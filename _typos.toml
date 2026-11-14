@@ -22,5 +22,8 @@ writeable = "writeable"
 caf = "caf"
 
 [default.extend-identifiers]
+# A simulator's unique device identifier (xcrun simctl).
+udid = "udid"
+UDID = "UDID"
 # Dial geometry (x and y of the indicator).
 iy = "iy"

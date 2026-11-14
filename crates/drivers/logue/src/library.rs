@@ -145,7 +145,9 @@ impl<M: Model> Library<M> {
 
     pub fn write(&self, w: impl Write + Seek) -> Result<(), M::Error> {
         let mut zip = ZipWriter::new(w);
-        let opts = SimpleFileOptions::default();
+        // The same bytes on every host: without this the archive says which
+        // system wrote it.
+        let opts = SimpleFileOptions::default().system(zip::System::Unix);
         zip.start_file(INDEX, opts).map_err(archive_err)?;
         zip.write_all(self.index_xml().as_bytes())
             .map_err(archive_err)?;

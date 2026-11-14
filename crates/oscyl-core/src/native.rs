@@ -69,7 +69,9 @@ pub fn write(w: impl Write + Seek, driver: &str, lib: &LibraryData) -> Result<()
     };
     let json = serde_json::to_vec_pretty(&manifest).map_err(archive)?;
     let mut zip = ZipWriter::new(w);
-    let opts = SimpleFileOptions::default();
+    // The same bytes on every host: without this the archive says which
+    // system wrote it.
+    let opts = SimpleFileOptions::default().system(zip::System::Unix);
     let mut member = |name: &str, data: &[u8]| -> Result<(), NativeError> {
         zip.start_file(name, opts).map_err(archive)?;
         zip.write_all(data).map_err(archive)
