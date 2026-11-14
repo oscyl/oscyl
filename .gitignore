@@ -1,0 +1,21 @@
+# Working notes that are not published
+/private/
+
+# Vendor material and legacy work: never commit
+/oem/
+/xdutils/
+*.syx
+*.oscap
+*.hex
+
+# Build output
+/target/
+
+# Python caches (scripts/)
+__pycache__/
+
+# Flatpak build (scripts/flatpak-sources.sh, flatpak-builder)
+/packaging/flatpak/cargo-sources.json
+/packaging/flatpak/.flatpak-builder/
+/packaging/flatpak/build-dir/
+/packaging/flatpak/repo/

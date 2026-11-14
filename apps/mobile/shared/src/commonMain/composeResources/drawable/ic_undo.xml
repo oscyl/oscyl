@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): the undo glyph of a dial's "was" line. Mirrors right to left. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="true">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M5.5 3.75L2.75 6.5L5.5 9.25M3 6.5H9.75A3.25 3.25 0 0 1 9.75 13H7.5" />
+</vector>

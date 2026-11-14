@@ -1,0 +1,204 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: rust
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt,clippy
+          rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cargo fmt --all --check
+      # GitHub runners ship an older GTK than the app needs (4.20); the app is
+      # built and tested in the GNOME runtime by the gtk job below.
+      - run: cargo clippy --workspace --exclude oscyl-gtk --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --exclude oscyl-gtk --locked
+      # The mobile build of the transport (no midir).
+      - run: cargo clippy -p oscyl-midi -p oscyl-app --no-default-features --all-targets --locked -- -D warnings
+      - run: cargo test -p oscyl-midi -p oscyl-app --no-default-features --locked
+
+  # The command-line tool and the shared crates on the other desktops
+  # (CoreMIDI on macOS, WinMM on Windows). The GNOME app is Linux only.
+  desktop:
+    name: desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: cargo test --workspace --exclude oscyl-gtk --locked
+      - run: cargo run -p oscyl-cli --locked -- --simulator info
+
+  conformance:
+    name: conformance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # One entry per driver package under crates/drivers/.
+        driver: [oscyl-minilogue-xd, oscyl-prophet-rev2, oscyl-korg-prologue]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cargo test -p "$DRIVER" --test conformance --locked
+        env:
+          DRIVER: ${{ matrix.driver }}
+
+  msrv:
+    name: msrv
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Keep in step with rust-version in Cargo.toml.
+      - name: Rust 1.92
+        run: |
+          rustup toolchain install 1.92 --profile minimal
+          rustup default 1.92
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cargo check --workspace --exclude oscyl-gtk --all-targets --locked
+
+  deny:
+    name: deny
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cargo doc --workspace --exclude oscyl-gtk --no-deps --locked
+
+  licences:
+    name: licences
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      # The About pages' third-party licences match Cargo.lock (installs cargo-about).
+      - run: scripts/licences.sh --check
+
+  typos:
+    name: typos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: crate-ci/typos@276087d9a4f06398b3e04825487805e2d7375888 # v1.52.2
+
+  # The Linux app: built and tested in the GNOME runtime it ships on.
+  flatpak-sources:
+    name: flatpak-sources
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: scripts/flatpak-sources.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cargo-sources
+          path: packaging/flatpak/cargo-sources.json
+          retention-days: 1
+
+  gtk:
+    name: gtk
+    needs: flatpak-sources
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-49@sha256:8a05aca51163a81259cc011302cc5121779c89b8b16f2819cc3fd06817d136e7
+      options: --privileged
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: cargo-sources
+          path: packaging/flatpak
+      # Runs the manifest's test-commands (cargo test -p oscyl-gtk) with a display.
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6.8
+        with:
+          manifest-path: packaging/flatpak/io.github.oscyl.Oscyl.json
+          run-tests: true
+          build-bundle: false
+          upload-artifact: false

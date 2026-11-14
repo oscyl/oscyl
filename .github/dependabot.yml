@@ -1,0 +1,42 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        update-types: [minor, patch]
+
+  - package-ecosystem: cargo
+    directory: /
+    labels: [dependencies, no-changelog]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: deps
+      include: scope
+    groups:
+      cargo:
+        update-types: [minor, patch]
+
+  - package-ecosystem: gradle
+    directory: /apps/mobile
+    labels: [dependencies, no-changelog]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: deps
+      include: scope
+    groups:
+      gradle:
+        update-types: [minor, patch]

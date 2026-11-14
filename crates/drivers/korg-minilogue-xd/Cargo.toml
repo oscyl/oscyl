@@ -1,0 +1,21 @@
+[package]
+name = "oscyl-minilogue-xd"
+description = "KORG minilogue xd driver for Oscyl: protocol, program model, file formats, simulator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+oscyl-driver = { path = "../../oscyl-driver" }
+oscyl-logue = { path = "../logue" }
+quick-xml = "0.42.0"
+serde_json = "1"
+thiserror.workspace = true
+zip = { version = "9.5.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
+
+[dev-dependencies]
+oscyl-conformance = { path = "../../oscyl-conformance" }
+oscyl-core = { path = "../../oscyl-core" }

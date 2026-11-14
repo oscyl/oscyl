@@ -1,0 +1,48 @@
+name: Changelog
+
+# A PR that changes what users get updates CHANGELOG.md, or carries the
+# no-changelog label. Docs, workflows, tests and Markdown are exempt.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  changelog:
+    name: changelog
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: CHANGELOG.md updated
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          if jq -e 'index("no-changelog")' <<< "$LABELS" > /dev/null; then
+              echo "Labelled no-changelog."
+              exit 0
+          fi
+          changed=$(git diff --name-only "$BASE...$HEAD")
+          if grep -qx CHANGELOG.md <<< "$changed"; then
+              echo "CHANGELOG.md updated."
+              exit 0
+          fi
+          exempt='^(docs/|\.github/)|\.md$|(^|/)tests?/|/src/[A-Za-z]*Test/'
+          if user=$(grep -Ev "$exempt" <<< "$changed" | grep .); then
+              echo "::error::These files change what users get, but CHANGELOG.md is untouched:"
+              echo "$user"
+              echo "Add an entry under ## [Unreleased], or label the PR no-changelog."
+              exit 1
+          fi
+          echo "Only docs, workflows, tests or Markdown changed."

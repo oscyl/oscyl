@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): saved (the memory card with a check on it: nothing left to save or sync). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="false">
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4.5 2.75H9.5L12.25 5.5V12.5a0.75 0.75 0 0 1 -0.75 0.75h-7a0.75 0.75 0 0 1 -0.75 -0.75v-9a0.75 0.75 0 0 1 0.75 -0.75ZM5.9 8.75L7.4 10.25L10.2 6.9" />
+</vector>

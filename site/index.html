@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oscyl: librarian and sound editor for hardware synths</title>
+<meta name="description" content="Oscyl is an open-source patch librarian and sound editor for the KORG minilogue xd, prologue and Sequential Prophet Rev2. Read, edit, back up and sync programs on Linux, Android, iOS and the command line.">
+<link rel="canonical" href="https://oscyl.github.io/oscyl/">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Oscyl: librarian and sound editor for hardware synths">
+<meta property="og:description" content="Read, edit, back up and sync your synth's programs. Open source, one Rust core, on Linux, Android, iOS and the command line.">
+<meta property="og:url" content="https://oscyl.github.io/oscyl/">
+<meta property="og:image" content="https://oscyl.github.io/oscyl/images/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Oscyl","applicationCategory":"MultimediaApplication","operatingSystem":"Linux, Android, iOS, macOS, Windows","description":"Open-source patch librarian and sound editor for hardware synthesizers.","license":"https://spdx.org/licenses/MIT.html","url":"https://oscyl.github.io/oscyl/","codeRepository":"https://github.com/oscyl/oscyl","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<style>
+@font-face { font-family: "Albert Sans"; font-weight: 700; font-display: swap; src: url("AlbertSans-Bold.ttf") format("truetype"); }
+:root {
+  --ground: #e7e6e2; --raised: #f6f5f2; --rule: #cbc9c3; --ink: #1d1e1f; --legend: #62615c;
+  --plate: #2a2b2c; --on-plate: #ecebe7; --act: #a54c08; --on: #2c8a45;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #1a1b1c; --raised: #232425; --rule: #353637; --ink: #ecebe7; --legend: #9d9c97;
+    --plate: #d9d8d3; --on-plate: #202122; --act: #f08a24; --on: #3fae5a; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 17px/1.55 system-ui, sans-serif; }
+main, header, footer { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+h1, h2, h3 { font-family: "Albert Sans", system-ui, sans-serif; font-weight: 700; line-height: 1.1; margin: 0; text-wrap: balance; }
+a { color: inherit; }
+a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+header { display: flex; align-items: center; justify-content: space-between; padding-block: 20px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 20px "Albert Sans", system-ui; text-decoration: none; }
+nav a { margin-left: 22px; color: var(--legend); text-decoration: none; }
+nav a:hover { color: var(--ink); }
+.hero { padding: 64px 0 40px; }
+.hero h1 { font-size: clamp(40px, 7vw, 76px); max-width: 15ch; }
+.hero p { font-size: 20px; color: var(--legend); max-width: 56ch; margin: 22px 0 30px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.button { display: inline-block; padding: 12px 20px; border-radius: 10px; border: 1px solid var(--rule); text-decoration: none; font-weight: 600; }
+.button.main { background: var(--plate); color: var(--on-plate); border-color: var(--plate); }
+.status { margin-top: 22px; font-size: 14px; color: var(--legend); }
+.status b { color: var(--act); font-weight: 600; }
+.shot { width: 100%; height: auto; display: block; margin: 28px 0 0; border-radius: 14px; }
+section { padding: 56px 0 8px; }
+section > h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 8px; }
+section > p { color: var(--legend); max-width: 60ch; margin: 0 0 26px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 26px 20px; }
+.grid img { width: 100%; height: auto; display: block; border-radius: 14px; border: 1px solid var(--rule); background: #202122; }
+.grid h3 { font-size: 19px; margin: 14px 0 4px; }
+.grid p { margin: 0; color: var(--legend); font-size: 15px; }
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+th, td { text-align: left; padding: 12px 14px 12px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--legend); font-weight: 600; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+pre { background: var(--raised); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; overflow-x: auto; font-size: 14px; }
+footer { padding-block: 48px; color: var(--legend); font-size: 13px; }
+@media (max-width: 560px) { nav a:not(:last-child) { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="./"><img src="icon.svg" width="32" height="32" alt="">Oscyl</a>
+  <nav><a href="#features">Features</a><a href="#synths">Synths</a><a href="#try">Try it</a><a href="https://github.com/oscyl/oscyl">GitHub</a></nav>
+</header>
+<main>
+  <div class="hero">
+    <h1>Your synth's sounds, in order.</h1>
+    <p>Oscyl is an open-source librarian and sound editor for hardware synths. It reads every program, shows each stage of the sound as a picture, and writes back only what you changed, after backing it up.</p>
+    <div class="actions">
+      <a class="button main" href="https://github.com/oscyl/oscyl">Get the source on GitHub</a>
+      <a class="button" href="#try">Try it without a synth</a>
+    </div>
+    <p class="status"><b>Pre-alpha.</b> No release yet: today you build it from source. Linux, Android, iOS and the command line.</p>
+    <img class="shot" src="images/hero.webp" width="1652" height="830" alt="The Oscyl editor on Linux and on an Android phone, at a program's Filter stage with its graph and dials">
+  </div>
+
+  <section id="features">
+    <h2>See it move</h2>
+    <p>Every picture here is drawn by the apps themselves.</p>
+    <div class="grid">
+      <div><img src="images/clip-island.webp" width="600" height="400" loading="lazy" alt="The floating island: Save with a count, saving, Saved, Sync and Synced"><h3>The island</h3><p>Navigation and Save float over your programs. Save counts your edits, shows its progress and turns into Sync.</p></div>
+      <div><img src="images/clip-rail.webp" width="600" height="400" loading="lazy" alt="The stage rail: icons with edit counts, then held open with each stage and its values"><h3>The stage rail</h3><p>One thumb on the right edge: tap a stage, or hold and slide to read every stage with its values.</p></div>
+      <div><img src="images/clip-search.webp" width="600" height="400" loading="lazy" alt="The island turning into a search field, then into a notice with Undo"><h3>Search and undo</h3><p>The island becomes the search field, and the place where a removed program comes back.</p></div>
+      <div><img src="images/clip-desktop-editor.webp" width="600" height="400" loading="lazy" alt="The Linux editor: the cutoff moves while the saved curve stays dashed behind"><h3>Edit along the signal</h3><p>The curve moves with the dial, the saved curve stays behind it, and the stage counts the edit.</p></div>
+      <div><img src="images/clip-compare.webp" width="600" height="400" loading="lazy" alt="The editor switching between the edited program and its saved version"><h3>Hold to compare</h3><p>Hold, and the synth plays the saved version. Let go, and your edit is back.</p></div>
+      <div><img src="images/clip-generate.webp" width="600" height="400" loading="lazy" alt="Generate: four shape dials, then six generated sounds"><h3>Generate</h3><p>Four dials shape a character. Oscyl deals six sounds; keep the ones worth a slot.</p></div>
+      <div><img src="images/clip-sync.webp" width="600" height="400" loading="lazy" alt="The sync review: the list of changes, then writing slot 1 of 2"><h3>Safe sync</h3><p>Review every change, then watch each slot written and confirmed. Only edited slots change.</p></div>
+      <div><img src="images/clip-desktop-generate.webp" width="600" height="400" loading="lazy" alt="Generate on Linux: characters, shape dials, six sounds, one kept in slot 004"><h3>Generate on the desktop</h3><p>Pick a character, shape it, and keep a sound in a slot or in a library.</p></div>
+      <div><img src="images/clip-desktop-themes.webp" width="600" height="400" loading="lazy" alt="The Linux editor sweeping from the light theme to dark and to AMOLED"><h3>Light, dark, AMOLED</h3><p>Three themes on every platform, with large text and screen readers supported.</p></div>
+    </div>
+  </section>
+
+  <section id="synths">
+    <h2>Supported synths</h2>
+    <p>Each synth has its own driver, proven against a simulator on every commit.</p>
+    <table>
+      <tr><th>Synth</th><th>State</th></tr>
+      <tr><td>KORG minilogue xd</td><td>Validated on hardware (firmware 2.10)</td></tr>
+      <tr><td>KORG prologue (8 and 16)</td><td>Proven against its simulator; hardware testers wanted</td></tr>
+      <tr><td>Sequential Prophet Rev2</td><td>Proven against its simulator; hardware testers wanted</td></tr>
+    </table>
+    <p style="margin-top:18px">Your synth is missing? <a href="https://github.com/oscyl/oscyl/blob/main/docs/drivers.md">Write a driver</a> or <a href="https://github.com/oscyl/oscyl/issues/new/choose">ask for one</a>.</p>
+  </section>
+
+  <section id="try">
+    <h2>Try it without a synth</h2>
+    <p>The simulated synth answers like a real one, with no sound. You need Rust 1.92 or newer.</p>
+<pre><code>git clone https://github.com/oscyl/oscyl &amp;&amp; cd oscyl
+cargo run -p oscyl-cli -- --simulator info    # Linux, macOS, Windows
+cargo run -p oscyl-gtk -- --simulator         # the Linux app</code></pre>
+    <p><a href="https://github.com/oscyl/oscyl#build-and-run">Build steps for Android and iOS</a></p>
+  </section>
+</main>
+<footer>
+  Oscyl is free software under MIT or Apache-2.0. It is an independent project, not affiliated with, endorsed by or supported by any synth maker. "KORG", "minilogue", "prologue" and "logue" are trademarks of KORG Inc.; "Sequential" and "Prophet" are trademarks of their owner.
+</footer>
+</body>
+</html>

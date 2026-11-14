@@ -1,0 +1,26 @@
+# Spell check (https://github.com/crate-ci/typos), run by CI.
+[files]
+extend-exclude = [
+    # Translations: typos checks English only.
+    "po/*.po",
+    "**/values-*/strings.xml",
+    # Generated third-party licence data and Xcode object ids.
+    "**/licences/rust.json",
+    "*.pbxproj",
+    # Baseline Profiles: generated method signatures.
+    "**/baselineProfiles/*.txt",
+]
+
+[default.extend-words]
+# Synth terms.
+formant = "formant"
+# Gradle's -P prefix: -PreleaseBuild.
+prelease = "prelease"
+# Quoted from Edisyn's UI.
+writeable = "writeable"
+# "caf\u{e9}" in a test of non-ASCII names.
+caf = "caf"
+
+[default.extend-identifiers]
+# Dial geometry (x and y of the indicator).
+iy = "iy"

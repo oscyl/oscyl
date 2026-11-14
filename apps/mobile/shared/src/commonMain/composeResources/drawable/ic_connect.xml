@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): connect: the plug home in its socket. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="true">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M1.5 8H5.25M5.25 5H8.75V11H5.25ZM8.75 6.75H11.5M8.75 9.25H11.5M11.5 4.5V11.5M11.5 8H14.5" />
+</vector>

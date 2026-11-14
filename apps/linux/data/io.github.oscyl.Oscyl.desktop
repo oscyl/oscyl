@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Oscyl
+GenericName=Synth Librarian
+Comment=Organize, edit and sync programs for the KORG minilogue xd
+Exec=oscyl-gtk
+Icon=io.github.oscyl.Oscyl
+Terminal=false
+Categories=AudioVideo;Audio;Music;
+Keywords=synth;minilogue;librarian;patch;midi;
+StartupNotify=true
+X-GNOME-UsesNotifications=false

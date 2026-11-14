@@ -1,0 +1,5 @@
+xcuserdata/
+*.xcuserstate
+build/
+app.log
+oscyl-simulator.png

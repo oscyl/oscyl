@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window before Compose draws: Oscyl's ground (generated from the tokens), so launch never flashes. -->
+    <style name="Theme.Oscyl" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/oscyl_ground</item>
+    </style>
+</resources>

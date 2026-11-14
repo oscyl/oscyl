@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): user units: a chip in its slot. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="false">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M5 4H11A1 1 0 0 1 12 5V11A1 1 0 0 1 11 12H5A1 1 0 0 1 4 11V5A1 1 0 0 1 5 4ZM6.5 1.75V4M9.5 1.75V4M6.5 12V14.25M9.5 12V14.25M1.75 6.5H4M1.75 9.5H4M12 6.5H14.25M12 9.5H14.25" />
+</vector>

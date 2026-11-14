@@ -1,0 +1,62 @@
+{
+  "id": "io.github.oscyl.Oscyl",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "49",
+  "sdk": "org.gnome.Sdk",
+  "sdk-extensions": [
+    "org.freedesktop.Sdk.Extension.rust-stable"
+  ],
+  "command": "oscyl-gtk",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--device=all"
+  ],
+  "build-options": {
+    "append-path": "/usr/lib/sdk/rust-stable/bin",
+    "env": {
+      "CARGO_HOME": "/run/build/oscyl/cargo",
+      "CARGO_NET_OFFLINE": "true",
+      "OSCYL_LOCALEDIR": "/app/share/locale"
+    }
+  },
+  "modules": [
+    {
+      "name": "oscyl",
+      "buildsystem": "simple",
+      "sources": [
+        {
+          "type": "dir",
+          "path": "../..",
+          "skip": [
+            "target",
+            ".git",
+            "oem",
+            "xdutils",
+            ".claude",
+            ".flatpak-builder",
+            "flatpak_app",
+            "apps/mobile",
+            "packaging/flatpak/.flatpak-builder",
+            "packaging/flatpak/build-dir",
+            "packaging/flatpak/repo"
+          ]
+        },
+        "cargo-sources.json"
+      ],
+      "test-commands": [
+        "cargo --offline test --release --locked -p oscyl-gtk"
+      ],
+      "build-commands": [
+        "cargo --offline build --release --locked -p oscyl-gtk",
+        "install -Dm755 target/release/oscyl-gtk -t /app/bin",
+        "install -Dm644 apps/linux/data/io.github.oscyl.Oscyl.desktop -t /app/share/applications",
+        "install -Dm644 apps/linux/data/io.github.oscyl.Oscyl.metainfo.xml -t /app/share/metainfo",
+        "install -Dm644 apps/linux/data/icons/hicolor/scalable/apps/io.github.oscyl.Oscyl.svg -t /app/share/icons/hicolor/scalable/apps",
+        "install -Dm644 apps/linux/data/icons/hicolor/symbolic/apps/io.github.oscyl.Oscyl-symbolic.svg -t /app/share/icons/hicolor/symbolic/apps",
+        "for po in po/*.po; do [ -e \"$po\" ] || continue; lang=$(basename \"$po\" .po); install -d /app/share/locale/$lang/LC_MESSAGES; msgfmt \"$po\" -o /app/share/locale/$lang/LC_MESSAGES/oscyl.mo; done"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+# Text is stored and checked out with LF everywhere.
+* text=auto eol=lf
+
+# Binaries.
+*.png binary
+*.webp binary
+*.ttf binary
+*.jar binary
+*.syx binary
+*.mnlgxdlib binary
+*.mnlgxdprog binary
+*.mnlgxdpreset binary
+*.oscyllib binary
+
+# Gradle's wrapper scripts: the shell one LF (it runs on Unix), the batch one CRLF.
+gradlew text eol=lf
+*.bat text eol=crlf
+
+# Screenshot goldens: regenerated, not reviewed line by line.
+apps/mobile/androidApp/src/test/snapshots/** -diff linguist-generated

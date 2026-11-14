@@ -1,0 +1,17 @@
+[package]
+name = "oscyl-korg-prologue"
+description = "KORG prologue driver for Oscyl: program model, curation, live edits, generator, simulator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+oscyl-driver = { path = "../../oscyl-driver" }
+oscyl-logue = { path = "../logue" }
+
+[dev-dependencies]
+oscyl-conformance = { path = "../../oscyl-conformance" }
+oscyl-minilogue-xd = { path = "../korg-minilogue-xd" }
+zip = { version = "9.5.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }

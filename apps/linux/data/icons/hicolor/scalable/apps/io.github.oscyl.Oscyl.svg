@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Oscyl app icon: one cycle of a wave drawn in pen on a chart card, ending in the pen's nib. GNOME 128px grid (96px square, 8px bottom depth). -->
+  <defs>
+    <clipPath id="face"><rect x="16" y="14" width="96" height="92" rx="16"/></clipPath>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F1F3F6"/></linearGradient>
+  </defs>
+  <rect x="16" y="18" width="96" height="96" rx="16" fill="#AEB6C3"/>
+  <rect x="16" y="14" width="96" height="92" rx="16" fill="url(#g)"/>
+  <g clip-path="url(#face)" stroke="#E3E6EB" stroke-width="1.5"><path d="M32 14V106"/><path d="M48 14V106"/><path d="M64 14V106"/><path d="M80 14V106"/><path d="M96 14V106"/><path d="M16 26H112"/><path d="M16 42H112"/><path d="M16 58H112"/><path d="M16 74H112"/><path d="M16 90H112"/></g>
+  <path d="M28 58L29.29 55.39L30.58 52.82L31.88 50.35L33.17 48L34.46 45.82L35.75 43.86L37.04 42.13L38.33 40.68L39.62 39.52L40.92 38.68L42.21 38.17L43.5 38L44.79 38.17L46.08 38.68L47.38 39.52L48.67 40.68L49.96 42.13L51.25 43.86L52.54 45.82L53.83 48L55.12 50.35L56.42 52.82L57.71 55.39L59 58L60.29 60.61L61.58 63.18L62.88 65.65L64.17 68L65.46 70.18L66.75 72.14L68.04 73.87L69.33 75.32L70.62 76.48L71.92 77.32L73.21 77.83L74.5 78L75.79 77.83L77.08 77.32L78.38 76.48L79.67 75.32L80.96 73.87L82.25 72.14L83.54 70.18L84.83 68L86.12 65.65L87.42 63.18L88.71 60.61L90 58" fill="none" stroke="#2F5BD3" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="99" cy="58" r="7.5" fill="#15171B"/>
+</svg>

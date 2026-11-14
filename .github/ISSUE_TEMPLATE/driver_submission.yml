@@ -1,0 +1,58 @@
+name: Driver submission
+description: Propose a new synth driver you have written or are writing.
+labels: [driver]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        See the driver acceptance rules in GOVERNANCE.md. Open the pull
+        request when you are ready and link it here.
+  - type: input
+    id: synth
+    attributes:
+      label: Synth (vendor and model)
+    validations:
+      required: true
+  - type: input
+    id: crate
+    attributes:
+      label: Driver crate path
+      placeholder: crates/drivers/<vendor>-<model>
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware versions covered
+    validations:
+      required: true
+  - type: input
+    id: pr
+    attributes:
+      label: Pull request
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance checklist
+      options:
+        - label: The driver crate implements the contract in `crates/oscyl-driver`.
+          required: true
+        - label: The driver ships a simulator, with fault injection for known hardware faults.
+          required: true
+        - label: "`tests/conformance.rs` calls `oscyl_conformance::run(&DRIVER)` and passes, and the package is in the CI `conformance` matrix."
+          required: true
+        - label: "The pull request names its sources (public documents only), the known limits and the firmware versions covered."
+          required: true
+        - label: Test fixtures are synthetic. No vendor firmware, factory presets, binaries or scraped content.
+          required: true
+        - label: A named maintainer is listed in `.github/CODEOWNERS` for the driver.
+          required: true
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Will you validate the driver on real hardware each release (Tier 1)?
+      options:
+        - "Yes"
+        - "No, Tier 2 only"
+    validations:
+      required: true

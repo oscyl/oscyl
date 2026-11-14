@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): roll a stage (a die tumbling: tilted, two motion strokes behind it). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="true">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.4" android:strokeLineJoin="round" android:pathData="M8.6 3.1L13.4 4.4A1 1 0 0 1 14.1 5.6L12.9 10.4A1 1 0 0 1 11.7 11.1L6.9 9.9A1 1 0 0 1 6.2 8.7L7.4 3.9A1 1 0 0 1 8.6 3.1Z" />
+    <path android:fillColor="#FF000000" android:pathData="M9.3 5.6m-0.75 0a0.75 0.75 0 1 0 1.5 0a0.75 0.75 0 1 0 -1.5 0M11.1 8.6m-0.75 0a0.75 0.75 0 1 0 1.5 0a0.75 0.75 0 1 0 -1.5 0" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.4" android:strokeLineCap="round" android:pathData="M1.8 9.2H4.4M2.8 12.2H6.4" />
+</vector>

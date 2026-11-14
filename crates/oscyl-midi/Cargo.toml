@@ -1,0 +1,49 @@
+[package]
+name = "oscyl-midi"
+description = "USB-MIDI transport for Oscyl synth drivers (midir on desktop, or bytes the platform moves)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+oscyl-driver = { path = "../oscyl-driver" }
+oscyl-logue = { path = "../drivers/logue" }
+oscyl-minilogue-xd = { path = "../drivers/korg-minilogue-xd" }
+oscyl-prophet-rev2 = { path = "../drivers/sequential-prophet-rev2" }
+oscyl-korg-prologue = { path = "../drivers/korg-prologue" }
+midir = { version = "0.11.1", optional = true }
+thiserror.workspace = true
+
+# Hotplug reads ALSA sequencer announcements; other desktops have no hotplug yet.
+[target.'cfg(target_os = "linux")'.dependencies]
+alsa = { version = "0.12.1", optional = true }
+
+[features]
+default = ["midir"]
+midir = ["dep:midir", "dep:alsa"]
+
+[[example]]
+name = "audition_settle"
+required-features = ["midir"]
+
+[[example]]
+name = "induce_lag"
+required-features = ["midir"]
+
+[[example]]
+name = "lag_check"
+required-features = ["midir"]
+
+[[example]]
+name = "read_slot"
+required-features = ["midir"]
+
+[[example]]
+name = "rewrite_range"
+required-features = ["midir"]
+
+[[test]]
+name = "hardware"
+required-features = ["midir"]

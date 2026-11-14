@@ -1,0 +1,24 @@
+[package]
+name = "oscyl-cli"
+description = "Command-line tool for the synths Oscyl supports: backup, diff, restore, audition, user units"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "oscyl"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive", "env"] }
+oscyl-core = { path = "../oscyl-core" }
+oscyl-driver = { path = "../oscyl-driver" }
+oscyl-logue = { path = "../drivers/logue" }
+oscyl-minilogue-xd = { path = "../drivers/korg-minilogue-xd" }
+oscyl-midi = { path = "../oscyl-midi" }
+
+[dev-dependencies]
+assert_cmd = "2.2.2"

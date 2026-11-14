@@ -1,0 +1,2966 @@
+# Oscyl translation template.
+# This file is distributed under the same licence as Oscyl (MIT OR Apache-2.0).
+msgid ""
+msgstr ""
+"Project-Id-Version: oscyl\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+msgid "%d change"
+msgid_plural "%d changes"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d change in this program"
+msgid_plural "%d changes in this program"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d program"
+msgid_plural "%d programs"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d program added"
+msgid_plural "%d programs added"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d program removed"
+msgid_plural "%d programs removed"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d program replaced"
+msgid_plural "%d programs replaced"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d voice"
+msgid_plural "%d voices"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "+1"
+msgstr ""
+
+msgid "+2"
+msgstr ""
+
+msgid "-1"
+msgstr ""
+
+msgid "-2"
+msgstr ""
+
+msgid "0"
+msgstr ""
+
+msgid "0%"
+msgstr ""
+
+msgid "1-Shot"
+msgstr ""
+
+msgid "1-Shot runs one cycle per note, like an extra envelope. BPM locks the rate to the tempo."
+msgstr ""
+
+msgid "100%"
+msgstr ""
+
+msgid "120 example sounds to explore and edit"
+msgstr ""
+
+msgid "12th"
+msgstr ""
+
+msgid "16'"
+msgstr ""
+
+msgid "16th"
+msgstr ""
+
+msgid "16th."
+msgstr ""
+
+msgid "2'"
+msgstr ""
+
+msgid "24th"
+msgstr ""
+
+msgid "32nd"
+msgstr ""
+
+msgid "4'"
+msgstr ""
+
+msgid "48th"
+msgstr ""
+
+msgid "4th"
+msgstr ""
+
+msgid "50%"
+msgstr ""
+
+msgid "64th"
+msgstr ""
+
+msgid "6th"
+msgstr ""
+
+msgid "8'"
+msgstr ""
+
+msgid "8th"
+msgstr ""
+
+msgid "8th."
+msgstr ""
+
+msgid "A little noise under the VCOs adds breath to the attack."
+msgstr ""
+
+msgid "A low-pass filter. The EG and LFO can both move the cutoff while a note plays."
+msgstr ""
+
+msgid "A parameter of the current user oscillator."
+msgstr ""
+
+msgid "A self-running pattern"
+msgstr ""
+
+msgid "A synth on this port is already connected or connecting."
+msgstr ""
+
+msgid "A {attack} · R {release}"
+msgstr ""
+
+msgid "AMOLED black"
+msgstr ""
+
+msgid "AMOLED uses true black, for OLED screens and dark studios"
+msgstr ""
+
+msgid "About Oscyl"
+msgstr ""
+
+msgid "Across"
+msgstr ""
+
+msgid "Add this sound to the end of a library"
+msgstr ""
+
+msgid "Adds noise to the VPM modulation."
+msgstr ""
+
+msgid "Aftertouch"
+msgstr ""
+
+msgid "Air 1"
+msgstr ""
+
+msgid "Air 2"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "All off"
+msgstr ""
+
+msgid "Also Ctrl+Plus and Ctrl+Minus; Ctrl+0 resets"
+msgstr ""
+
+msgid "Ambience"
+msgstr ""
+
+msgid "Amount and direction of the EG's effect on its target."
+msgstr ""
+
+msgid "Amp EG"
+msgstr ""
+
+msgid "Amp EG Attack"
+msgstr ""
+
+msgid "Amp EG Decay"
+msgstr ""
+
+msgid "Amp EG Release"
+msgstr ""
+
+msgid "Amp EG Sustain"
+msgstr ""
+
+msgid "Amp Velocity"
+msgstr ""
+
+msgid "Another app is using the synth's MIDI port. Close it and press Connect."
+msgstr ""
+
+msgid "Appearance"
+msgstr ""
+
+msgid "Arena"
+msgstr ""
+
+msgid "Arp"
+msgstr ""
+
+msgid "Arp Gate Time"
+msgstr ""
+
+msgid "Arp Pulse"
+msgstr ""
+
+msgid "Arp Rate"
+msgstr ""
+
+msgid "Arp/Latch"
+msgstr ""
+
+msgid "Arpeggiator"
+msgstr ""
+
+msgid "Arpeggio note value, relative to the tempo."
+msgstr ""
+
+msgid "As saved"
+msgstr ""
+
+msgid "At 0% high notes sound duller than low ones."
+msgstr ""
+
+msgid "At zero every note dies away after the decay, like a plucked string."
+msgstr ""
+
+msgid "At zero every note plays at the same level."
+msgstr ""
+
+msgid "Attack"
+msgstr ""
+
+msgid "Attack time of the VPM envelope."
+msgstr ""
+
+msgid "Audition live"
+msgstr ""
+
+msgid "Audition live on or off"
+msgstr ""
+
+msgid "Audition live: play every change on the synth without storing it (Ctrl+Shift+A)"
+msgstr ""
+
+msgid "Auditioning"
+msgstr ""
+
+msgid "Auto"
+msgstr ""
+
+msgid "Auto glides only between overlapping notes; On glides on every note."
+msgstr ""
+
+msgid "BPM"
+msgstr ""
+
+msgid "BPM types set the delay time as a note value at the program tempo."
+msgstr ""
+
+msgid "Back Up Synth…"
+msgstr ""
+
+msgid "Back to the editor"
+msgstr ""
+
+msgid "Back to the editor (Escape)"
+msgstr ""
+
+msgid "Back to the graph"
+msgstr ""
+
+msgid "Back up synth"
+msgstr ""
+
+msgid "Backup saved"
+msgstr ""
+
+msgid "Balance between the dry sound and the echoes."
+msgstr ""
+
+msgid "Balance between the dry sound and the reverb."
+msgstr ""
+
+msgid "Bass"
+msgstr ""
+
+msgid "Bell"
+msgstr ""
+
+msgid "Below centre the joystick moves the parameter the other way."
+msgstr ""
+
+msgid "Bend +"
+msgstr ""
+
+msgid "Bend -"
+msgstr ""
+
+msgid "Bend Range (+)"
+msgstr ""
+
+msgid "Bend Range (-)"
+msgstr ""
+
+msgid "Black"
+msgstr ""
+
+msgid "Blend toward the edit"
+msgstr ""
+
+msgid "Boosts frequencies around the cutoff."
+msgstr ""
+
+msgid "Breed With…"
+msgstr ""
+
+msgid "Breed with"
+msgstr ""
+
+msgid "Bright"
+msgstr ""
+
+msgid "CV 1 Assign"
+msgstr ""
+
+msgid "CV 1 Range"
+msgstr ""
+
+msgid "CV 2 Assign"
+msgstr ""
+
+msgid "CV 2 Range"
+msgstr ""
+
+msgid "CV In 1 Assign"
+msgstr ""
+
+msgid "CV In 1 Range"
+msgstr ""
+
+msgid "CV In 2 Assign"
+msgstr ""
+
+msgid "CV In 2 Range"
+msgstr ""
+
+msgid "CV In Mode"
+msgstr ""
+
+msgid "CV/Gate (+)"
+msgstr ""
+
+msgid "CV/Gate (-)"
+msgstr ""
+
+msgid "Can't sync yet"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Centre is zero; below centre the sweep is inverted."
+msgstr ""
+
+msgid "Change VCO 2 Pitch to change the overtones."
+msgstr ""
+
+msgid "Change value by a step"
+msgstr ""
+
+msgid "Change value in large steps"
+msgstr ""
+
+msgid "Changes to this program"
+msgstr ""
+
+msgid "Character"
+msgstr ""
+
+msgid "Children of “{a}” and “{b}”"
+msgstr ""
+
+msgid "Choose for {name}"
+msgstr ""
+
+msgid "Choose how the four voices play: Poly, Unison, Chord or Arp/Latch. Glide and program-wide tuning are here too."
+msgstr ""
+
+msgid "Choose two parameters"
+msgstr ""
+
+msgid "Chord"
+msgstr ""
+
+msgid "Chorus"
+msgstr ""
+
+msgid "Chorus flavour, from Light and Deep to Triphase and Vibrato."
+msgstr ""
+
+msgid "Clear Search and Filters"
+msgstr ""
+
+msgid "Clear Slot"
+msgstr ""
+
+msgid "Clear the search and filters to reorder"
+msgstr ""
+
+msgid "Clear this slot"
+msgstr ""
+
+msgid "Clear to Init Program"
+msgstr ""
+
+msgid "Clear {name}"
+msgstr ""
+
+msgid "Clear “{name}”?"
+msgstr ""
+
+msgid "Close or open a folder"
+msgstr ""
+
+msgid "Compare with the saved program"
+msgstr ""
+
+msgid "Connect"
+msgstr ""
+
+msgid "Connect Synth"
+msgstr ""
+
+msgid "Connect a {model} to send this library to it."
+msgstr ""
+
+msgid "Connect the synth"
+msgstr ""
+
+msgid "Connect the synth to audition."
+msgstr ""
+
+msgid "Connect the synth with a USB cable and switch it on."
+msgstr ""
+
+msgid "Connect your synth over USB, or turn on the simulated synths in Preferences."
+msgstr ""
+
+msgid "Connected"
+msgstr ""
+
+msgid "Connecting"
+msgstr ""
+
+msgid "Connecting…"
+msgstr ""
+
+msgid "Controllers"
+msgstr ""
+
+msgid "Copied to “{name}”"
+msgstr ""
+
+msgid "Copied “{program}”"
+msgstr ""
+
+msgid "Copy Sound"
+msgstr ""
+
+msgid "Copy program to a library"
+msgstr ""
+
+msgid "Copy to Another Library"
+msgstr ""
+
+msgid "Couldn't back up the synth"
+msgstr ""
+
+msgid "Couldn't change that value: {error}"
+msgstr ""
+
+msgid "Couldn't connect to the synth"
+msgstr ""
+
+msgid "Couldn't delete the library"
+msgstr ""
+
+msgid "Couldn't duplicate the library"
+msgstr ""
+
+msgid "Couldn't export the library"
+msgstr ""
+
+msgid "Couldn't make the folder"
+msgstr ""
+
+msgid "Couldn't make the library"
+msgstr ""
+
+msgid "Couldn't move the library"
+msgstr ""
+
+msgid "Couldn't open the demo library"
+msgstr ""
+
+msgid "Couldn't open the file"
+msgstr ""
+
+msgid "Couldn't open the library"
+msgstr ""
+
+msgid "Couldn't open your libraries: {error}"
+msgstr ""
+
+msgid "Couldn't read"
+msgstr ""
+
+msgid "Couldn't read the unit"
+msgstr ""
+
+msgid "Couldn't read this library"
+msgstr ""
+
+msgid "Couldn't rename the folder"
+msgstr ""
+
+msgid "Couldn't rename the library"
+msgstr ""
+
+msgid "Couldn't restore the library"
+msgstr ""
+
+msgid "Couldn't save preferences: {error}"
+msgstr ""
+
+msgid "Couldn't save the backup"
+msgstr ""
+
+msgid "Couldn't save the libraries' order: {error}"
+msgstr ""
+
+msgid "Couldn't save the library"
+msgstr ""
+
+msgid "Couldn't save “{name}”: {error}"
+msgstr ""
+
+msgid "Couldn't sync"
+msgstr ""
+
+msgid "Creep"
+msgstr ""
+
+msgid "Cross Mod"
+msgstr ""
+
+msgid "Cross Mod Depth"
+msgstr ""
+
+msgid "Current program ({model})"
+msgstr ""
+
+msgid "Custom oscillators and effects made with the logue SDK live in these slots. Loading replaces only the chosen slot."
+msgstr ""
+
+msgid "Cut {cutoff} · Res {resonance}"
+msgstr ""
+
+msgid "Cutoff"
+msgstr ""
+
+msgid "Cutoff Drive"
+msgstr ""
+
+msgid "Cutoff Keyboard Track"
+msgstr ""
+
+msgid "Cutoff Velocity"
+msgstr ""
+
+msgid "Cutoff and resonance"
+msgstr ""
+
+msgid "Cutoff {cutoff} · Res {resonance}"
+msgstr ""
+
+msgid "Cutoff, resonance and the second oscillator's octave"
+msgstr ""
+
+msgid "Dark"
+msgstr ""
+
+msgid "Deal six children of this sound and another"
+msgstr ""
+
+msgid "Deal six new sounds (Space)"
+msgstr ""
+
+msgid "Deal six variations of this sound"
+msgstr ""
+
+msgid "Decay"
+msgstr ""
+
+msgid "Decay 1"
+msgstr ""
+
+msgid "Decay 2"
+msgstr ""
+
+msgid "Decay and sustain"
+msgstr ""
+
+msgid "Decay time of the VPM envelope."
+msgstr ""
+
+msgid "Decim"
+msgstr ""
+
+msgid "Deep"
+msgstr ""
+
+msgid "Delay"
+msgstr ""
+
+msgid "Delay Depth"
+msgstr ""
+
+msgid "Delay Dry/Wet"
+msgstr ""
+
+msgid "Delay On"
+msgstr ""
+
+msgid "Delay Sub Type"
+msgstr ""
+
+msgid "Delay Time"
+msgstr ""
+
+msgid "Delay and reverb"
+msgstr ""
+
+msgid "Delay type, from stereo and ping-pong to tape and tempo-synced versions."
+msgstr ""
+
+msgid "Delays"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Deleted “{name}”"
+msgstr ""
+
+msgid "Demo library"
+msgstr ""
+
+msgid "Depth"
+msgstr ""
+
+msgid "Design sounds"
+msgstr ""
+
+msgid "Detune"
+msgstr ""
+
+msgid "Disconnect"
+msgstr ""
+
+msgid "Double-click the value, or press Enter, to type it"
+msgstr ""
+
+msgid "Doubling"
+msgstr ""
+
+msgid "Downward pitch-bend range, in semitones, when you push the joystick left."
+msgstr ""
+
+msgid "Drive"
+msgstr ""
+
+msgid "Drive, cross mod, ring, sync and noise"
+msgstr ""
+
+msgid "Driven fifths for riffs"
+msgstr ""
+
+msgid "Drone"
+msgstr ""
+
+msgid "Dry/Wet"
+msgstr ""
+
+msgid "Duo"
+msgstr ""
+
+msgid "Duplicate"
+msgstr ""
+
+msgid "EG"
+msgstr ""
+
+msgid "EG Attack"
+msgstr ""
+
+msgid "EG Decay"
+msgstr ""
+
+msgid "EG Int"
+msgstr ""
+
+msgid "EG Legato"
+msgstr ""
+
+msgid "EG Target"
+msgstr ""
+
+msgid "Earlier stages"
+msgstr ""
+
+msgid "Early Ref"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Edit history and snapshots"
+msgstr ""
+
+msgid "Edited"
+msgstr ""
+
+msgid "Edited only"
+msgstr ""
+
+msgid "Editing"
+msgstr ""
+
+msgid "Editor"
+msgstr ""
+
+msgid "Effects"
+msgstr ""
+
+msgid "Empty"
+msgstr ""
+
+msgid "Empty Library"
+msgstr ""
+
+msgid "Empty slots make no sound."
+msgstr ""
+
+msgid "Empty slots pass the sound through."
+msgstr ""
+
+msgid "Encore"
+msgstr ""
+
+msgid "Endless low tone"
+msgstr ""
+
+msgid "Enlarge graph"
+msgstr ""
+
+msgid "Enlarge graph (Ctrl+I)"
+msgstr ""
+
+msgid "Ensemble"
+msgstr ""
+
+msgid "Ensemble variation: Stereo, Light or Mono."
+msgstr ""
+
+msgid "Envelopes"
+msgstr ""
+
+msgid "Every change to these programs is listed here; a click goes back to it."
+msgstr ""
+
+msgid "Everything works offline; you only need the synth to listen and sync."
+msgstr ""
+
+msgid "Example sounds to explore and edit, no synth needed."
+msgstr ""
+
+msgid "Explore Demo Library"
+msgstr ""
+
+msgid "Explore a Demo Library"
+msgstr ""
+
+msgid "Export Library"
+msgstr ""
+
+msgid "Export…"
+msgstr ""
+
+msgid "FX"
+msgstr ""
+
+msgid "Factory slot: read-only. Copy it to a library to change it."
+msgstr ""
+
+msgid "Fall time of the EG back to zero."
+msgstr ""
+
+msgid "Fast"
+msgstr ""
+
+msgid "Fat 1"
+msgstr ""
+
+msgid "Fat 2"
+msgstr ""
+
+msgid "Feedback"
+msgstr ""
+
+msgid "Feedback: how long the echoes keep repeating."
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Filter cutoff: lower settings darken the sound."
+msgstr ""
+
+msgid "Fine-tunes VCO 1, up to an octave either way."
+msgstr ""
+
+msgid "Fine-tunes VCO 2, up to an octave either way."
+msgstr ""
+
+msgid "Fine-tunes the whole program by up to 50 cents either way."
+msgstr ""
+
+msgid "Firmware {firmware}"
+msgstr ""
+
+msgid "Flanger"
+msgstr ""
+
+msgid "Flanger flavour, from Light to jet-like High and Pan sweeps."
+msgstr ""
+
+msgid "Folder name"
+msgstr ""
+
+msgid "Folder {number}"
+msgstr ""
+
+msgid "Follow system"
+msgstr ""
+
+msgid "Formant"
+msgstr ""
+
+msgid "From the Synth"
+msgstr ""
+
+msgid "Fuzz Bass"
+msgstr ""
+
+msgid "Gate"
+msgstr ""
+
+msgid "Gate Time"
+msgstr ""
+
+msgid "General"
+msgstr ""
+
+msgid "Generate"
+msgstr ""
+
+msgid "Generate (Ctrl+G) makes new sounds for you. Pick a character, from power chords and fuzz bass to bells and space effects, and shape it with four dials: Bright opens the filter, Movement adds the LFO and modulation, Grit adds drive and noise, Ambience adds delay and reverb. Press Generate (or Space) for six sounds, and pick one, or move with the arrow keys, to hear it on the synth. Keep puts it in the slot selected in the list, as an edit you can undo and sync like any other. Vary deals six variations of a sound, Breed With crosses it with another, and Alt+Left goes back to an earlier hand. To give one of your sounds a new filter or new effects, select it and choose which of its stages to keep."
+msgstr ""
+
+msgid "Generate sounds"
+msgstr ""
+
+msgid "Generating sounds"
+msgstr ""
+
+msgid "Get Started"
+msgstr ""
+
+msgid "Getting started"
+msgstr ""
+
+msgid "Gig set"
+msgstr ""
+
+msgid "Glide time between notes."
+msgstr ""
+
+msgid "Gliding solo with bite"
+msgstr ""
+
+msgid "Grit"
+msgstr ""
+
+msgid "Guide"
+msgstr ""
+
+msgid "Hall"
+msgstr ""
+
+msgid "Harmonic"
+msgstr ""
+
+msgid "Held stages are copied as they are from slot {slot}, “{name}”."
+msgstr ""
+
+msgid "High"
+msgstr ""
+
+msgid "High Sweep"
+msgstr ""
+
+msgid "High and Low are high-pass and low-pass filtered noise; Decim is noise at a reduced sample rate."
+msgstr ""
+
+msgid "High and Low: the filter cutoff. Decim: the sample rate."
+msgstr ""
+
+msgid "High settings make filter sweeps whistle."
+msgstr ""
+
+msgid "Hipass"
+msgstr ""
+
+msgid "Hipass BPM"
+msgstr ""
+
+msgid "History"
+msgstr ""
+
+msgid "History (Ctrl+H)"
+msgstr ""
+
+msgid "Hold from Slot {slot}"
+msgstr ""
+
+msgid "Hold from the selected program"
+msgstr ""
+
+msgid "Hold to compare"
+msgstr ""
+
+msgid "Hold to hear and see the saved program; drag sideways to blend it with your edit (or hold \\, with Left and Right)"
+msgstr ""
+
+msgid "Hold {stage}"
+msgstr ""
+
+msgid "Horror"
+msgstr ""
+
+msgid "How dense the reverb is: higher settings blur the tail into a wash."
+msgstr ""
+
+msgid "How different"
+msgstr ""
+
+msgid "How different the variations are"
+msgstr ""
+
+msgid "How far CV IN 1 moves its parameter."
+msgstr ""
+
+msgid "How far CV IN 2 moves its parameter."
+msgstr ""
+
+msgid "How far pulling the joystick down moves its parameter."
+msgstr ""
+
+msgid "How far pushing the joystick up moves its parameter."
+msgstr ""
+
+msgid "How far the LFO moves its target."
+msgstr ""
+
+msgid "How far the VPM envelope moves VPM Shape during each note."
+msgstr ""
+
+msgid "How fast the LFO cycles."
+msgstr ""
+
+msgid "How fast the chorus, phaser or flanger sweeps."
+msgstr ""
+
+msgid "How long the reverb rings on after the sound stops."
+msgstr ""
+
+msgid "How loud the multi engine is in the mix."
+msgstr ""
+
+msgid "How much VPM Shape follows the note you play."
+msgstr ""
+
+msgid "How much harder playing makes notes louder."
+msgstr ""
+
+msgid "How much harder playing opens the filter."
+msgstr ""
+
+msgid "How strongly the sweep bends the sound, from a gentle shimmer to a deep swirl."
+msgstr ""
+
+msgid "How the four voices are used: Poly, Unison, Chord or Arp/Latch."
+msgstr ""
+
+msgid "Import File"
+msgstr ""
+
+msgid "Import File…"
+msgstr ""
+
+msgid "In BPM mode it picks a note value instead."
+msgstr ""
+
+msgid "In CV/Gate mode you can play the synth from a modular system."
+msgstr ""
+
+msgid "Int"
+msgstr ""
+
+msgid "Interface size"
+msgstr ""
+
+msgid "Interface size {percent} %"
+msgstr ""
+
+msgid "It holds programs for another synth ({model})."
+msgstr ""
+
+msgid "Joy + Assign"
+msgstr ""
+
+msgid "Joy + Range"
+msgstr ""
+
+msgid "Joy - Assign"
+msgstr ""
+
+msgid "Joy - Range"
+msgstr ""
+
+msgid "Joystick Assign (+)"
+msgstr ""
+
+msgid "Joystick Assign (-)"
+msgstr ""
+
+msgid "Joystick Range (+)"
+msgstr ""
+
+msgid "Joystick Range (-)"
+msgstr ""
+
+msgid "Keep"
+msgstr ""
+
+msgid "Keep Editing"
+msgstr ""
+
+msgid "Keep as Library"
+msgstr ""
+
+msgid "Keep as one of your libraries"
+msgstr ""
+
+msgid "Keep in Library"
+msgstr ""
+
+msgid "Keep in Slot {slot}"
+msgstr ""
+
+msgid "Keep in Slot…"
+msgstr ""
+
+msgid "Keep the program as it is now"
+msgstr ""
+
+msgid "Keep this library to put its programs in order"
+msgstr ""
+
+msgid "Keeps the LFO in the same phase across all voices."
+msgstr ""
+
+msgid "Kept “{name}” in slot {slot}"
+msgstr ""
+
+msgid "Kept “{name}” in your libraries"
+msgstr ""
+
+msgid "Key Sync"
+msgstr ""
+
+msgid "Key Track"
+msgstr ""
+
+msgid "Key Trig"
+msgstr ""
+
+msgid "Keyboard Shortcuts"
+msgstr ""
+
+msgid "Keyboard shortcuts"
+msgstr ""
+
+msgid "Keys"
+msgstr ""
+
+msgid "Knob {n}"
+msgstr ""
+
+msgid "LFO"
+msgstr ""
+
+msgid "LFO Int"
+msgstr ""
+
+msgid "LFO Key Sync"
+msgstr ""
+
+msgid "LFO Mode"
+msgstr ""
+
+msgid "LFO Rate"
+msgstr ""
+
+msgid "LFO Target"
+msgstr ""
+
+msgid "LFO Target Osc"
+msgstr ""
+
+msgid "LFO Voice Sync"
+msgstr ""
+
+msgid "LFO Wave"
+msgstr ""
+
+msgid "LFO behaviour: 1-Shot, Normal or BPM."
+msgstr ""
+
+msgid "LFO waveform: square, triangle or sawtooth."
+msgstr ""
+
+msgid "LFO, envelope amount and modulation effect"
+msgstr ""
+
+msgid "Larger interface"
+msgstr ""
+
+msgid "Later stages"
+msgstr ""
+
+msgid "Lead"
+msgstr ""
+
+msgid "Legato"
+msgstr ""
+
+msgid "Length of each arpeggio note."
+msgstr ""
+
+msgid "Lets VCO 1 modulate the pitch of VCO 2."
+msgstr ""
+
+msgid "Level"
+msgstr ""
+
+msgid "Level of VCO 1 going into the filter."
+msgstr ""
+
+msgid "Level of VCO 2 going into the filter."
+msgstr ""
+
+msgid "Libraries"
+msgstr ""
+
+msgid "Libraries and programs"
+msgstr ""
+
+msgid "Library exported"
+msgstr ""
+
+msgid "Library name"
+msgstr ""
+
+msgid "Library saved"
+msgstr ""
+
+msgid "Library {number}"
+msgstr ""
+
+msgid "Library, editor and sync for hardware synths. Not affiliated with any synth maker."
+msgstr ""
+
+msgid "Light"
+msgstr ""
+
+msgid "Live"
+msgstr ""
+
+msgid "Load Unit"
+msgstr ""
+
+msgid "Load unit into {section}, slot {number}"
+msgstr ""
+
+msgid "Loading “{name}”…"
+msgstr ""
+
+msgid "Load…"
+msgstr ""
+
+msgid "Low"
+msgstr ""
+
+msgid "Low amounts add bite; high amounts turn noisy and metallic."
+msgstr ""
+
+msgid "Low, fuzzy and tight"
+msgstr ""
+
+msgid "MIDI Aftertouch Assign"
+msgstr ""
+
+msgid "Main control of the user oscillator; the unit decides what it does."
+msgstr ""
+
+msgid "Main menu"
+msgstr ""
+
+msgid "Main noise control; what it sets depends on the noise type."
+msgstr ""
+
+msgid "Managing units"
+msgstr ""
+
+msgid "Medium"
+msgstr ""
+
+msgid "Metallic ring, long decay"
+msgstr ""
+
+msgid "Micro Tuning"
+msgstr ""
+
+msgid "Mid Sweep"
+msgstr ""
+
+msgid "Minimum or maximum"
+msgstr ""
+
+msgid "Mixer"
+msgstr ""
+
+msgid "Mod"
+msgstr ""
+
+msgid "Mod Attack"
+msgstr ""
+
+msgid "Mod Decay"
+msgstr ""
+
+msgid "Mod FX"
+msgstr ""
+
+msgid "Mod FX Chorus"
+msgstr ""
+
+msgid "Mod FX Depth"
+msgstr ""
+
+msgid "Mod FX Ensemble"
+msgstr ""
+
+msgid "Mod FX Flanger"
+msgstr ""
+
+msgid "Mod FX On"
+msgstr ""
+
+msgid "Mod FX Phaser"
+msgstr ""
+
+msgid "Mod FX Speed"
+msgstr ""
+
+msgid "Mod FX Time"
+msgstr ""
+
+msgid "Mod FX Type"
+msgstr ""
+
+msgid "Mod FX User"
+msgstr ""
+
+msgid "Mod FX type: Chorus, Ensemble, Phaser, Flanger or User."
+msgstr ""
+
+msgid "Mod FX, delay and reverb each have their own switch, type and settings."
+msgstr ""
+
+msgid "Mod Key Track"
+msgstr ""
+
+msgid "Mode"
+msgstr ""
+
+msgid "Modulation"
+msgstr ""
+
+msgid "Modulation depth of the VPM tone, from pure to harsh."
+msgstr ""
+
+msgid "Modulation effects"
+msgstr ""
+
+msgid "Mono"
+msgstr ""
+
+msgid "Mono BPM"
+msgstr ""
+
+msgid "Mono Sweep"
+msgstr ""
+
+msgid "Motion Slot 1 On"
+msgstr ""
+
+msgid "Motion Slot 1 Parameter"
+msgstr ""
+
+msgid "Motion Slot 1 Smooth"
+msgstr ""
+
+msgid "Motion Slot 1 Steps On"
+msgstr ""
+
+msgid "Motion Slot 2 On"
+msgstr ""
+
+msgid "Motion Slot 2 Parameter"
+msgstr ""
+
+msgid "Motion Slot 2 Smooth"
+msgstr ""
+
+msgid "Motion Slot 2 Steps On"
+msgstr ""
+
+msgid "Motion Slot 3 On"
+msgstr ""
+
+msgid "Motion Slot 3 Parameter"
+msgstr ""
+
+msgid "Motion Slot 3 Smooth"
+msgstr ""
+
+msgid "Motion Slot 3 Steps On"
+msgstr ""
+
+msgid "Motion Slot 4 On"
+msgstr ""
+
+msgid "Motion Slot 4 Parameter"
+msgstr ""
+
+msgid "Motion Slot 4 Smooth"
+msgstr ""
+
+msgid "Motion Slot 4 Steps On"
+msgstr ""
+
+msgid "Move Down"
+msgstr ""
+
+msgid "Move Up"
+msgstr ""
+
+msgid "Move library or folder up or down"
+msgstr ""
+
+msgid "Move program up or down"
+msgstr ""
+
+msgid "Move to Folder"
+msgstr ""
+
+msgid "Move to {slot} · %d slot changes"
+msgid_plural "Move to {slot} · %d slots change"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Movement"
+msgstr ""
+
+msgid "Multi"
+msgstr ""
+
+msgid "Multi Engine"
+msgstr ""
+
+msgid "Multi Level"
+msgstr ""
+
+msgid "Multi Octave"
+msgstr ""
+
+msgid "Multi Routing"
+msgstr ""
+
+msgid "Multi Shape"
+msgstr ""
+
+msgid "Multi Type"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Names can have up to 12 letters, digits and simple symbols."
+msgstr ""
+
+msgid "New Folder"
+msgstr ""
+
+msgid "New Folder Here"
+msgstr ""
+
+msgid "New Library"
+msgstr ""
+
+msgid "New Library Here"
+msgstr ""
+
+msgid "New Program"
+msgstr ""
+
+msgid "New Program (Ctrl+N)"
+msgstr ""
+
+msgid "New program in a library"
+msgstr ""
+
+msgid "Next program"
+msgstr ""
+
+msgid "Next set"
+msgstr ""
+
+msgid "Next set (Alt+Right)"
+msgstr ""
+
+msgid "No edits yet"
+msgstr ""
+
+msgid "No effect in equal temperament."
+msgstr ""
+
+msgid "No effect unless Sustain is below maximum."
+msgstr ""
+
+msgid "No matching programs"
+msgstr ""
+
+msgid "No program matches the search and the filters together."
+msgstr ""
+
+msgid "No programs yet"
+msgstr ""
+
+msgid "No sound. Takes effect the next time you connect"
+msgstr ""
+
+msgid "No such value"
+msgstr ""
+
+msgid "No synth connected"
+msgstr ""
+
+msgid "No synth? Try reading and syncing with a simulated one (no sound)"
+msgstr ""
+
+msgid "Noise"
+msgstr ""
+
+msgid "Noise Depth"
+msgstr ""
+
+msgid "Noise Shape"
+msgstr ""
+
+msgid "Noise Shift"
+msgstr ""
+
+msgid "Noise Type"
+msgstr ""
+
+msgid "Noise type: High, Low, Peak or Decim."
+msgstr ""
+
+msgid "None"
+msgstr ""
+
+msgid "Normal"
+msgstr ""
+
+msgid "Not connected"
+msgstr ""
+
+msgid "Not stored"
+msgstr ""
+
+msgid "Nothing was synced."
+msgstr ""
+
+msgid "Now"
+msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "Octave"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "Off lets each voice move on its own."
+msgstr ""
+
+msgid "Offline. Connect the synth to hear each sound as you pick it."
+msgstr ""
+
+msgid "On"
+msgstr ""
+
+msgid "On High and Low it sets the resonance of the noise filter."
+msgstr ""
+
+msgid "On square it sets the pulse width; on triangle and sawtooth it adds harmonics."
+msgstr ""
+
+msgid "One Tap"
+msgstr ""
+
+msgid "Only these slots change. Oscyl backs up what they hold now first."
+msgstr ""
+
+msgid "Only used when CV In Mode is Modulation."
+msgstr ""
+
+msgid "Only used when LFO Target is Pitch or Shape."
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Open Backup"
+msgstr ""
+
+msgid "Open Library"
+msgstr ""
+
+msgid "Open Library…"
+msgstr ""
+
+msgid "Open in Editor"
+msgstr ""
+
+msgid "Open library"
+msgstr ""
+
+msgid "Open the demo library"
+msgstr ""
+
+msgid "Open the {model} demo library"
+msgstr ""
+
+msgid "Open your synth's own library and program files, edit them anywhere, and save. Oscyl keeps everything it does not edit exactly as it was, so files stay compatible."
+msgstr ""
+
+msgid "Opens the filter further for higher notes: 0%, 50% or 100%."
+msgstr ""
+
+msgid "Orange"
+msgstr ""
+
+msgid "Organise my library"
+msgstr ""
+
+msgid "Oscillators"
+msgstr ""
+
+msgid "Oscillators and effects"
+msgstr ""
+
+msgid "Oscyl can't read .{ext} files."
+msgstr ""
+
+msgid "Oscyl library"
+msgstr ""
+
+msgid "Oscyl talks to your synths over USB-MIDI. No synth? The simulated synths answer like real ones, so you can try reading, syncing and saving, but they make no sound."
+msgstr ""
+
+msgid "Output level of this program."
+msgstr ""
+
+msgid "Overdrives the filter input: 0%, 50% or 100%."
+msgstr ""
+
+msgid "Pad"
+msgstr ""
+
+msgid "Pads and drones"
+msgstr ""
+
+msgid "Page 1"
+msgstr ""
+
+msgid "Page 2"
+msgstr ""
+
+msgid "Page 3"
+msgstr ""
+
+msgid "Page 4"
+msgstr ""
+
+msgid "Page 5"
+msgstr ""
+
+msgid "Page 6"
+msgstr ""
+
+msgid "Pan Sweep"
+msgstr ""
+
+msgid "Param 1"
+msgstr ""
+
+msgid "Param 2"
+msgstr ""
+
+msgid "Param 3"
+msgstr ""
+
+msgid "Param 4"
+msgstr ""
+
+msgid "Param 5"
+msgstr ""
+
+msgid "Param 6"
+msgstr ""
+
+msgid "Parameter moved by aftertouch from an external MIDI controller."
+msgstr ""
+
+msgid "Parameter that CV IN 1 controls."
+msgstr ""
+
+msgid "Parameter that CV IN 2 controls."
+msgstr ""
+
+msgid "Parameter the joystick moves when pulled down."
+msgstr ""
+
+msgid "Parameter the joystick moves when pushed up."
+msgstr ""
+
+msgid "Paste Sound Here"
+msgstr ""
+
+msgid "Pasted over slot {slot}"
+msgstr ""
+
+msgid "Pattern"
+msgstr ""
+
+msgid "Peak"
+msgstr ""
+
+msgid "Perform"
+msgstr ""
+
+msgid "Perform this program on an XY pad and four knobs (Ctrl+P)"
+msgstr ""
+
+msgid "Perform: the XY pad and four knobs, or back to the editor"
+msgstr ""
+
+msgid "Phaser"
+msgstr ""
+
+msgid "Phaser flavour, from a fast sweep to vowel-like Formant."
+msgstr ""
+
+msgid "Pick a character, shape it, and press Generate. Every sound plays on the synth as you pick it."
+msgstr ""
+
+msgid "Pick a program. The band across the top shows the synth's pages, from the voice to the effects. Click a page to open its large graph and its controls. Drag the handles on the graph: the filter peak, the envelope points, the mixer bars. Drag a dial up or down, scroll over it, or focus it and use the arrow keys; hold Shift for fine steps, and double-click to put it back. Ctrl+I enlarges the graph. Red ticks mark what you changed: the program in the list, the stage on the band and each line under Changes. An edited dial shows what it was."
+msgstr ""
+
+msgid "Ping BPM"
+msgstr ""
+
+msgid "Ping Pong"
+msgstr ""
+
+msgid "Pitch"
+msgstr ""
+
+msgid "Pitch 2"
+msgstr ""
+
+msgid "Pitch 2 with Sync on gives a sync sweep on every note."
+msgstr ""
+
+msgid "Pitch climbs into noise"
+msgstr ""
+
+msgid "Pitch gives vibrato; Shape on a square wave gives pulse-width modulation."
+msgstr ""
+
+msgid "Pitch range of VCO 1, from 16' (lowest) to 2'."
+msgstr ""
+
+msgid "Pitch range of VCO 2, from 16' (lowest) to 2'."
+msgstr ""
+
+msgid "Pitch range of the multi engine, from 16' to 2'."
+msgstr ""
+
+msgid "Plate"
+msgstr ""
+
+msgid "Playing on the synth"
+msgstr ""
+
+msgid "Pluck"
+msgstr ""
+
+msgid "Plug your synths into this computer with USB cables and switch them on, then press Connect. Oscyl reads every program in the background while you keep working. With several synths connected, pick the one to show and sync with at the top of the sidebar. No synth? Turn on the simulated synths in Preferences to try reading, syncing and saving. They answer like real ones but make no sound, so auditioning needs a real synth."
+msgstr ""
+
+msgid "Poly"
+msgstr ""
+
+msgid "Poly: above the first quarter it stacks a second, detuned voice (Duo). Unison: detune, up to 50 cents. Chord: the chord type. Arp/Latch: the arpeggio pattern."
+msgstr ""
+
+msgid "Porta Mode"
+msgstr ""
+
+msgid "Porta Sync"
+msgstr ""
+
+msgid "Portamento"
+msgstr ""
+
+msgid "Portamento BPM Sync"
+msgstr ""
+
+msgid "Portamento Mode"
+msgstr ""
+
+msgid "Post VCF"
+msgstr ""
+
+msgid "Post VCF keeps the multi engine bright while the VCOs are filtered."
+msgstr ""
+
+msgid "Power Chord"
+msgstr ""
+
+msgid "Pre VCF"
+msgstr ""
+
+msgid "Preferences"
+msgstr ""
+
+msgid "Prepare a performance"
+msgstr ""
+
+msgid "Press Generate to deal six sounds."
+msgstr ""
+
+msgid "Previous program"
+msgstr ""
+
+msgid "Previous set"
+msgstr ""
+
+msgid "Previous set (Alt+Left)"
+msgstr ""
+
+msgid "Program"
+msgstr ""
+
+msgid "Program Level"
+msgstr ""
+
+msgid "Program Transpose"
+msgstr ""
+
+msgid "Program Tuning"
+msgstr ""
+
+msgid "Program moved"
+msgstr ""
+
+msgid "Program name"
+msgstr ""
+
+msgid "Program replaced"
+msgstr ""
+
+msgid "Programs"
+msgstr ""
+
+msgid "Programs grouped by category keep their order"
+msgstr ""
+
+msgid "Programs on {synth} (not synced)"
+msgstr ""
+
+msgid "Programs swapped"
+msgstr ""
+
+msgid "Put it back, as one step you can undo"
+msgstr ""
+
+msgid "Quick, playable chords"
+msgstr ""
+
+msgid "Quit"
+msgstr ""
+
+msgid "Quit and Lose Edits"
+msgstr ""
+
+msgid "Quit without saving?"
+msgstr ""
+
+msgid "Raise it for struck attacks that settle into a softer tone."
+msgstr ""
+
+msgid "Range {min} to {max}"
+msgstr ""
+
+msgid "Rate"
+msgstr ""
+
+msgid "Reading stopped. Programs not yet read show as “Reading…”."
+msgstr ""
+
+msgid "Reading the synth's user slots…"
+msgstr ""
+
+msgid "Reading {done} of {total}"
+msgstr ""
+
+msgid "Reading…"
+msgstr ""
+
+msgid "Recall"
+msgstr ""
+
+msgid "Recall {snapshot}"
+msgstr ""
+
+msgid "Recalled snapshot {letter}"
+msgstr ""
+
+msgid "Redo"
+msgstr ""
+
+msgid "Redo (Ctrl+Shift+Z)"
+msgstr ""
+
+msgid "Redo: {step}"
+msgstr ""
+
+msgid "Reduce motion"
+msgstr ""
+
+msgid "Release"
+msgstr ""
+
+msgid "Remove from Library"
+msgstr ""
+
+msgid "Remove program from a library"
+msgstr ""
+
+msgid "Removed “{program}”"
+msgstr ""
+
+msgid "Rename"
+msgstr ""
+
+msgid "Rename (F2)"
+msgstr ""
+
+msgid "Rename (up to 12 characters)"
+msgstr ""
+
+msgid "Rename library or folder"
+msgstr ""
+
+msgid "Rename program"
+msgstr ""
+
+msgid "Replace “{name}” with this sound (you can undo it)"
+msgstr ""
+
+msgid "Reset"
+msgstr ""
+
+msgid "Reset interface size"
+msgstr ""
+
+msgid "Reshapes the VCO 1 wave."
+msgstr ""
+
+msgid "Reshapes the VCO 2 wave."
+msgstr ""
+
+msgid "Resonance"
+msgstr ""
+
+msgid "Restarts VCO 2's cycle with every cycle of VCO 1."
+msgstr ""
+
+msgid "Restarts the LFO cycle on every new note."
+msgstr ""
+
+msgid "Restarts the arpeggio from its first step when you press a new key."
+msgstr ""
+
+msgid "Restore graph"
+msgstr ""
+
+msgid "Restore graph (Escape)"
+msgstr ""
+
+msgid "Restore the graph, or stop reading programs"
+msgstr ""
+
+msgid "Reverb"
+msgstr ""
+
+msgid "Reverb Depth"
+msgstr ""
+
+msgid "Reverb Dry/Wet"
+msgstr ""
+
+msgid "Reverb On"
+msgstr ""
+
+msgid "Reverb Sub Type"
+msgstr ""
+
+msgid "Reverb Time"
+msgstr ""
+
+msgid "Reverb type, such as Hall, Plate, Room or Space."
+msgstr ""
+
+msgid "Reverbs"
+msgstr ""
+
+msgid "Revert All"
+msgstr ""
+
+msgid "Revert Changes"
+msgstr ""
+
+msgid "Revert program"
+msgstr ""
+
+msgid "Revert to the saved value"
+msgstr ""
+
+msgid "Revert {name}"
+msgstr ""
+
+msgid "Revert {parameter}"
+msgstr ""
+
+msgid "Ring"
+msgstr ""
+
+msgid "Ring-modulates VCO 2 with VCO 1 for metallic, bell-like tones."
+msgstr ""
+
+msgid "Rise time of the EG after a key press."
+msgstr ""
+
+msgid "Riser"
+msgstr ""
+
+msgid "Roll {stage}"
+msgstr ""
+
+msgid "Rolled {stage}"
+msgstr ""
+
+msgid "Room"
+msgstr ""
+
+msgid "Root note of the microtuning scale."
+msgstr ""
+
+msgid "Routing"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Save %d edited program"
+msgid_plural "Save %d edited programs"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Save Library"
+msgstr ""
+
+msgid "Save Playing Sound"
+msgstr ""
+
+msgid "Save library as"
+msgstr ""
+
+msgid "Save library or sync"
+msgstr ""
+
+msgid "Saved"
+msgstr ""
+
+msgid "Saved %d program"
+msgid_plural "Saved %d programs"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Saved version"
+msgstr ""
+
+msgid "Saw"
+msgstr ""
+
+msgid "Saw 1"
+msgstr ""
+
+msgid "Saw 2"
+msgstr ""
+
+msgid "Scale Key"
+msgstr ""
+
+msgid "Scream Lead"
+msgstr ""
+
+msgid "Search programs"
+msgstr ""
+
+msgid "Second control of the user oscillator (Shift and Shape)."
+msgstr ""
+
+msgid "Second noise control (Shift and Shape)."
+msgstr ""
+
+msgid "Select Noise"
+msgstr ""
+
+msgid "Select User"
+msgstr ""
+
+msgid "Select VPM"
+msgstr ""
+
+msgid "Select a program in the list to build on it."
+msgstr ""
+
+msgid "Select a slot in the program list first."
+msgstr ""
+
+msgid "Send"
+msgstr ""
+
+msgid "Send to Synth"
+msgstr ""
+
+msgid "Send to Synth…"
+msgstr ""
+
+msgid "Sends the multi engine before the filter (Pre VCF) or after it (Post VCF)."
+msgstr ""
+
+msgid "Seq Active Steps"
+msgstr ""
+
+msgid "Seq BPM"
+msgstr ""
+
+msgid "Seq Default Gate Time"
+msgstr ""
+
+msgid "Seq Step Length"
+msgstr ""
+
+msgid "Seq Step Motion On"
+msgstr ""
+
+msgid "Seq Step Resolution"
+msgstr ""
+
+msgid "Seq Steps On"
+msgstr ""
+
+msgid "Seq Swing"
+msgstr ""
+
+msgid "Set LFO Target to Shape to move it over time."
+msgstr ""
+
+msgid "Set the level of each source going into the filter. Higher levels also drive the filter harder."
+msgstr ""
+
+msgid "Set {n} of {total}"
+msgstr ""
+
+msgid "Sets glide time as a note value at the program tempo."
+msgstr ""
+
+msgid "Sets the detail of the voice mode; its job changes with the mode."
+msgstr ""
+
+msgid "Settings between whole-number ratios give inharmonic, bell-like tones."
+msgstr ""
+
+msgid "Shape"
+msgstr ""
+
+msgid "Shape Mod"
+msgstr ""
+
+msgid "Shape Noise"
+msgstr ""
+
+msgid "Shape User"
+msgstr ""
+
+msgid "Shape VPM"
+msgstr ""
+
+msgid "Shift Shape Noise"
+msgstr ""
+
+msgid "Shift Shape User"
+msgstr ""
+
+msgid "Shift Shape VPM"
+msgstr ""
+
+msgid "Shifts the whole keyboard up or down by octaves."
+msgstr ""
+
+msgid "Short and percussive"
+msgstr ""
+
+msgid "Show every change"
+msgstr ""
+
+msgid "Show in the editor"
+msgstr ""
+
+msgid "Show or hide sources"
+msgstr ""
+
+msgid "Show sources (F9)"
+msgstr ""
+
+msgid "Signal flow"
+msgstr ""
+
+msgid "Simulated, no sound"
+msgstr ""
+
+msgid "Sin 1"
+msgstr ""
+
+msgid "Sin 2"
+msgstr ""
+
+msgid "Sin 3"
+msgstr ""
+
+msgid "Sin 4"
+msgstr ""
+
+msgid "Sirens, lasers, alien air"
+msgstr ""
+
+msgid "Sketches"
+msgstr ""
+
+msgid "Slot not cleared: backup failed ({error})."
+msgstr ""
+
+msgid "Slot {number}"
+msgstr ""
+
+msgid "Slot {number} opens as soon as it has been read from the synth."
+msgstr ""
+
+msgid "Slot {slot} cleared"
+msgstr ""
+
+msgid "Slot {slot} is still being read."
+msgstr ""
+
+msgid "Slow swell with chorus"
+msgstr ""
+
+msgid "Small"
+msgstr ""
+
+msgid "Small Reso"
+msgstr ""
+
+msgid "Small offsets against VCO 2 make the two beat against each other."
+msgstr ""
+
+msgid "Smaller interface"
+msgstr ""
+
+msgid "Smooth"
+msgstr ""
+
+msgid "Snapshot {letter}"
+msgstr ""
+
+msgid "Snapshot {letter} replaced"
+msgstr ""
+
+msgid "Snapshots"
+msgstr ""
+
+msgid "Something went wrong talking to the synth. Try again."
+msgstr ""
+
+msgid "Sounds"
+msgstr ""
+
+msgid "Source for the multi engine: Noise, VPM or a user oscillator."
+msgstr ""
+
+msgid "Sources"
+msgstr ""
+
+msgid "Space"
+msgstr ""
+
+msgid "Space FX"
+msgstr ""
+
+msgid "Squ 1"
+msgstr ""
+
+msgid "Squ 2"
+msgstr ""
+
+msgid "Square"
+msgstr ""
+
+msgid "Stages"
+msgstr ""
+
+msgid "Start a new program (Ctrl+N), copy programs here from the synth or another library with Copy to Library in a program's menu (Ctrl+Shift+L), or keep sounds from Generate."
+msgstr ""
+
+msgid "Start at voice and arpeggiator settings, ready to audition."
+msgstr ""
+
+msgid "Start in the editor at the oscillators, with live audition on."
+msgstr ""
+
+msgid "Start with your programs: search, back up and sync."
+msgstr ""
+
+msgid "Steps"
+msgstr ""
+
+msgid "Stereo"
+msgstr ""
+
+msgid "Stereo BPM"
+msgstr ""
+
+msgid "Stop reading"
+msgstr ""
+
+msgid "Stops the EG restarting on notes played legato."
+msgstr ""
+
+msgid "Store"
+msgstr ""
+
+msgid "Store {snapshot}"
+msgstr ""
+
+msgid "Stored"
+msgstr ""
+
+msgid "Studio"
+msgstr ""
+
+msgid "Style"
+msgstr ""
+
+msgid "Submarine"
+msgstr ""
+
+msgid "Subtle"
+msgstr ""
+
+msgid "Sustain"
+msgstr ""
+
+msgid "Swap program with the one above or below"
+msgstr ""
+
+msgid "Swap with {slot} · %d slot changes"
+msgid_plural "Swap with {slot} · %d slots change"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Switches Mod FX on or off."
+msgstr ""
+
+msgid "Switches the delay on or off."
+msgstr ""
+
+msgid "Switches the reverb on or off."
+msgstr ""
+
+msgid "Sync"
+msgstr ""
+
+msgid "Sync %d edited program"
+msgid_plural "Sync %d edited programs"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Sync %d program?"
+msgid_plural "Sync %d programs?"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Sync shows exactly which slots will change before it writes, writes only those, and confirms each one is saved. Back up the whole synth any time with Ctrl+B. Undo (Ctrl+Z) works on edits; to reverse a sync, undo and sync again."
+msgstr ""
+
+msgid "Synced"
+msgstr ""
+
+msgid "Synced %d program"
+msgid_plural "Synced %d programs"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Syncing"
+msgstr ""
+
+msgid "Syncing {done} of {total}"
+msgstr ""
+
+msgid "Synth"
+msgstr ""
+
+msgid "Synth backup"
+msgstr ""
+
+msgid "Synth transfer progress"
+msgstr ""
+
+msgid "Synths of the logue family have slots for user oscillators and effects made with the logue SDK. Oscyl lists what is loaded in each slot."
+msgstr ""
+
+msgid "Tape"
+msgstr ""
+
+msgid "Tape BPM"
+msgstr ""
+
+msgid "Target"
+msgstr ""
+
+msgid "Target Osc"
+msgstr ""
+
+msgid "Tempo-locked wobble"
+msgstr ""
+
+msgid "That library is for another synth."
+msgstr ""
+
+msgid "The Amp EG shapes the volume of each note. The EG and LFO move cutoff, pitch or shape."
+msgstr ""
+
+msgid "The EG has no sustain stage, so this sets the length of the sweep."
+msgstr ""
+
+msgid "The editor's pages"
+msgstr ""
+
+msgid "The minilogue xd keyboard does not send aftertouch."
+msgstr ""
+
+msgid "The note follows VCO 1; VCO 2 Pitch then changes the tone instead of the pitch."
+msgstr ""
+
+msgid "The simulated synth makes no sound. Connect a real synth to hear changes."
+msgstr ""
+
+msgid "The simulated synth makes no sound: audition needs a real synth (Ctrl+Shift+A)"
+msgstr ""
+
+msgid "The slot is emptied on the synth. Oscyl saves a backup of the unit first: Load Unit puts it back."
+msgstr ""
+
+msgid "The synth already holds these programs."
+msgstr ""
+
+msgid "The synth didn't answer. Check the cable and try again."
+msgstr ""
+
+msgid "The synth is not connected."
+msgstr ""
+
+msgid "The synth was disconnected. Check the cable and press Connect."
+msgstr ""
+
+msgid "The unit sets its name and meaning."
+msgstr ""
+
+msgid "The unit “{name}” is for {section}."
+msgstr ""
+
+msgid "These have edits that are not saved or synced:"
+msgstr ""
+
+msgid "This file holds {count} programs; a library for this synth holds up to {max}."
+msgstr ""
+
+msgid "This library has no programs to send."
+msgstr ""
+
+msgid "This library is full: a library holds up to {max} programs."
+msgstr ""
+
+msgid "This slot is read-only (a factory bank)."
+msgstr ""
+
+msgid "This synth has no user units."
+msgstr ""
+
+msgid "Throat"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Time between echoes."
+msgstr ""
+
+msgid "Time for the sound to fade after you let go."
+msgstr ""
+
+msgid "Time for the volume to fall from its peak to the sustain level."
+msgstr ""
+
+msgid "Time for the volume to rise after you press a key."
+msgstr ""
+
+msgid "Too many programs"
+msgstr ""
+
+msgid "Top Level"
+msgstr ""
+
+msgid "Transpose"
+msgstr ""
+
+msgid "Transposes this program by up to an octave either way."
+msgstr ""
+
+msgid "Triangle"
+msgstr ""
+
+msgid "Triphase"
+msgstr ""
+
+msgid "Tuning"
+msgstr ""
+
+msgid "Tuning system: equal temperament, a preset scale or a user tuning."
+msgstr ""
+
+msgid "Turn it to zero to use VCO 2 only for Sync, Ring or Cross Mod."
+msgstr ""
+
+msgid "Turn on Audition live (Ctrl+Shift+A) and every change plays on the synth instantly, without storing anything. Play the keys to hear it. Nothing is written to the synth's memory until you sync."
+msgstr ""
+
+msgid "Twinkle"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Type a value"
+msgstr ""
+
+msgid "Undo"
+msgstr ""
+
+msgid "Undo (Ctrl+Z)"
+msgstr ""
+
+msgid "Undo: {step}"
+msgstr ""
+
+msgid "Undone"
+msgstr ""
+
+msgid "Unison"
+msgstr ""
+
+msgid "Unison puts all four voices on one note, so the program plays one note at a time."
+msgstr ""
+
+msgid "Up"
+msgstr ""
+
+msgid "Upward pitch-bend range, in semitones, when you push the joystick right."
+msgstr ""
+
+msgid "Use it to match the volume of programs you switch between."
+msgstr ""
+
+msgid "Use of the rear CV inputs: Modulation, or CV/Gate with either polarity."
+msgstr ""
+
+msgid "Use simulated synth"
+msgstr ""
+
+msgid "Use the simulated synth"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "User 1"
+msgstr ""
+
+msgid "User 10"
+msgstr ""
+
+msgid "User 11"
+msgstr ""
+
+msgid "User 12"
+msgstr ""
+
+msgid "User 13"
+msgstr ""
+
+msgid "User 14"
+msgstr ""
+
+msgid "User 15"
+msgstr ""
+
+msgid "User 16"
+msgstr ""
+
+msgid "User 2"
+msgstr ""
+
+msgid "User 3"
+msgstr ""
+
+msgid "User 4"
+msgstr ""
+
+msgid "User 5"
+msgstr ""
+
+msgid "User 6"
+msgstr ""
+
+msgid "User 7"
+msgstr ""
+
+msgid "User 8"
+msgstr ""
+
+msgid "User 9"
+msgstr ""
+
+msgid "User Osc"
+msgstr ""
+
+msgid "User Param 1"
+msgstr ""
+
+msgid "User Param 1 Type"
+msgstr ""
+
+msgid "User Param 2"
+msgstr ""
+
+msgid "User Param 2 Type"
+msgstr ""
+
+msgid "User Param 3"
+msgstr ""
+
+msgid "User Param 3 Type"
+msgstr ""
+
+msgid "User Param 4"
+msgstr ""
+
+msgid "User Param 4 Type"
+msgstr ""
+
+msgid "User Param 5"
+msgstr ""
+
+msgid "User Param 5 Type"
+msgstr ""
+
+msgid "User Param 6"
+msgstr ""
+
+msgid "User Param 6 Type"
+msgstr ""
+
+msgid "User Shape"
+msgstr ""
+
+msgid "User Shift"
+msgstr ""
+
+msgid "User oscillators and effects in the synth's user slots. Connect the synth to list them."
+msgstr ""
+
+msgid "V.M Depth"
+msgstr ""
+
+msgid "VCO 1"
+msgstr ""
+
+msgid "VCO 1 Level"
+msgstr ""
+
+msgid "VCO 1 Octave"
+msgstr ""
+
+msgid "VCO 1 Pitch"
+msgstr ""
+
+msgid "VCO 1 Shape"
+msgstr ""
+
+msgid "VCO 1 Wave"
+msgstr ""
+
+msgid "VCO 1 and VCO 2 are analogue; the multi engine is digital and plays noise, VPM or a user oscillator."
+msgstr ""
+
+msgid "VCO 1+2"
+msgstr ""
+
+msgid "VCO 2"
+msgstr ""
+
+msgid "VCO 2 Level"
+msgstr ""
+
+msgid "VCO 2 Octave"
+msgstr ""
+
+msgid "VCO 2 Pitch"
+msgstr ""
+
+msgid "VCO 2 Shape"
+msgstr ""
+
+msgid "VCO 2 Wave"
+msgstr ""
+
+msgid "VPM"
+msgstr ""
+
+msgid "VPM Feedback"
+msgstr ""
+
+msgid "VPM Mod Attack"
+msgstr ""
+
+msgid "VPM Mod Decay"
+msgstr ""
+
+msgid "VPM Mod Key Track"
+msgstr ""
+
+msgid "VPM Noise Depth"
+msgstr ""
+
+msgid "VPM Shape"
+msgstr ""
+
+msgid "VPM Shape Mod Int"
+msgstr ""
+
+msgid "VPM Shift"
+msgstr ""
+
+msgid "VPM Type"
+msgstr ""
+
+msgid "VPM feedback: adds edge to the VPM tone."
+msgstr ""
+
+msgid "VPM modulator ratio, which sets the overtones you hear."
+msgstr ""
+
+msgid "VPM waveform, from plain sines to Air, Decay and Throat types."
+msgstr ""
+
+msgid "Variations of “{name}”"
+msgstr ""
+
+msgid "Vary"
+msgstr ""
+
+msgid "Velocity"
+msgstr ""
+
+msgid "Vibrato"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Voice"
+msgstr ""
+
+msgid "Voice Mode Depth"
+msgstr ""
+
+msgid "Voice Mode Type"
+msgstr ""
+
+msgid "Voice Sync"
+msgstr ""
+
+msgid "Volume held while you keep a key down."
+msgstr ""
+
+msgid "Wait until all programs have been read from the synth."
+msgstr ""
+
+msgid "Wave"
+msgstr ""
+
+msgid "Waveform of VCO 1: square, triangle or sawtooth."
+msgstr ""
+
+msgid "Waveform of VCO 2: square, triangle or sawtooth."
+msgstr ""
+
+msgid "Welcome"
+msgstr ""
+
+msgid "Welcome to Oscyl"
+msgstr ""
+
+msgid "What do you mainly want to do? Oscyl sets up the workspace for it."
+msgstr ""
+
+msgid "What the EG moves: Cutoff, Pitch 2 (VCO 2 only) or Pitch."
+msgstr ""
+
+msgid "What the LFO moves: Cutoff, Shape or Pitch."
+msgstr ""
+
+msgid "Which installed user Mod FX unit is used."
+msgstr ""
+
+msgid "Which installed user oscillator unit the multi engine plays."
+msgstr ""
+
+msgid "Which sources the LFO affects: All, VCO 1+2, VCO 2 or Multi."
+msgstr ""
+
+msgid "Which synth to show and sync with"
+msgstr ""
+
+msgid "Wild"
+msgstr ""
+
+msgid "With Sync on, sweep this for the classic sync sound."
+msgstr ""
+
+msgid "Wobble"
+msgstr ""
+
+msgid "Working offline"
+msgstr ""
+
+msgid "Write its %d program to slot 1 of {synth}"
+msgid_plural "Write its %d programs to {synth} from slot 1"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "You can still export its file or delete it from the library's menu."
+msgstr ""
+
+msgid "Your edits are kept. Check the cable and sync again."
+msgstr ""
+
+msgid "Your libraries folder couldn't be opened."
+msgstr ""
+
+msgid "Zero turns glide off."
+msgstr ""
+
+msgid "edited"
+msgstr ""
+
+msgid "edited, was {value}"
+msgstr ""
+
+msgid "logue SDK units for {model}"
+msgstr ""
+
+msgid "renamed"
+msgstr ""
+
+msgid "the synth sent no unit data"
+msgstr ""
+
+msgid "translator-credits"
+msgstr ""
+
+msgid "was {value}"
+msgstr ""
+
+msgid "{a} or {b} voices"
+msgstr ""
+
+msgid "{before} to {after}"
+msgstr ""
+
+msgid "{category} · kept in slot {slot}"
+msgstr ""
+
+msgid "{first}, {second} and {count} more"
+msgstr ""
+
+msgid "{maker} · {voices}"
+msgstr ""
+
+msgid "{model} by {maker}"
+msgstr ""
+
+msgid "{model} plugged in"
+msgstr ""
+
+msgid "{model} unplugged. Your edits are kept."
+msgstr ""
+
+msgid "{mode} · Octave {octave}"
+msgstr ""
+
+msgid "{name} added"
+msgstr ""
+
+msgid "{name} copy"
+msgstr ""
+
+msgid "{name} removed"
+msgstr ""
+
+msgid "{name}, {category}"
+msgstr ""
+
+msgid "{program}, edited"
+msgstr ""
+
+msgid "{program}, {category}"
+msgstr ""
+
+msgid "{shown} of %d program"
+msgid_plural "{shown} of %d programs"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{stage} graph"
+msgstr ""
+
+msgid "{stage} graph: {summary}"
+msgstr ""
+
+msgid "{summary}, edited"
+msgstr ""
+
+msgid "{synth} (disconnected)"
+msgstr ""
+
+msgid "{title}, couldn't read"
+msgstr ""
+
+msgid "{title}, unsaved edits"
+msgstr ""
+
+msgid "{title}: {before} to {after}"
+msgstr ""
+
+msgid "{x} and {y}"
+msgstr ""
+
+msgid "“{name}” is full: a library holds up to {max} programs."
+msgstr ""
+

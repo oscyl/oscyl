@@ -1,0 +1,55 @@
+name: New synth request
+description: Ask for Oscyl to support another synth.
+labels: [synth-request]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Public documentation makes a driver far easier to write. Link only to
+        official or public sources; do not attach firmware or vendor files.
+  - type: input
+    id: synth
+    attributes:
+      label: Synth model
+      placeholder: Prophet Rev2
+    validations:
+      required: true
+  - type: input
+    id: vendor
+    attributes:
+      label: Vendor
+      placeholder: Sequential
+    validations:
+      required: true
+  - type: checkboxes
+    id: editor
+    attributes:
+      label: Official editor or librarian platforms
+      description: Where the vendor's own editor runs, if there is one.
+      options:
+        - label: Windows
+        - label: macOS
+        - label: Linux
+        - label: Web
+        - label: There is no official editor
+  - type: dropdown
+    id: mobile
+    attributes:
+      label: Is there an official mobile app?
+      options:
+        - "No"
+        - "Yes, iOS only"
+        - "Yes, Android only"
+        - "Yes, iOS and Android"
+        - "I don't know"
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: Public MIDI and SysEx documentation
+      description: Links to the MIDI implementation chart, SysEx spec, or other public protocol notes.
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you use Oscyl for with this synth?

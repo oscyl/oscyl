@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): paste: the clipboard. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="false">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M5.5 3.5H4.5A1 1 0 0 0 3.5 4.5V12.5A1 1 0 0 0 4.5 13.5H11.5A1 1 0 0 0 12.5 12.5V4.5A1 1 0 0 0 11.5 3.5H10.5M6 2.5H10V4.5H6ZM6 8H10M6 10.5H8.5" />
+</vector>

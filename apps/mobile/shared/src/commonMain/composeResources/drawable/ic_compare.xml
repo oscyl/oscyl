@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): compare (the saved sound, dotted, half behind the sound now). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="true">
+    <path android:fillColor="#FF000000" android:pathData="M7.31 12.04m-0.7 0a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0M4.69 12.04m-0.7 0a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0M2.56 10.50m-0.7 0a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0M1.75 8.00m-0.7 0a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0M2.56 5.50m-0.7 0a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0M4.69 3.96m-0.7 0a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0M7.31 3.96m-0.7 0a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.5" android:pathData="M10 3.75A4.25 4.25 0 1 1 10 12.25A4.25 4.25 0 1 1 10 3.75Z" />
+</vector>

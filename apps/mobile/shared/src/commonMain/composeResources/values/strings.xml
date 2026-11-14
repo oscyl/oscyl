@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Oscyl</string>
+    <!-- The three destinations of the floating island. -->
+    <string name="destination_library">Library</string>
+    <string name="destination_editor">Editor</string>
+    <string name="destination_generate">Generate</string>
+    <string name="destination_synth">Synth</string>
+    <!-- The island's primary action: the verb, then the count of programs to write. -->
+    <string name="action_save">Save</string>
+    <!-- Quiet state of the primary action when nothing waits to be written. -->
+    <string name="state_saved">Saved</string>
+    <plurals name="action_save_edited">
+        <item quantity="one">Save %1$d edited program</item>
+        <item quantity="other">Save %1$d edited programs</item>
+    </plurals>
+    <!-- The same action for a synth's slots: its edits are written to the synth. -->
+    <string name="action_sync">Sync</string>
+    <string name="state_synced">Synced</string>
+    <plurals name="action_sync_edited">
+        <item quantity="one">Sync %1$d edited program</item>
+        <item quantity="other">Sync %1$d edited programs</item>
+    </plurals>
+    <!-- A dial while edited: the saved value under it, tapping it restores that value. -->
+    <string name="dial_was">was %1$s</string>
+    <!-- Screen reader state of an edited dial: the value, then the saved one. -->
+    <string name="dial_state_edited">%1$s, edited, was %2$s</string>
+    <!-- Screen reader actions on a dial: one printed scale step up or down, or back to saved. -->
+    <string name="dial_increase">Increase</string>
+    <string name="dial_decrease">Decrease</string>
+    <string name="dial_restore">Restore saved value</string>
+    <string name="dial_set_exactly">Set exactly</string>
+    <string name="dial_no_such_value">No such value</string>
+    <!-- Screen reader state of a segment holding the saved choice while another is chosen (it replaces "not selected", so says both). -->
+    <string name="segment_saved">Not selected, saved choice</string>
+    <!-- A stage on the stage rail, read by a screen reader: its name, then its summary. -->
+    <string name="stage_description">%1$s, %2$s</string>
+    <plurals name="stage_description_edited">
+        <item quantity="one">%1$s, %2$s, %3$d edit</item>
+        <item quantity="other">%1$s, %2$s, %3$d edits</item>
+    </plurals>
+    <!-- The synth sheet. A synth's status caption, beside its lamp. -->
+    <string name="synth_state_connected">Connected</string>
+    <string name="synth_state_firmware">Connected, firmware %1$s</string>
+    <string name="synth_state_simulated">Simulated, no sound</string>
+    <string name="synth_state_disconnected">Disconnected</string>
+    <!-- A plugged synth Android has not let Oscyl use yet. -->
+    <string name="synth_state_access">Waiting for USB access</string>
+    <!-- A synth's action; the _named forms are what a screen reader says (the synth's model). -->
+    <string name="synth_action_disconnect">Disconnect</string>
+    <string name="synth_action_disconnect_named">Disconnect %1$s</string>
+    <string name="synth_action_connect">Connect</string>
+    <string name="synth_action_connect_named">Connect %1$s</string>
+    <string name="synth_action_allow">Allow USB access</string>
+    <string name="synth_action_allow_named">Allow USB access for %1$s</string>
+    <!-- No synth connected: a normal state, not an error. -->
+    <string name="synth_empty_title">Plug in your synth over USB</string>
+    <string name="synth_empty_body">Connect it with a USB cable and switch it on. Oscyl finds it by itself.</string>
+    <!-- The demo: a driver's simulated synth, chosen by model. -->
+    <string name="synth_demo_legend">Demo</string>
+    <!-- About Oscyl, reached from the top bar's menu. Licence names and texts are never translated. -->
+    <string name="about_action">About Oscyl</string>
+    <string name="about_title">About Oscyl</string>
+    <string name="about_own">Oscyl is free software. You may use it under the MIT licence or the Apache License 2.0, as you choose.</string>
+    <!-- UniFFI's licence (MPL-2.0) asks that recipients learn where its source is; the argument is that address. -->
+    <string name="about_uniffi">Oscyl’s core reaches the app through UniFFI, available under the Mozilla Public License 2.0. Its source: %1$s</string>
+    <string name="about_third_party">Third-party software</string>
+    <string name="about_third_party_body">Oscyl is built with these projects. Open one to read its licence.</string>
+    <!-- A notice's version, then its licence (an SPDX expression such as "MIT OR Apache-2.0"). -->
+    <string name="about_notice_caption">%1$s · %2$s</string>
+    <!-- The Library destination: sources (connected synths, Oscyl's own libraries) and their programs. Section legends. -->
+    <string name="library_legend_synth">Synth</string>
+    <string name="library_legend_libraries">Libraries</string>
+    <string name="library_no_synth">No synth connected.</string>
+    <string name="library_connect_synth">Connect a synth</string>
+    <!-- A synth's programs being read, slot by slot. -->
+    <string name="library_reading">Reading %1$d of %2$d</string>
+    <plurals name="library_programs">
+        <item quantity="one">%1$d program</item>
+        <item quantity="other">%1$d programs</item>
+    </plurals>
+    <string name="library_new">New library</string>
+    <string name="library_new_folder">New folder</string>
+    <string name="library_empty_title">No libraries yet</string>
+    <string name="library_empty_body">Make a library, or import a library file.</string>
+    <!-- A library Oscyl can't open (a synth this build doesn't know, a damaged file). -->
+    <string name="library_unreadable">Can’t be read</string>
+    <!-- Screen reader state of a library whose last save failed (an orange dot). -->
+    <string name="library_unsaved">Not saved</string>
+    <string name="library_folder_open">Expanded</string>
+    <string name="library_folder_closed">Collapsed</string>
+    <!-- The name a duplicated library gets: the original's, then "copy". -->
+    <string name="library_copy_name">%1$s copy</string>
+    <!-- What a long press on a library, folder or program offers, said by a screen reader. -->
+    <string name="library_actions">Actions</string>
+    <string name="node_rename">Rename</string>
+    <string name="node_duplicate">Duplicate</string>
+    <string name="node_move_up">Move up</string>
+    <string name="node_move_down">Move down</string>
+    <string name="node_move_to">Move to folder</string>
+    <string name="node_top_level">Top level</string>
+    <string name="node_delete">Delete</string>
+    <string name="node_new_library_here">New library here</string>
+    <string name="node_new_folder_here">New folder here</string>
+    <!-- The dialog that renames a library, a folder or a program. -->
+    <string name="name_library">Rename library</string>
+    <string name="name_folder">Rename folder</string>
+    <string name="name_program">Rename program</string>
+    <string name="name_field">Name</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_back">Back</string>
+    <!-- The program list. -->
+    <string name="programs_choose_title">Choose a library or a synth</string>
+    <string name="programs_choose_body">Its programs show here.</string>
+    <string name="programs_empty_title">No programs yet</string>
+    <string name="programs_empty_body">Add a program, or copy one here from the synth or another library.</string>
+    <string name="programs_new">New program</string>
+    <string name="programs_undo">Undo</string>
+    <string name="programs_redo">Redo</string>
+    <!-- A slot not read from the synth yet. -->
+    <string name="program_reading">Reading…</string>
+    <!-- A factory slot: it can be copied, never changed. The tag, and what a screen reader says. -->
+    <string name="program_factory">Factory</string>
+    <string name="program_factory_state">Factory slot, read-only</string>
+    <!-- Screen reader state of a program with changes not yet saved or synced (an orange dot). -->
+    <string name="program_edited">Edited</string>
+    <string name="program_more">More actions for %1$s</string>
+    <!-- The program menu's heading: the slot, then the program's name. -->
+    <string name="program_heading">%1$s %2$s</string>
+    <string name="menu_rename">Rename</string>
+    <string name="menu_duplicate">Duplicate</string>
+    <string name="menu_copy">Copy sound</string>
+    <string name="menu_paste_over">Paste sound here</string>
+    <string name="menu_copy_to">Copy to another library…</string>
+    <string name="menu_new">New program</string>
+    <string name="menu_move_up">Move up</string>
+    <string name="menu_move_down">Move down</string>
+    <string name="menu_revert">Revert changes</string>
+    <string name="menu_remove">Remove from library</string>
+    <string name="menu_clear">Clear to init program</string>
+    <string name="menu_new_library">New library</string>
+    <!-- Notices on the island after a change; most offer Undo. -->
+    <string name="notice_removed">Removed “%1$s”</string>
+    <string name="notice_cleared">Slot %1$s cleared</string>
+    <string name="notice_pasted">Pasted over slot %1$s</string>
+    <string name="notice_deleted">Deleted “%1$s”</string>
+    <string name="notice_copied">Copied “%1$s”</string>
+    <string name="notice_copied_to">Copied to “%1$s”</string>
+    <plurals name="notice_full">
+        <item quantity="one">“%1$s” is full: a library holds up to %2$d program.</item>
+        <item quantity="other">“%1$s” is full: a library holds up to %2$d programs.</item>
+    </plurals>
+    <string name="notice_undo">Undo</string>
+    <string name="notice_dismiss">Dismiss</string>
+    <string name="notice_exported">Exported “%1$s”</string>
+    <!-- Files: a library or program file from elsewhere, kept as a new library; a library written out as a file. -->
+    <string name="library_import">Import file</string>
+    <string name="node_export">Export as…</string>
+    <string name="node_share">Share</string>
+    <!-- One export format: its name, then its file extension. -->
+    <string name="node_export_format">%1$s (.%2$s)</string>
+    <!-- A file the system's picker gave that could not be read, or one that could not be written; the argument is its name. -->
+    <string name="notice_cannot_read">Couldn’t read “%1$s”</string>
+    <string name="notice_cannot_write">Couldn’t write “%1$s”</string>
+    <!-- The library that keeps a synth's unsynced edits once it is unplugged; the argument is the synth's model. -->
+    <string name="library_disconnected">%1$s (disconnected)</string>
+    <!-- Editor: shown when no program is open. -->
+    <string name="editor_empty_title">No program open</string>
+    <string name="editor_empty_body">Pick a program in Library to shape it here.</string>
+    <string name="editor_empty_action">Open Library</string>
+    <!-- Editor's top row. Live plays every change on the synth; Hold to compare plays and shows the saved program while held. -->
+    <string name="editor_live">Live</string>
+    <string name="editor_compare">Hold to compare</string>
+    <!-- A tag beside the program title while Compare is held. -->
+    <string name="editor_saved_version">Saved version</string>
+    <!-- Above the program title: the slot, then the synth model. -->
+    <string name="editor_slot">Slot %1$s · %2$s</string>
+    <!-- A synth's slot the editor shows before its program has been read: what it holds is not known yet. -->
+    <string name="editor_not_read">Not read yet: this slot is still being read from the synth. Edits wait until it is.</string>
+    <string name="editor_read_only">Factory slot: read-only. Copy it to a library to change it.</string>
+    <!-- A two-way parameter's choices. -->
+    <string name="option_off">Off</string>
+    <string name="option_on">On</string>
+    <!-- A selector with many options: its label, then the option chosen (for screen readers). -->
+    <string name="choice_description">%1$s, %2$s</string>
+    <!-- Legends printed on a stage's graph: filter frequencies, envelope phases (attack, decay, sustain, release), axes, levels. -->
+    <string name="axis_hz100">100 Hz</string>
+    <string name="axis_khz1">1k</string>
+    <string name="axis_khz10">10k</string>
+    <string name="axis_attack">A</string>
+    <string name="axis_decay">D</string>
+    <string name="axis_sustain">S</string>
+    <string name="axis_release">R</string>
+    <string name="axis_note">Note</string>
+    <string name="axis_time">Time</string>
+    <string name="axis_pitch">Pitch</string>
+    <string name="axis_percent0">0%</string>
+    <string name="axis_percent50">50%</string>
+    <string name="axis_percent100">100%</string>
+    <!-- A stage's graph for screen readers: the stage, then its summary. -->
+    <string name="graph_description">%1$s graph: %2$s</string>
+    <!-- A draggable point on a graph: what it moves, then its values. -->
+    <string name="graph_handle">%1$s: %2$s</string>
+    <string name="graph_move_left">Move left</string>
+    <string name="graph_move_right">Move right</string>
+    <string name="graph_move_up">Move up</string>
+    <string name="graph_move_down">Move down</string>
+    <string name="graph_zoom_in">Zoom in</string>
+    <string name="graph_fit">Fit graph</string>
+    <!-- The review sheet: every edited program of the library or synth shown, before its edits are kept. -->
+    <plurals name="review_title">
+        <item quantity="one">%1$d edited program</item>
+        <item quantity="other">%1$d edited programs</item>
+    </plurals>
+    <!-- Puts one program back as it was saved. -->
+    <string name="review_revert">Revert</string>
+    <!-- A change: the saved value, then the new one. -->
+    <string name="review_change">%1$s to %2$s</string>
+    <string name="review_sync_note">Only these slots change. Oscyl backs up what they hold now first.</string>
+    <string name="review_backing_up">Backing up the synth…</string>
+    <!-- Programs written so far, of all. -->
+    <string name="review_writing">Writing %1$d of %2$d…</string>
+    <!-- The argument is the reason, in the system's or the synth's words. -->
+    <string name="review_backup_failed">Couldn’t back up the synth: %1$s. Nothing was synced.</string>
+    <string name="review_backup_nowhere">No storage is available for a backup, so nothing was synced.</string>
+    <string name="review_sync_failed">Couldn’t sync: %1$s. Your edits are kept. Check the cable and sync again.</string>
+    <string name="review_sync_lost">The synth went away during the sync. Your edits are kept.</string>
+    <string name="review_save_failed">Couldn’t save: %1$s. Your edits are kept.</string>
+    <string name="review_not_yet">Can’t sync yet: %1$s</string>
+    <!-- Preferences, reached from the top bar's menu. -->
+    <string name="prefs_title">Preferences</string>
+    <string name="prefs_theme">Theme</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_amoled">AMOLED black</string>
+    <string name="prefs_motion">Animations</string>
+    <string name="prefs_motion_body">Turn off to make everything move instantly.</string>
+    <string name="prefs_haptics">Haptics</string>
+    <string name="prefs_haptics_body">Small taps as you turn dials and pass stages. Follows the system’s touch feedback setting.</string>
+    <string name="prefs_demo">Demo mode</string>
+    <string name="prefs_demo_body">Connect a simulated synth at start, to explore without one.</string>
+    <!-- Why no synth can connect: the device has no MIDI support. -->
+    <string name="synth_no_midi">This device has no MIDI support, so no synth can connect. The demo still works.</string>
+    <!-- A file name for a library that has none. -->
+    <string name="file_library">library</string>
+    <!-- The synth chip while a synth is being read: how far, in percent. -->
+    <string name="synth_reading_percent">Reading, %1$d%</string>
+    <!-- A synth's read: programs read so far, of all. -->
+    <string name="synth_read_progress">Reading %1$d of %2$d programs</string>
+    <string name="synth_stop_reading">Stop reading</string>
+    <string name="synth_read_again">Read all again</string>
+    <!-- Reads the program the synth is playing and keeps it as a new library. -->
+    <string name="synth_read_current">Keep the current program</string>
+    <plurals name="synth_review">
+        <item quantity="one">Review %1$d edit</item>
+        <item quantity="other">Review %1$d edits</item>
+    </plurals>
+    <!-- The library that keeps a synth's current program; the argument is the synth's model. -->
+    <string name="library_current">Current program (%1$s)</string>
+    <!-- User units (logue SDK oscillators and effects) in a synth's slots. -->
+    <string name="units_empty">Empty</string>
+    <string name="units_load">Load…</string>
+    <!-- The section (Oscillators…), then the slot number. -->
+    <string name="units_load_named">Load a unit into %1$s, slot %2$s</string>
+    <string name="units_clear">Clear</string>
+    <string name="units_clear_named">Clear %1$s (a backup is taken first)</string>
+    <string name="backups_title">Backups</string>
+    <string name="backups_empty">No backups yet. Oscyl takes one before every sync and before clearing a unit slot.</string>
+    <string name="backups_open">Open as library</string>
+    <string name="backups_share">Share</string>
+    <!-- A library could not be written: its name, then why. Its edits stay; Retry writes it again. -->
+    <string name="notice_save_failed">Couldn’t save “%1$s”: %2$s. Your edits are kept.</string>
+    <string name="notice_retry">Retry</string>
+    <!-- Generate: new sounds from a character and four dials. -->
+    <string name="gen_intro">Pick a character, shape it, and generate. Every sound plays on the synth as you pick it.</string>
+    <string name="gen_character">Character</string>
+    <string name="gen_shape">Shape</string>
+    <!-- The stages kept as they are from the program open; the argument is its slot. -->
+    <string name="gen_keep_stages">Hold from slot %1$s</string>
+    <string name="gen_deal">Generate</string>
+    <string name="gen_dealing">Generating…</string>
+    <string name="gen_empty">No sounds yet: press Generate for six.</string>
+    <!-- Which hand of sounds is shown, of how many kept. -->
+    <string name="gen_hand_of">Set %1$d of %2$d</string>
+    <string name="gen_previous">Previous set</string>
+    <string name="gen_next">Next set</string>
+    <!-- How far Vary moves a sound. -->
+    <string name="gen_vary_subtle">Subtle</string>
+    <string name="gen_vary_clear">Medium</string>
+    <string name="gen_vary_wild">Wild</string>
+    <string name="gen_vary">Vary</string>
+    <string name="gen_breed">Breed with…</string>
+    <!-- Where a sound was kept (a slot or a library). -->
+    <string name="gen_kept">kept in %1$s</string>
+    <!-- First run: what the person mainly does arranges where Oscyl starts. -->
+    <string name="onb_question">What do you mainly do?</string>
+    <string name="onb_design">Design sounds</string>
+    <string name="onb_design_body">Start in the editor, with live audition on.</string>
+    <string name="onb_organise">Organise my library</string>
+    <string name="onb_organise_body">Start with your programs: back them up and sync.</string>
+    <string name="onb_perform">Prepare a performance</string>
+    <string name="onb_perform_body">Start at the voice settings, ready to audition.</string>
+    <!-- The in-app guide. -->
+    <string name="guide_action">Guide</string>
+    <string name="guide_title">Getting started</string>
+    <string name="guide_connecting">Connecting</string>
+    <string name="guide_connecting_body">Plug the synth into the phone’s USB-C port (an OTG adapter, or a USB-C to USB-B cable) and switch it on.\nAllow access once: Oscyl connects and reads every program.\nTap the synth button, top right, for its jobs. No synth? Tap Add a synth there and try one.</string>
+    <string name="guide_offline">Working offline</string>
+    <string name="guide_offline_body">Import your synth’s library files in Library.\nEdit them anywhere: what Oscyl does not edit stays exactly as it was, so the files stay compatible.</string>
+    <string name="guide_editing">Editing</string>
+    <string name="guide_editing_body">Open a program from Library and scroll through its stages, or tap one on the strip at the side (slide along it to see their names).\nDrag a knob up or down to turn it; move slowly to turn it finely.\nTap “↶ was” under a control, or double-tap a knob, to put it back. An orange dot marks what you changed.\nTap a picture to open it full screen and drag its handles.</string>
+    <string name="guide_auditioning">Auditioning</string>
+    <string name="guide_auditioning_body">Turn on Live in the synth button’s sheet: every change plays on the synth at once.\nHold Compare, under the stages, to hear the saved sound; slide to blend it with your edit.\nIn Library, swipe a program to the left to hear it without opening it.</string>
+    <string name="guide_generating">Generating sounds</string>
+    <string name="guide_generating_body">Pick a character, shape it with the four dials and press Generate for six sounds.\nTap one to hear it, then Keep it: over the program open (an edit you can undo) or in a library.\nVary deals six more like it; Breed with crosses two; the arrows go back to earlier sets.</string>
+    <string name="guide_syncing">Syncing</string>
+    <string name="guide_syncing_body">Tap Sync on the island to see exactly which slots will change.\nOscyl backs up what they hold, writes only those and checks each one.\nYour edits are never lost: unsynced ones stay, even if the synth is unplugged or the app closes.</string>
+    <string name="guide_units">Managing units</string>
+    <string name="guide_units_body">Synths of the logue family have slots for user oscillators and effects.\nTap the synth button, then User units: load a unit file into an empty slot, or clear one (a backup is taken first).</string>
+    <string name="units_clear_title">Clear “%1$s”?</string>
+    <string name="units_clear_body">The slot is emptied on the synth. Oscyl saves a backup of the unit first: Put back, in Backups, loads it again.</string>
+    <string name="units_clear_confirm">Clear slot</string>
+    <string name="backups_put_back">Put back</string>
+    <!-- No empty slot to put a unit back into: the section, then the synth. -->
+    <string name="units_no_empty">No empty slot in %1$s on the %2$s: clear one first.</string>
+    <string name="units_no_synth">Connect the synth this unit came from to put it back.</string>
+    <!-- The app was closed while a file was being chosen: nothing happened with it. -->
+    <string name="notice_export_lost">“%1$s” was not exported: Oscyl closed while you chose where. Export it again.</string>
+    <string name="notice_unit_lost">“%1$s” was not loaded: Oscyl closed while you picked it. Load it again.</string>
+    <!-- Why a USB MIDI device could not be opened, shown in the synth sheet. -->
+    <string name="midi_unavailable">This device has no MIDI.</string>
+    <string name="midi_unplugged">%1$s is no longer plugged in.</string>
+    <string name="midi_open_failed">%1$s could not be opened.</string>
+    <string name="midi_in_use">%1$s is in use by another app.</string>
+    <string name="library_demo">Demo library</string>
+    <!-- The top bar: the synth chip (the lamp, the synth's model, "+1" for each other synth, "Live") and its menu. -->
+    <string name="chip_no_synth">No synth</string>
+    <string name="chip_more">+%1$d</string>
+    <string name="chip_description">Synths: %1$s</string>
+    <string name="chip_description_more">%1$s and %2$d more</string>
+    <string name="chip_description_none">Synths: none connected</string>
+    <string name="app_menu">More options</string>
+    <!-- The full-screen graph: opening a stage's picture, closing it, its stages' position, its controls sheet, the short Hold to compare. -->
+    <string name="graph_expand">Open %1$s full screen</string>
+    <string name="graph_close">Close full screen</string>
+    <string name="graph_position">%1$d of %2$d</string>
+    <string name="graph_controls_more">Show all the controls</string>
+    <string name="graph_controls_less">Show fewer controls</string>
+    <string name="editor_hold">Compare</string>
+    <!-- The synth sheet (from the chip), its sub-pages, and the picker that adds a synth. -->
+    <string name="sheet_title">Synths</string>
+    <string name="sheet_close">Close</string>
+    <string name="sheet_add">Add a synth</string>
+    <string name="sheet_units">User units</string>
+    <string name="sheet_live">Live</string>
+    <!-- Short labels on a synth card's job tiles: keep the program the synth plays as a library; review its edits (their count stands beside it). -->
+    <string name="sheet_job_keep">Save playing sound</string>
+    <string name="sheet_job_review">Review edits</string>
+    <string name="picker_title">Add a synth</string>
+    <string name="picker_search">Search synths</string>
+    <string name="picker_plugged">Plugged in</string>
+    <string name="picker_demo">Try a demo</string>
+    <string name="picker_waiting">Waiting for USB. Plug a synth in and switch it on.</string>
+    <string name="picker_ask">Your synth isn’t here? Ask for a driver</string>
+    <string name="picker_none">No model matches.</string>
+    <!-- The first run: one screen. -->
+    <string name="first_purpose">Edit, organise and back up your synth’s programs, from your phone.</string>
+    <string name="first_found">Found it</string>
+    <string name="first_read">Read its programs</string>
+    <string name="first_read_body">You can start editing while it reads.</string>
+    <string name="first_try">No synth here? Try one</string>
+    <string name="first_skip">Continue without a synth</string>
+    <string name="first_privacy">Oscyl works offline. Nothing leaves your phone.</string>
+    <!-- Designed empty states: a title over the existing line of guidance. -->
+    <string name="empty_backups">No backups yet</string>
+    <string name="empty_hand">No sounds yet</string>
+    <string name="empty_plugged">Nothing plugged in</string>
+    <string name="picker_none_body">Try another name, or ask for a driver.</string>
+    <!-- The edit history sheet: its title (also the long press on Undo and the editor's menu row); the row for the state before the first step; its empty state; what a screen reader says of the step the document stands at, and of a step undone. -->
+    <string name="history_title">History</string>
+    <string name="history_start">As saved</string>
+    <string name="history_empty_title">No edits yet</string>
+    <string name="history_empty_body">Every change to these programs is listed here; a tap goes back to it.</string>
+    <string name="history_now">Now</string>
+    <string name="history_undone">Undone</string>
+    <string name="search_programs">Search programs</string>
+    <string name="search_clear">Clear search</string>
+    <string name="search_none_title">No program matches</string>
+    <string name="search_none_body">Nothing here matches “%1$s”.</string>
+    <string name="morph_edit">Edited</string>
+    <string name="morph_toward_edit">Toward the edit</string>
+    <string name="morph_toward_saved">Toward saved</string>
+    <string name="stage_roll">Roll %1$s</string>
+    <string name="snapshot">Snapshot %1$s</string>
+    <string name="snapshot_empty">Empty</string>
+    <string name="snapshot_stored">Stored</string>
+    <string name="snapshot_store">Store</string>
+    <string name="snapshot_recall">Recall</string>
+    <string name="snapshots_hint">Hold to store, tap to recall</string>
+    <string name="program_play">Play</string>
+    <string name="program_audition">Audition</string>
+    <string name="pad_more">More %1$s</string>
+    <string name="pad_less">Less %1$s</string>
+    <string name="pad_description">%1$s and %2$s</string>
+    <string name="play_title">Perform</string>
+    <string name="play_open">Perform</string>
+    <string name="play_choose_pad">Choose two parameters</string>
+    <string name="play_choose">Choose</string>
+    <string name="play_none">None</string>
+    <string name="play_across">Across</string>
+    <string name="play_up">Up</string>
+    <string name="play_knob">Knob %1$d</string>
+    <string name="play_assign">Choose for %1$s</string>
+    <plurals name="search_matches">
+        <item quantity="one">%1$d of %2$d program</item>
+        <item quantity="other">%1$d of %2$d programs</item>
+    </plurals>
+    <string name="island_save">Save</string>
+    <string name="island_sync">Sync</string>
+    <!-- The Save key with nothing to write: one short word under its drawing (a screen reader hears the state in full). -->
+    <string name="island_saved">Saved</string>
+    <string name="island_synced">Synced</string>
+    <string name="notice_added">New program at %1$s</string>
+    <string name="notice_rolled">Rolled %1$s</string>
+    <string name="notice_snapshot_replaced">Snapshot %1$s replaced</string>
+    <string name="notice_compare_hint">Hold Compare, under the stages, to hear the saved sound. Slide away from the edge to blend it with your edit.</string>
+    <string name="morph_slide">Slide to blend</string>
+    <string name="editor_copy_to_library">Copy to a library</string>
+    <string name="play_short">Perform</string>
+    <string name="dial_was_restore">Back to %1$s</string>
+    <string name="search_clear_text">Clear text</string>
+    <string name="menu_undo_step">Undo: %1$s</string>
+    <string name="menu_redo_step">Redo: %1$s</string>
+    <string name="search_all">All</string>
+    <string name="search_edited">Edited</string>
+    <string name="search_user">User</string>
+    <string name="search_factory">Factory</string>
+    <string name="search_done">Done</string>
+    <string name="search_close">Close search</string>
+    <string name="programs_new_key">New</string>
+    <string name="gen_intro_no_synth">Pick a character, shape it, and generate. Connect a synth to hear each sound as you pick it.</string>
+    <string name="gen_keep">Keep</string>
+    <string name="gen_keep_in_slot">In slot %1$s, replacing it</string>
+    <string name="gen_keep_in_library">In a library</string>
+    <string name="read_stop">Stop</string>
+    <string name="name_new_library">Name the new library</string>
+    <string name="name_new_folder">Name the new folder</string>
+    <string name="notice_open">Open</string>
+    <string name="notice_kept">Kept in %1$s</string>
+    <string name="sheet_live_caption">Live: every edit plays on the synth as you make it.</string>
+    <string name="first_not_now">Not now</string>
+    <plurals name="notice_saved">
+        <item quantity="one">Saved %1$d program</item>
+        <item quantity="other">Saved %1$d programs</item>
+    </plurals>
+    <string name="notice_roll_hint">Hold the dice to roll %1$s.</string>
+    <!-- One-time how-to lines (DESIGN.md "First-run hints"). The first is said after a plain tap on the stage rail. -->
+    <string name="notice_rail_hint">Slide along the stages to move through them.</string>
+    <!-- The first Save: %1$s is the "Saved 3 programs" line it ends. -->
+    <string name="notice_saved_review">%1$s. Hold Save to see the changes first.</string>
+    <!-- Under the heading of a program's menu, the first time a hold opened it. -->
+    <string name="program_drag_hint">Keep holding and move to reorder.</string>
+    <string name="history_snapshots">Snapshots</string>
+    <string name="history_steps">Steps</string>
+    <string name="backup_all">Every program</string>
+    <string name="backup_unit">%1$s unit</string>
+</resources>

@@ -1,0 +1,143 @@
+/* Oscyl custom widgets: dial, graph, stage tabs, edit marks.
+ *
+ * Drawn widgets read their colours from CSS: the widget's own `color`
+ * plus hidden swatch children whose `color` names one palette role.
+ */
+
+/* Dial: printed scale, flat disc with a rim, ink index, values below. */
+dial {
+  color: var(--oscyl-ink);
+  padding: 4px;
+  border-radius: var(--oscyl-radius);
+}
+dial > .tick { color: var(--oscyl-legend); }
+dial > .disc { color: var(--oscyl-raised); }
+dial > .rim { color: var(--oscyl-rule-strong); }
+dial > .muted { color: var(--oscyl-legend); }
+dial > .act { color: var(--oscyl-act); }
+dial > .shadow { color: var(--oscyl-shadow); }
+/* Typing a value: a small field over the value, in its weight. */
+dial > entry.dial-entry {
+  min-height: 0;
+  padding: 1px 4px;
+  font-size: 1.1em;
+  font-weight: 600;
+  background: var(--oscyl-raised);
+  box-shadow: inset 0 0 0 1px var(--oscyl-ink);
+}
+dial > entry.dial-entry.error { box-shadow: inset 0 0 0 2px var(--oscyl-act); }
+/* Hover and drag lift the disc, so it reads as something to turn. */
+dial:hover > .disc,
+dial.dragging > .disc { color: color-mix(in srgb, var(--oscyl-raised) 82%, var(--oscyl-ink)); }
+dial:hover > .rim,
+dial.dragging > .rim { color: var(--oscyl-legend); }
+dial:focus-visible {
+  outline: 2px solid var(--oscyl-focus);
+  outline-offset: 2px;
+}
+
+/* Graph: ink line, the saved shape faint behind, legends for scales. */
+graph { color: var(--oscyl-ink); }
+graph > .faint { color: var(--oscyl-graph-faint); }
+graph > .rule { color: var(--oscyl-rule); }
+graph > .muted { color: var(--oscyl-legend); }
+graph > .edit { color: var(--oscyl-act); }
+graph > .knob { color: var(--oscyl-ground); }
+graph.mini { min-height: 1.6em; }
+/* Keyboard focus is drawn on the active handle. */
+graph:focus-visible { outline: none; }
+
+/* The edit mark: an action-colour dot, the same everywhere. */
+.edit-tick {
+  min-width: 6px;
+  min-height: 6px;
+  border-radius: 999px;
+  background: var(--oscyl-act);
+}
+
+/* Stage tabs: six equal segments in a 1 px frame; the selected one is
+ * the control plate. */
+/* The frame sits on the strip, outside its scroller, so a row wider than
+ * the editor scrolls inside a whole frame. Tabs sit inset in it; the
+ * selected one is the plate with its own corners. */
+stagestrip {
+  border: 1px solid var(--oscyl-rule-strong);
+  border-radius: var(--oscyl-radius-panel);
+  padding: 3px;
+}
+stagestrip .flow { border-spacing: 3px; }
+button.stage-col {
+  min-width: 4.5em;
+  padding: 0.6em 0 0.5em;
+  margin: 0;
+  border-radius: var(--oscyl-radius);
+  border: none;
+  background: none;
+  color: var(--oscyl-legend);
+  box-shadow: none;
+  outline-offset: -2px;
+  transition: background-color var(--oscyl-base) var(--oscyl-ease),
+              color var(--oscyl-slow) var(--oscyl-ease);
+}
+button.stage-col:hover { background: var(--oscyl-hover); }
+button.stage-col:active { background: var(--oscyl-press); }
+/* The plate itself is drawn by the strip and slides between tabs. */
+stagestrip > .plate { color: var(--oscyl-plate); }
+stagestrip > .ground { color: var(--oscyl-ground); }
+/* Lifted plates cast the shadow token (none on AMOLED). */
+stagestrip > .shadow, segmenttrack > .shadow, plated > .shadow { color: var(--oscyl-shadow); }
+/* The arrows at a scrolled strip's ends: small raised discs on the fade. */
+stagestrip > button.strip-arrow {
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  background: var(--oscyl-raised);
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong);
+  color: var(--oscyl-ink);
+  -gtk-icon-size: 14px;
+}
+stagestrip > button.strip-arrow:hover {
+  background: color-mix(in srgb, var(--oscyl-raised) 82%, var(--oscyl-ink));
+}
+button.stage-col:checked,
+button.stage-col:checked:hover {
+  background: none;
+  color: var(--oscyl-plate-legend);
+}
+button.stage-col .stage-head,
+button.stage-col .stage-summary,
+button.stage-col graph.mini { margin: 0 0.6em; }
+button.stage-col graph.mini { margin-top: 0.1em; margin-bottom: 0.45em; color: currentColor; }
+button.stage-col .stage-title {
+  font-weight: 600;
+  color: var(--oscyl-ink);
+  transition: color var(--oscyl-slow) var(--oscyl-ease);
+}
+button.stage-col:checked .stage-title { color: var(--oscyl-on-plate); }
+button.stage-col:checked graph.mini { color: var(--oscyl-on-plate); }
+button.stage-col .stage-summary { font-size: 0.846em; margin-top: 0.1em; color: inherit; }
+button.stage-col .stage-count {
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0 4px;
+  border-radius: var(--oscyl-radius-inner);
+  background: var(--oscyl-act);
+  color: var(--oscyl-on-act);
+  font-size: 0.75em;
+  font-weight: 700;
+  transition: opacity var(--oscyl-base) var(--oscyl-ease);
+}
+button.stage-col .stage-count.unlit { opacity: 0; }
+fold > .ink { color: var(--oscyl-ink); }
+
+/* The Perform page's XY pad: ink point, printed grid, orange edit line. */
+xypad { color: var(--oscyl-ink); border-radius: var(--oscyl-radius-panel); }
+xypad > .rule { color: var(--oscyl-rule); }
+xypad > .strong { color: var(--oscyl-rule-strong); }
+xypad > .muted { color: var(--oscyl-legend); }
+xypad > .edit { color: var(--oscyl-act); }
+xypad > .knob { color: var(--oscyl-ground); }
+xypad:disabled { opacity: 0.6; }
+
+/* A program row's first picture: small, in the legend's ink. */
+graph.row-picture { color: var(--oscyl-legend); min-height: 1.6em; }

@@ -1,0 +1,309 @@
+name: Release
+
+# A pushed tag vX.Y.Z builds every artifact, checksums and attests them, and
+# opens a draft GitHub Release with the CHANGELOG section as notes. A manual
+# run builds the same artifacts from the chosen ref and publishes nothing.
+# See docs/releasing.md.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: version
+        name: Version
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = push ]; then
+              version=${GITHUB_REF_NAME#v}
+          else
+              version=$(sed -n '/^\[workspace.package\]/,/^\[/s/^version = "\(.*\)"/\1/p' Cargo.toml)
+          fi
+          if ! [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "not a release version: $version" >&2
+              exit 1
+          fi
+          prerelease=false
+          [[ $version == *-* ]] && prerelease=true
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+      - name: Versions and changelog agree
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: scripts/release-check.sh "$VERSION"
+      - name: The tag is on main
+        if: github.event_name == 'push'
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+  cli:
+    name: cli (${{ matrix.target }})
+    needs: guard
+    strategy:
+      fail-fast: false
+      matrix:
+        # No musl: it would need a static libasound.
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-24.04
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          rustup toolchain install stable --profile minimal --target "$TARGET"
+          rustup default stable
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - name: Build and package
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          cargo build --release --locked -p oscyl-cli --target "$TARGET"
+          name=oscyl-$VERSION-$TARGET
+          mkdir -p "$name" dist
+          cp README.md CHANGELOG.md LICENSE-MIT LICENSE-APACHE "$name/"
+          if [ "$RUNNER_OS" = Windows ]; then
+              cp "target/$TARGET/release/oscyl.exe" "$name/"
+              7z a "dist/$name.zip" "$name"
+          else
+              cp "target/$TARGET/release/oscyl" "$name/"
+              tar -czf "dist/$name.tar.gz" "$name"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-cli-${{ matrix.target }}
+          path: dist/
+
+  flatpak-sources:
+    name: flatpak-sources
+    needs: guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: scripts/flatpak-sources.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cargo-sources
+          path: packaging/flatpak/cargo-sources.json
+          retention-days: 1
+
+  flatpak:
+    name: flatpak
+    needs: [guard, flatpak-sources]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-49@sha256:8a05aca51163a81259cc011302cc5121779c89b8b16f2819cc3fd06817d136e7
+      options: --privileged
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: cargo-sources
+          path: packaging/flatpak
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6.8
+        with:
+          manifest-path: packaging/flatpak/io.github.oscyl.Oscyl.json
+          bundle: oscyl-${{ needs.guard.outputs.version }}-x86_64.flatpak
+          upload-artifact: false
+          # No cache: a release builds from scratch.
+          cache: false
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-flatpak
+          path: oscyl-*.flatpak
+
+  android:
+    name: android
+    needs: guard
+    runs-on: ubuntu-latest
+    # The signing keys are secrets of this environment only.
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal --target aarch64-linux-android,x86_64-linux-android
+          rustup default stable
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          # A release builds from scratch and leaves no cache behind.
+          cache-disabled: true
+      - name: Install the NDK
+        run: |
+          ndk=$(sed -n 's/^android-ndk = "\(.*\)"/\1/p' apps/mobile/gradle/libs.versions.toml)
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" > /dev/null
+      - name: Build the release APK and bundle
+        working-directory: apps/mobile
+        run: >
+          ./gradlew --warning-mode=all -PreleaseBuild=true
+          :androidApp:assembleRelease :androidApp:bundleRelease
+      # Signed only when the keystore secrets exist; otherwise the files are
+      # published unsigned, with -unsigned in their names.
+      - name: Sign
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          out=apps/mobile/androidApp/build/outputs
+          apk=$out/apk/release/androidApp-release-unsigned.apk
+          aab=$out/bundle/release/androidApp-release.aab
+          mkdir -p dist
+          if [ -z "$KEYSTORE_BASE64" ]; then
+              echo "::warning::ANDROID_KEYSTORE_BASE64 not set: the APK and AAB are unsigned"
+              cp "$apk" "dist/oscyl-$VERSION-unsigned.apk"
+              cp "$aab" "dist/oscyl-$VERSION-unsigned.aab"
+              exit 0
+          fi
+          keystore=$RUNNER_TEMP/release.jks
+          base64 -d <<< "$KEYSTORE_BASE64" > "$keystore"
+          tools=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 | sort -V | tail -n 1)
+          "$tools/apksigner" sign --ks "$keystore" --ks-pass env:KEYSTORE_PASSWORD \
+              --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASSWORD --v4-signing-enabled false \
+              --out "dist/oscyl-$VERSION.apk" "$apk"
+          "$tools/apksigner" verify "dist/oscyl-$VERSION.apk"
+          cp "$aab" "dist/oscyl-$VERSION.aab"
+          jarsigner -keystore "$keystore" -storepass:env KEYSTORE_PASSWORD \
+              -keypass:env KEY_PASSWORD "dist/oscyl-$VERSION.aab" "$KEY_ALIAS"
+          rm -f "$keystore"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-android
+          path: dist/
+
+  source:
+    name: source
+    needs: guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Source tarball
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+        run: |
+          mkdir dist
+          git archive --format=tar.gz --prefix="oscyl-$VERSION/" -o "dist/oscyl-$VERSION.tar.gz" HEAD
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-source
+          path: dist/
+
+  checksums:
+    name: checksums
+    needs: [cli, flatpak, android, source]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # sign the provenance (Sigstore)
+      attestations: write # store the attestations
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - name: SHA256SUMS
+        working-directory: dist
+        run: sha256sum -- * > SHA256SUMS && cat SHA256SUMS
+      # Only tagged releases get provenance; dry runs stay unattested.
+      - if: github.event_name == 'push'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist/SHA256SUMS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: dist/
+
+  publish:
+    name: publish
+    if: github.event_name == 'push'
+    needs: [guard, checksums]
+    runs-on: ubuntu-latest
+    # Required reviewers on this environment gate the draft.
+    environment: release
+    permissions:
+      contents: write # create the draft release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: dist
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.guard.outputs.version }}
+          PRERELEASE: ${{ needs.guard.outputs.prerelease }}
+        run: |
+          scripts/release-notes.sh "$VERSION" > "$RUNNER_TEMP/notes.md"
+          # The changelog section, then GitHub's list of pull requests (.github/release.yml).
+          flags=(--draft --verify-tag --title "Oscyl $VERSION" --notes-file "$RUNNER_TEMP/notes.md" --generate-notes)
+          [ "$PRERELEASE" = true ] && flags+=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" "${flags[@]}" dist/*

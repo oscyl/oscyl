@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oscyl artwork (MIT OR Apache-2.0): rename: the pencil. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16"
+    android:autoMirrored="false">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M3 13L3.5 10.5L10.75 3.25A1.06 1.06 0 0 1 12.25 3.25L12.75 3.75A1.06 1.06 0 0 1 12.75 5.25L5.5 12.5ZM9.5 4.5L11.5 6.5" />
+</vector>

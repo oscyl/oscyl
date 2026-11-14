@@ -1,0 +1,110 @@
+/* Oscyl app components: sidebar and program list.
+ * Spacing follows the 4/8/12/16/24 scale; sizes in em scale with zoom. */
+
+/* Sources sidebar */
+.sources { padding: 4px 8px 12px; }
+.synth-status { padding: 8px 6px 14px; border-bottom: 1px solid var(--oscyl-rule); margin: 0 2px 6px; }
+.synth-status .heading { font-weight: 600; }
+.status-dot { min-width: 6px; min-height: 6px; border-radius: 999px; background: var(--oscyl-legend); }
+.status-dot.on { background: var(--oscyl-on); }
+.status-dot.busy { background: var(--oscyl-ink); }
+.synth-status button:not(.circular) { padding: 3px 12px; }
+.sidebar-heading,
+.program-section {
+  font-size: 0.846em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--oscyl-legend);
+}
+.sidebar-heading { margin: 18px 10px 6px; text-transform: uppercase; }
+.navigation-sidebar > row { min-height: 2.4em; padding: 0 10px; margin: 1px 0; }
+.navigation-sidebar > row:selected { background: var(--oscyl-raised); }
+/* The libraries tree. A row has no box of its own (it folds to nothing
+ * when its folder closes); its body is the row as seen: the hover, the
+ * plate, the drop marks. Each level indents by one faint guide line
+ * under the chevron of the folder it is in. */
+.navigation-sidebar > row.tree-row { min-height: 0; padding: 0; margin: 0; }
+.navigation-sidebar > row.tree-row,
+.navigation-sidebar > row.tree-row:hover,
+.navigation-sidebar > row.tree-row:selected { background: none; }
+.tree-body {
+  min-height: 2.4em;
+  padding: 0 10px;
+  margin: 1px 0;
+  border-radius: var(--oscyl-radius);
+  transition: background-color var(--oscyl-fast) var(--oscyl-ease),
+              box-shadow var(--oscyl-fast) var(--oscyl-ease);
+}
+.navigation-sidebar > row.tree-row:hover .tree-body { background-color: var(--oscyl-hover); }
+.tree-guide { margin-left: 17px; border-left: 1px solid var(--oscyl-rule); }
+.chevron {
+  color: var(--oscyl-legend);
+  transition: -gtk-icon-transform var(--oscyl-slow) var(--oscyl-ease);
+}
+.chevron.open { -gtk-icon-transform: rotate(90deg); }
+/* Dropping into a folder or onto a library: the body is outlined in ink.
+ * Dropping on New Library puts it last at the top level. */
+.tree-body.drop-into { box-shadow: inset 0 0 0 1px var(--oscyl-ink); }
+.navigation-sidebar > row.drop-before { box-shadow: inset 0 2px var(--oscyl-ink); }
+/* A library row: its name over the program count, or the field renaming it. */
+.library-row .tree-body { padding-top: 4px; padding-bottom: 4px; }
+.library-row .legend { letter-spacing: 0.04em; }
+.library-row entry { min-height: 0; padding: 2px 6px; }
+/* Inside a plated list the selection is drawn under the rows and slides
+ * from row to row; the row itself stays clear. */
+plated > .raised { color: var(--oscyl-raised); }
+plated > .navigation-sidebar > row:selected,
+plated > scrolledwindow .navigation-sidebar > row:selected,
+plated > .navigation-sidebar > row:selected:hover,
+plated > scrolledwindow .navigation-sidebar > row:selected:hover { background: none; }
+
+/* Program list */
+.program-list .filter-chips { padding: 0 12px 10px; border-bottom: 1px solid var(--oscyl-rule); }
+.chip:checked {
+  background: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+  box-shadow: none;
+}
+.program-list listview > row {
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+}
+/* The rule is the row content's, so it travels with a row that slides. */
+.program-row {
+  padding: 2px 24px 2px 20px;
+  min-height: 2.6em;
+  border-bottom: 1px solid color-mix(in srgb, var(--oscyl-rule) 70%, transparent);
+}
+/* In one of Oscyl's libraries a row can be picked up: its handle shows
+ * on hover. */
+.program-list .drag-handle {
+  color: var(--oscyl-legend);
+  opacity: 0;
+  transition: opacity var(--oscyl-fast) var(--oscyl-ease);
+}
+.program-list.reorderable listview > row:hover .drag-handle { opacity: 1; }
+/* Dropping onto a row swaps with it: the row is outlined in ink. */
+.program-row { transition: box-shadow var(--oscyl-fast) var(--oscyl-ease); }
+.program-row.swap-target { box-shadow: inset 0 0 0 1px var(--oscyl-ink); }
+/* The row being dragged, and under it what a drop would do. */
+.drag-icon {
+  background: var(--oscyl-raised);
+  border-radius: var(--oscyl-radius);
+  box-shadow: 0 0 0 1px var(--oscyl-rule), 0 4px 12px var(--oscyl-shadow);
+}
+.drag-legend { margin: 0 20px 8px; color: var(--oscyl-legend); }
+.program-row .program-name { font-weight: 500; }
+.program-list listview > row:selected .program-name { font-weight: 600; }
+.program-row .slot-number { font-weight: 400; min-width: 2.2em; color: var(--oscyl-legend); }
+.program-row .caption { font-size: 0.846em; }
+/* Category run headers, aligned with the program names. */
+.program-section { padding: 10px 6px 4px 3.45em; text-transform: uppercase; }
+
+
+/* Explore a Demo Library: a nameplate per synth, outlined like any button,
+ * its panel drawn small in shades of ink. */
+.pick-demo { padding: 0 18px 18px; }
+button.nameplate { padding: 10px; border-radius: var(--oscyl-radius-panel); }
+button.nameplate .nameplate-panel { color: var(--oscyl-ink); }
+button.nameplate .nameplate-model { font-weight: 600; }

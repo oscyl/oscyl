@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest something Oscyl could do, or do better.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a new synth, use "New synth request" instead. Questions are
+        welcome in Discussions.
+  - type: textarea
+    id: need
+    attributes:
+      label: What you want to do
+      description: The task, in your words, and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How Oscyl could help
+      description: Your idea, if you have one. Sketches and screenshots are welcome.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      multiple: true
+      options:
+        - Linux app
+        - Android app
+        - iOS app
+        - Command-line tool
+        - Every app
+    validations:
+      required: true

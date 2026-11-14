@@ -1,0 +1,14 @@
+# Categories for GitHub's generated release notes. The release notes proper
+# are the CHANGELOG.md section; this list is only the "Pull requests"
+# appendix the release workflow adds below it.
+changelog:
+  exclude:
+    labels: [no-changelog]
+    authors: [dependabot, "dependabot[bot]"]
+  categories:
+    - title: Drivers
+      labels: [driver]
+    - title: Fixes
+      labels: [bug]
+    - title: Other changes
+      labels: ['*']

@@ -1,0 +1,11 @@
+[package]
+name = "oscyl-driver"
+description = "Driver contract for Oscyl synth drivers, with shared SysEx helpers and the request engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+thiserror.workspace = true

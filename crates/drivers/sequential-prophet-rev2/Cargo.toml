@@ -1,0 +1,14 @@
+[package]
+name = "oscyl-prophet-rev2"
+description = "Sequential Prophet Rev2 driver for Oscyl: protocol, program model, .syx files, simulator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+oscyl-driver = { path = "../../oscyl-driver" }
+
+[dev-dependencies]
+oscyl-conformance = { path = "../../oscyl-conformance" }

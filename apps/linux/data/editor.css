@@ -1,0 +1,291 @@
+/* The editor: a plain enamel ground, sections divided by 1 px rules, no
+ * cards. Sizes in em scale with zoom. Albert Sans only for the program
+ * title; legends are small uppercase. */
+
+.editor { padding: 1.5em 2em 2em; }
+.editor-head { margin-bottom: 1.1em; }
+/* Set once on the title; its label and text inherit (em sizes set on
+ * every level would compound). */
+.editor .program-title { font-size: 2.3em; }
+.editor-body { margin-top: 1.4em; }
+
+/* The title reads as editable: a dotted underline on hover, a solid one
+ * while editing, and the pencil beside it. */
+.editor .program-title {
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--oscyl-base) var(--oscyl-ease);
+}
+.editor .program-title:hover { border-bottom: 2px dotted var(--oscyl-rule-strong); }
+.editor .program-title.editing { border-bottom: 2px solid var(--oscyl-ink); }
+.editor .rename { color: var(--oscyl-legend); min-width: 32px; min-height: 32px; }
+.editor .rename:hover { color: var(--oscyl-ink); }
+
+.stage-heading { font-size: 1.1em; font-weight: 600; }
+.section-heading {
+  font-size: 0.846em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oscyl-legend);
+}
+.editor .control-label {
+  font-size: 0.846em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oscyl-legend);
+}
+/* Sections: each group of controls is a framed panel, like the printed
+ * frames that group controls on audio equipment. The legend sits on the
+ * frame's top edge, so where a section starts and ends is never in doubt. */
+.editor .controls { margin-top: 0.75em; }
+.editor .chart-section { margin-top: 1.4em; }
+.editor .chart-section:first-child { margin-top: 0.4em; }
+.editor .section-panel {
+  border: 1px solid var(--oscyl-rule-strong);
+  border-radius: var(--oscyl-radius-panel);
+  background-image: linear-gradient(to bottom,
+    color-mix(in srgb, var(--oscyl-ink) 3%, transparent), transparent 45%);
+  padding: 1em 1.1em 1.1em;
+}
+
+/* A selector's way back, like a dial's: while edited, an action dot by
+ * the legend and a "was" line under the control (undo icon and the saved
+ * value, in the action colour); clicking the line restores it. The control
+ * keeps the line's space and the dot's, so neither moves the layout. */
+.revertable { margin-bottom: calc(1.45em + 6px); }
+.control-head .edited-dot { transition: opacity var(--oscyl-base) var(--oscyl-ease); }
+.control-head .edited-dot.unlit { opacity: 0; }
+button.revert-one {
+  min-width: 0;
+  min-height: 0;
+  padding: 1px 5px;
+  margin: 0 0 0 -5px;
+  color: var(--oscyl-act);
+  font-size: 0.85em;
+  font-weight: 500;
+  -gtk-icon-size: 11px;
+}
+button.revert-one:hover { color: var(--oscyl-ink); background: var(--oscyl-hover); }
+
+/* The selected stage's large graph, in its own 1 px frame. */
+graph.stage-graph {
+  min-height: 12em;
+  margin: 0.4em 0 0.6em;
+  border-radius: var(--oscyl-radius-panel);
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule);
+}
+.editor.short graph.stage-graph { min-height: 6em; }
+
+/* Changes: an uppercase legend and a ruled list on the ground. */
+/* Compare: the saved-version plate beside the title, shown only while
+ * Compare is held. */
+.compare-tag {
+  margin-left: 0.6em;
+  padding: 2px 9px;
+  border-radius: var(--oscyl-radius);
+  background: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity var(--oscyl-base) var(--oscyl-ease);
+}
+.comparing .compare-tag { opacity: 1; }
+
+/* The docked scope: raised enamel hanging from the top edge while the
+ * stage graph is scrolled away; the same live shape, small. */
+dock > .dock-card {
+  margin: 0 2em;
+  padding: 6px 10px 8px 6px;
+  border-radius: 0 0 14px 14px;
+  background: var(--oscyl-raised);
+  box-shadow: 0 1px 0 var(--oscyl-rule-strong), 0 8px 24px var(--oscyl-shadow);
+}
+dock button.dock-back { padding: 2px 12px; border-radius: 10px; }
+dock button.dock-back:hover { background: var(--oscyl-hover); }
+/* The stage switcher: the stages' live drawings in a selector, the
+ * chosen one the lifted plate; an orange dot on edited stages. */
+toggle-group.dock-stages > toggle { padding: 5px 7px; }
+toggle-group.dock-stages > toggle:checked { color: var(--oscyl-on-plate); }
+graph.dock-stage-graph { min-height: 1.4em; color: var(--oscyl-legend); transition: color var(--oscyl-base) var(--oscyl-ease); }
+toggle-group.dock-stages > toggle:hover graph.dock-stage-graph { color: var(--oscyl-ink); }
+toggle-group.dock-stages > toggle:checked graph.dock-stage-graph { color: var(--oscyl-on-plate); }
+.dock-stages .edit-tick { min-width: 5px; min-height: 5px; margin: 1px; transition: opacity var(--oscyl-base) var(--oscyl-ease); }
+.dock-stages .edit-tick.unlit { opacity: 0; }
+.dock-title { font-weight: 600; }
+graph.dock-graph { min-height: 4.2em; }
+
+/* The review bar: raised enamel at the editor's foot, top corners
+ * rounded, lifted by a shadow; it opens into the sheet of changes. The
+ * page keeps room for it. */
+.editor { padding-bottom: 4.5em; }
+.review {
+  background: var(--oscyl-raised);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -1px 0 var(--oscyl-rule-strong), 0 -8px 28px var(--oscyl-shadow);
+}
+.review-bar { min-height: 48px; padding: 0 12px 0 24px; }
+.review-count { font-weight: 600; }
+button.review-chip { color: var(--oscyl-legend); font-weight: 500; padding: 2px 8px; min-height: 0; }
+/* Chips that run past the bar fade at the edge they continue from. */
+scrolledwindow.review-chips > undershoot.left {
+  background-image: linear-gradient(to right, var(--oscyl-raised), transparent 2.5em);
+  box-shadow: none;
+}
+scrolledwindow.review-chips > undershoot.right {
+  background-image: linear-gradient(to left, var(--oscyl-raised), transparent 2.5em);
+  box-shadow: none;
+}
+button.review-chip:hover { color: var(--oscyl-ink); }
+button.review-toggle > image { transition: -gtk-icon-transform var(--oscyl-slow) var(--oscyl-ease); }
+button.review-toggle:checked { background: none; }
+button.review-toggle:checked > image { -gtk-icon-transform: rotate(180deg); }
+.review-groups { padding: 4px 24px 18px; border-top: 1px solid var(--oscyl-rule); }
+.review-legend { margin: 12px 0 2px; text-transform: uppercase; }
+list.review-list { background: none; }
+list.review-list > row { border-radius: 0; border-bottom: 1px solid var(--oscyl-rule); min-height: 44px; }
+list.review-list > row .edit-tick { margin-right: 0.35em; }
+
+/* Narrow editor (phones, split screens). */
+.editor.narrow { padding: 1em 1em 1.25em; }
+.editor.narrow .program-title { font-size: 1.6em; }
+
+/* Header bar: the primary action. Clean: a quiet "Synced" with a check.
+ * Edited: the control plate with the count in the action colour. */
+#primary-action { padding-left: 10px; padding-right: 6px; }
+#primary-action.flat { padding-right: 10px; }
+#primary-action:disabled { opacity: 1; filter: none; }
+#primary-action:disabled label,
+#primary-action:disabled image { color: var(--oscyl-legend); opacity: 1; }
+#primary-action .edit-count {
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0 4px;
+  border-radius: var(--oscyl-radius);
+  background: var(--oscyl-act);
+  color: var(--oscyl-on-act);
+  font-size: 0.846em;
+  font-weight: 700;
+}
+
+
+/* Stage change: the controls rise into place, short and firm. */
+@keyframes stage-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.controls.enter { animation: stage-in var(--oscyl-base) var(--oscyl-ease); }
+/* A page settles up into place as the stack crossfades to it. */
+@keyframes page-in {
+  from { transform: translateY(10px); }
+  to { transform: none; }
+}
+.page-enter { animation: page-in var(--oscyl-slow) var(--oscyl-ease); }
+
+/* Generate: the editor's enamel page. Characters and sounds are tiles
+ * inset in a framed grid, like the stage tabs; the selected tile is the
+ * plate, drawn by the grid and sliding between tiles. */
+.generator .gen-title { font-size: 1.6em; font-weight: 600; letter-spacing: -0.01em; }
+.generator .gen-intro { margin: 0.25em 0 0.4em; }
+.generator > .section-heading,
+.generator .gen-sounds-head { margin: 1.5em 0 0.6em; }
+.generator .gen-sounds-head .section-heading { margin: 0; }
+.generator .gen-sounds-head button { min-width: 32px; min-height: 32px; margin: -6px 0; }
+.gen-frame {
+  border: 1px solid var(--oscyl-rule-strong);
+  border-radius: var(--oscyl-radius-panel);
+  padding: 3px;
+}
+plated > .plate { color: var(--oscyl-plate); }
+plated > flowbox { background: none; }
+plated > flowbox > flowboxchild {
+  padding: 0.6em 0.7em 0.55em;
+  margin: 0;
+  border-radius: var(--oscyl-radius);
+  color: var(--oscyl-legend);
+  outline-offset: -2px;
+  transition: background-color var(--oscyl-base) var(--oscyl-ease),
+              color var(--oscyl-slow) var(--oscyl-ease);
+}
+plated > flowbox > flowboxchild:hover { background: var(--oscyl-hover); }
+plated > flowbox > flowboxchild:active { background: var(--oscyl-press); }
+plated > flowbox > flowboxchild:selected,
+plated > flowbox > flowboxchild:selected:hover {
+  background: none;
+  color: var(--oscyl-plate-legend);
+}
+.gen-tile .tile-title {
+  font-weight: 600;
+  color: var(--oscyl-ink);
+  transition: color var(--oscyl-slow) var(--oscyl-ease);
+}
+flowboxchild:selected .gen-tile .tile-title { color: var(--oscyl-on-plate); }
+.gen-tile graph.mini { margin: 0.25em 0 0.35em; color: currentColor; }
+flowboxchild:selected .gen-tile graph.mini { color: var(--oscyl-on-plate); }
+.gen-tile .tile-hint { font-size: 0.846em; }
+.gen-tile .tile-legend {
+  font-size: 0.846em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 0.1em;
+}
+.gen-tile .gen-band { margin-top: 0.35em; }
+.gen-tile .gen-band graph.mini { margin: 0; }
+.gen-empty { padding: 2.4em 1em; }
+.generator .gen-dials { padding: 0.7em 1em 0; }
+.gen-go .gen-generate { min-height: 2.6em; padding: 0 1.8em; font-weight: 600; }
+.generator .gen-keep-caption { margin-top: 0.5em; }
+.generator .gen-actions { margin-top: 0.75em; }
+list.gen-breed-list { background: none; }
+list.gen-breed-list > row { padding: 6px 10px; border-radius: var(--oscyl-radius); }
+
+/* A new hand deals in: each sound rises into place, 30 ms after the one
+ * before (the system's or Oscyl's reduced-motion setting turns it off). */
+@keyframes deal-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+plated > flowbox > flowboxchild.deal {
+  animation: deal-in var(--oscyl-fast) var(--oscyl-ease) backwards;
+}
+plated > flowbox > flowboxchild.deal-1 { animation-delay: 30ms; }
+plated > flowbox > flowboxchild.deal-2 { animation-delay: 60ms; }
+plated > flowbox > flowboxchild.deal-3 { animation-delay: 90ms; }
+plated > flowbox > flowboxchild.deal-4 { animation-delay: 120ms; }
+plated > flowbox > flowboxchild.deal-5 { animation-delay: 150ms; }
+
+/* The History popover: snapshots A, B, C (empty a rule outline, stored the
+ * plate), then the steps newest first; an ink index line marks where the
+ * document stands, steps undone wait in the legend colour. */
+.history-body { padding: 8px 6px; min-width: 22em; }
+.history-body > .section-heading { margin: 4px 6px 0; }
+.snapshots { margin: 0 6px 6px; }
+.snapshot-plate {
+  min-width: 40px;
+  min-height: 32px;
+  border-radius: var(--oscyl-radius);
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule);
+  color: var(--oscyl-legend);
+  font-weight: 600;
+}
+.snapshot-plate.stored {
+  box-shadow: 0 1px 3px var(--oscyl-shadow);
+  background: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+}
+list.history { background: none; }
+list.history > row { padding: 6px 6px; border-radius: var(--oscyl-radius); }
+list.history > row.undone label { color: var(--oscyl-legend); }
+.history-mark {
+  min-width: 2px;
+  min-height: 1.2em;
+  border-radius: 1px;
+  background: var(--oscyl-ink);
+}
+
+/* The Perform page: the editor's margins, the pad at the start and the
+ * knobs two by two beside it (under it when narrow). */
+.perform { padding: 1.5em 2em 2em; }
+.perform .program-title { font-size: 1.6em; }
+.perform-knobs dial { min-width: 7em; }

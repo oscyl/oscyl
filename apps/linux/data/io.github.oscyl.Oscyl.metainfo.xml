@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.oscyl.Oscyl</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT OR Apache-2.0</project_license>
+
+  <name>Oscyl</name>
+  <summary>Library, sound editor and sync for the minilogue xd</summary>
+  <description>
+    <p>
+      Oscyl manages the programs of a KORG minilogue xd synthesiser. Browse,
+      organise and edit libraries offline, with no synth attached; every
+      parameter has its own control. With the synth connected over USB, you
+      can audition edits live before storing them.
+    </p>
+    <p>
+      Sync writes only the programs that changed, and before it writes Oscyl
+      shows exactly which slots will change. A built-in simulated synth lets
+      you try sync and audition without hardware. Oscyl is an independent
+      open-source project and is not affiliated with or endorsed by KORG.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.oscyl.Oscyl.desktop</launchable>
+  <provides>
+    <binary>oscyl-gtk</binary>
+  </provides>
+
+  <developer id="io.github.oscyl">
+    <name>Oscyl contributors</name>
+  </developer>
+
+  <url type="homepage">https://github.com/oscyl</url>
+
+  <content_rating type="oars-1.1"/>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </supports>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#F4F5F7</color>
+    <color type="primary" scheme_preference="dark">#14161A</color>
+  </branding>
+
+  <!-- TODO: add <screenshots> once the UI is stable (light and dark, 16:9). -->
+
+  <releases>
+    <release version="0.4.0" date="2026-11-13" type="development">
+      <description>
+        <p>Android app, an iOS app ready for its first build, and two more synths: the KORG prologue and the Sequential Prophet Rev2. Several synths at once, Generate, and safer libraries in Oscyl's own format.</p>
+      </description>
+    </release>
+    <release version="0.3.0" date="2026-11-11" type="development">
+      <description>
+        <p>Redesigned editor: one chart band with a single signal line through six stages, live graphs you can drag, and a backup of the slots a sync replaces.</p>
+      </description>
+    </release>
+    <release version="0.2.0" date="2026-11-11" type="development">
+      <description>
+        <p>Development snapshot of the GNOME app (library manager, sound editor and sync), with an app icon, desktop entry and Flatpak manifest.</p>
+      </description>
+    </release>
+  </releases>
+</component>

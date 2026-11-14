@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Redrawn from apps/linux/data/icons/scalable/actions/oscyl-envelope-symbolic.svg (Oscyl artwork, MIT OR Apache-2.0). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <path android:fillColor="#FF000000" android:pathData="M1.03 13.04L4.03 2.54Q4.13 2.18 4.36 2.05Q4.6 1.93 4.96 2.03Q5.27 2.12 5.41 2.4L8.2 7.75L11 7.75Q11.4 7.75 11.62 8.08L14.87 12.83Q15.29 13.45 14.67 13.87Q14.05 14.29 13.63 13.67L10.6 9.25L7.75 9.25Q7.3 9.25 7.09 8.85L4.95 4.76L2.47 13.46Q2.27 14.18 1.54 13.97Q1.18 13.87 1.05 13.64Q0.93 13.4 1.03 13.04Z" />
+</vector>

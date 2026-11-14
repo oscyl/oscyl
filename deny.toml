@@ -1,0 +1,39 @@
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = [
+    # basic-toml (unmaintained) reaches us only through uniffi-bindgen's
+    # templates (feature `cli` of oscyl-ffi, a host build tool, never in the
+    # shipped library). uniffi is pinned to =0.32.0 for the Kotlin
+    # Multiplatform plugin, so no upgrade drops it.
+    { id = "RUSTSEC-2026-0374", reason = "build-time only, via uniffi_bindgen" },
+]
+
+[licenses]
+version = 2
+# Licences used by the current dependency tree. Add one only after checking
+# it is compatible with MIT OR Apache-2.0 distribution.
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "ISC",
+    "MIT",
+    # uniffi (file-level copyleft; used unmodified, compatible with MIT OR
+    # Apache-2.0 distribution of Oscyl).
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Zlib",
+]
+
+[bans]
+multiple-versions = "allow"
+# Workspace crates depend on each other by path without a version. Tighten
+# to "deny" once crates are published to crates.io.
+wildcards = "allow"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

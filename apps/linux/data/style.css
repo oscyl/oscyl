@@ -1,0 +1,331 @@
+/* Oscyl global styles: Ulm Hi-Fi.
+ *
+ * The colour, shape and motion tokens (--oscyl-*) are generated from the
+ * shared design/tokens.json into tokens-light.css (base), tokens-dark.css
+ * and tokens-amoled.css (layered on top). This sheet maps them onto
+ * libadwaita's named colours, so every stock widget follows the world, and
+ * restyles the stock controls in its language: anthracite or light-grey
+ * enamel, 1 px rules, 2 px corners, and colour only for a function.
+ */
+
+:root {
+  --accent-bg-color: var(--oscyl-plate);
+  --accent-fg-color: var(--oscyl-on-plate);
+  --accent-color: var(--oscyl-ink);
+  --window-bg-color: var(--oscyl-ground);
+  --window-fg-color: var(--oscyl-ink);
+  --view-bg-color: var(--oscyl-list);
+  --view-fg-color: var(--oscyl-ink);
+  --headerbar-bg-color: var(--oscyl-ground);
+  --headerbar-fg-color: var(--oscyl-ink);
+  --headerbar-border-color: var(--oscyl-rule);
+  --headerbar-shade-color: transparent;
+  /* libadwaita repaints the header and sidebars in their own "window in
+   * the background" greys; the enamel stays the same, focused or not. */
+  --headerbar-backdrop-color: var(--oscyl-ground);
+  --sidebar-bg-color: var(--oscyl-sidebar);
+  --sidebar-fg-color: var(--oscyl-ink);
+  --sidebar-border-color: var(--oscyl-rule);
+  --sidebar-backdrop-color: var(--oscyl-sidebar);
+  --secondary-sidebar-bg-color: var(--oscyl-list);
+  --secondary-sidebar-fg-color: var(--oscyl-ink);
+  --secondary-sidebar-border-color: var(--oscyl-rule);
+  --secondary-sidebar-backdrop-color: var(--oscyl-list);
+  --card-bg-color: var(--oscyl-raised);
+  --card-fg-color: var(--oscyl-ink);
+  --popover-bg-color: var(--oscyl-raised);
+  --popover-fg-color: var(--oscyl-ink);
+  --dialog-bg-color: var(--oscyl-ground);
+  --dialog-fg-color: var(--oscyl-ink);
+  --thumbnail-bg-color: var(--oscyl-raised);
+  --destructive-bg-color: var(--oscyl-ink);
+  --destructive-fg-color: var(--oscyl-ground);
+  --destructive-color: var(--oscyl-ink);
+  --success-bg-color: var(--oscyl-on);
+  --success-color: var(--oscyl-on);
+  --warning-color: var(--oscyl-act);
+  --border-color: var(--oscyl-rule);
+  --window-radius: 8px;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --oscyl-rule: var(--oscyl-rule-strong);
+    --oscyl-legend: var(--oscyl-ink);
+  }
+}
+
+/* Display face: program titles only. Everything else keeps the desktop's
+ * UI font, which renders crisply at small sizes. */
+.display {
+  font-family: "Albert Sans", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Legends: the small printed labels of the world. */
+.legend {
+  font-size: 0.846em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--oscyl-legend);
+}
+
+/* Values, slot numbers and anything that changes while you watch. */
+.numeric, .slot-number {
+  font-feature-settings: "tnum";
+}
+
+.dim-label, .caption-secondary {
+  color: var(--oscyl-legend);
+  opacity: 1;
+}
+
+/* Focus: always visible, 2 px, never coloured. */
+*:focus-visible {
+  outline-color: var(--oscyl-focus);
+}
+
+selection {
+  background-color: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+}
+
+/* Function lamps and marks. Colour always pairs with a shape and a word. */
+.lamp {
+  min-width: 6px;
+  min-height: 6px;
+  border-radius: 999px;
+  background: var(--oscyl-legend);
+}
+.lamp.on { background: var(--oscyl-on); }
+.lamp.act, .edited-dot {
+  min-width: 6px;
+  min-height: 6px;
+  border-radius: 999px;
+  background: var(--oscyl-act);
+}
+.edited { color: var(--oscyl-act); }
+.saved { color: var(--oscyl-on); }
+
+/* ---------- Stock controls in the Ulm language ---------- */
+
+button,
+menubutton > button,
+dropdown > button,
+splitbutton > button,
+splitbutton > menubutton > button {
+  border-radius: var(--oscyl-radius);
+  transition: background-color var(--oscyl-fast) var(--oscyl-ease),
+              box-shadow var(--oscyl-fast) var(--oscyl-ease),
+              color var(--oscyl-fast) var(--oscyl-ease);
+}
+
+/* Standalone buttons are outlined, never filled grey. */
+button:not(.flat):not(.suggested-action):not(.destructive-action):not(.circular):not(.image-button):not(.stage-col),
+dropdown > button,
+menubutton.outlined > button {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong);
+}
+button:hover:not(.suggested-action):not(.destructive-action):not(.stage-col),
+dropdown > button:hover {
+  background-color: var(--oscyl-hover);
+}
+button:active:not(.suggested-action):not(.destructive-action):not(.stage-col),
+button:checked:not(.suggested-action):not(.stage-col):not(.toggle-plate),
+dropdown > button:active {
+  background-color: var(--oscyl-press);
+}
+headerbar button.outlined { box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong); }
+headerbar button.audition:checked { background: var(--oscyl-press); }
+/* The audition lamp: a ring while off, lit green while auditioning. */
+button.audition .lamp {
+  min-width: 7px;
+  min-height: 7px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--oscyl-legend);
+  transition: background-color var(--oscyl-base) var(--oscyl-ease),
+              box-shadow var(--oscyl-base) var(--oscyl-ease);
+}
+button.audition:checked .lamp {
+  background: var(--oscyl-on);
+  box-shadow: inset 0 0 0 1px var(--oscyl-on);
+}
+/* Against the simulated synth there is nothing to hear: the lamp stays a
+ * ring even when audition is on. */
+button.audition.silent .lamp {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--oscyl-legend);
+}
+button.audition label { font-weight: 500; }
+/* Compare: held, it is the pressed control; the whole editor marks the
+ * moment with a quiet legend instead of colour. */
+headerbar button.compare.held { background: var(--oscyl-press); }
+button.compare label { font-weight: 500; }
+/* The blend along the held Compare button's foot: an ink line, as far
+   toward the edit as the drag has gone. */
+button.compare progressbar.blend { margin: 0 -6px -4px; }
+button.compare progressbar.blend trough,
+button.compare progressbar.blend progress { min-height: 2px; border-radius: 1px; }
+button.compare progressbar.blend trough { background: var(--oscyl-rule); }
+button.compare progressbar.blend progress { background: var(--oscyl-ink); }
+headerbar button:not(.suggested-action):not(.outlined),
+.toolbar button:not(.suggested-action):not(.outlined) {
+  box-shadow: none;
+}
+
+/* The primary action is the light-grey control plate (dark mode) or the
+ * anthracite plate (light mode). */
+button.suggested-action {
+  background: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+  box-shadow: none;
+  font-weight: 600;
+}
+button.suggested-action:hover {
+  background: color-mix(in srgb, var(--oscyl-plate) 88%, var(--oscyl-ink));
+}
+button.suggested-action:active {
+  background: color-mix(in srgb, var(--oscyl-plate) 78%, var(--oscyl-ink));
+}
+/* Destructive actions are outlined in ink; orange only means "needs
+ * action", never "danger". */
+button.destructive-action {
+  background: none;
+  color: var(--oscyl-ink);
+  box-shadow: inset 0 0 0 1px var(--oscyl-ink);
+}
+button.destructive-action:hover { background: var(--oscyl-hover); }
+
+button.pill {
+  border-radius: var(--oscyl-radius);
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Text fields: outlined, no fill. */
+entry,
+searchbar > revealer > box > entry,
+spinbutton,
+searchentry {
+  border-radius: var(--oscyl-radius);
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong);
+}
+/* Inside list rows (preferences), fields and spin buttons stay flat, as
+ * libadwaita draws them: the row is the frame. */
+row entry, row spinbutton, row searchentry {
+  background: none;
+  box-shadow: none;
+}
+row spinbutton:focus-within { box-shadow: none; }
+entry:focus-within,
+searchentry:focus-within,
+spinbutton:focus-within {
+  box-shadow: inset 0 0 0 1px var(--oscyl-ink);
+  outline: none;
+}
+
+/* Selectors: segments inside a 1 px outline; the chosen one is the
+ * plate, inset with its own smaller corners. */
+toggle-group {
+  border-radius: var(--oscyl-radius);
+  padding: 2px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong);
+  border-spacing: 2px;
+}
+toggle-group > toggle {
+  border-radius: var(--oscyl-radius-inner);
+  padding: 4px 11px;
+  margin: 0;
+  color: var(--oscyl-legend);
+  font-weight: 500;
+  transition: background-color var(--oscyl-base) var(--oscyl-ease),
+              color var(--oscyl-base) var(--oscyl-ease);
+}
+toggle-group > toggle:hover { background: var(--oscyl-hover); color: var(--oscyl-ink); }
+toggle-group > toggle:checked {
+  background: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+  font-weight: 600;
+}
+toggle-group > separator { background: none; min-width: 0; }
+/* Inside a track the plate is drawn by the track and slides between
+ * options; the toggle only changes its text colour. */
+segmenttrack > .plate { color: var(--oscyl-plate); }
+segmenttrack > .act { color: var(--oscyl-act); }
+toggle-group.tracked > toggle:checked { background: none; }
+toggle-group.tracked > toggle:checked:hover { background: none; }
+
+/* Switches: achromatic; "on" is the ink track, not a colour. The track
+ * always carries an outline, so it reads on any row, hovered or not. */
+switch {
+  border-radius: 999px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong);
+}
+switch:checked { background: var(--oscyl-ink); box-shadow: none; }
+switch > slider {
+  border-radius: 999px;
+  background: var(--oscyl-legend);
+  box-shadow: none;
+  margin: 3px;
+}
+switch:checked > slider { background: var(--oscyl-ground); }
+
+/* Progress: a thin ink line on a rule. */
+progressbar > trough { background: var(--oscyl-rule); border-radius: 1px; min-height: 2px; }
+progressbar > trough > progress { background: var(--oscyl-ink); border-radius: 1px; min-height: 2px; }
+
+/* Lists and rows. */
+list, listview { background: none; }
+row, listview > row {
+  border-radius: var(--oscyl-radius);
+  transition: background-color var(--oscyl-fast) var(--oscyl-ease);
+}
+row:hover, listview > row:hover { background-color: var(--oscyl-hover); }
+row:selected, listview > row:selected,
+.navigation-sidebar > row:selected {
+  background-color: var(--oscyl-raised);
+  color: var(--oscyl-ink);
+}
+.boxed-list, list.boxed-list, .card {
+  border-radius: var(--oscyl-radius-panel);
+  background: var(--oscyl-raised);
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule);
+}
+.boxed-list > row { border-radius: 0; }
+
+/* Popovers, dialogs, toasts: plain enamel with a rule, small corners. */
+popover > contents {
+  border-radius: var(--oscyl-radius);
+  box-shadow: 0 0 0 1px var(--oscyl-rule), 0 4px 12px var(--oscyl-shadow);
+}
+popover > arrow { background: var(--oscyl-raised); border-color: var(--oscyl-rule); }
+toast {
+  border-radius: var(--oscyl-radius);
+  background: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+}
+dialog.floating sheet, floating-sheet > sheet {
+  border-radius: 6px;
+}
+
+/* Scrollbars: thin graphite rule. */
+scrollbar slider {
+  border-radius: 1px;
+  background-color: var(--oscyl-rule-strong);
+  min-width: 4px;
+  min-height: 4px;
+}
+scrollbar.hovering slider { min-width: 6px; min-height: 6px; }
+
+/* Tooltips: the plate. */
+tooltip, tooltip.background {
+  border-radius: var(--oscyl-radius);
+  background: var(--oscyl-plate);
+  color: var(--oscyl-on-plate);
+}
+tooltip > box { padding: 2px 4px; }

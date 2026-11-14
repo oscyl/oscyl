@@ -1,0 +1,75 @@
+name: Bug report
+description: Something in Oscyl does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems go through private vulnerability reporting instead
+        (see SECURITY.md). Please do not attach vendor firmware, factory
+        presets or files you did not author.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Oscyl version or commit
+    validations:
+      required: true
+  - type: dropdown
+    id: frontend
+    attributes:
+      label: Where
+      options:
+        - Linux app (oscyl-gtk)
+        - Android app
+        - iOS app
+        - Command-line tool (oscyl)
+        - Library crate
+    validations:
+      required: true
+  - type: dropdown
+    id: synth
+    attributes:
+      label: Synth
+      options:
+        - KORG minilogue xd
+        - KORG prologue
+        - Sequential Prophet Rev2
+        - The simulated synth
+        - No synth involved
+        - Another synth
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Synth firmware version
+      description: Shown on the Synth page, or by `oscyl info`.
+      placeholder: "2.10"
+  - type: input
+    id: os
+    attributes:
+      label: Platform
+      description: The operating system and its version (and, on Linux, the distribution; on a phone, the model).
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or output
+      render: text
