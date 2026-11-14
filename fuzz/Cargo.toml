@@ -1,0 +1,40 @@
+[package]
+name = "oscyl-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+oscyl-core = { path = "../crates/oscyl-core" }
+oscyl-korg-prologue = { path = "../crates/drivers/korg-prologue" }
+oscyl-minilogue-xd = { path = "../crates/drivers/korg-minilogue-xd" }
+oscyl-prophet-rev2 = { path = "../crates/drivers/sequential-prophet-rev2" }
+
+# Built with cargo-fuzz on nightly, so it stays out of the main workspace.
+[workspace]
+
+[[bin]]
+name = "sysex"
+path = "fuzz_targets/sysex.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "program"
+path = "fuzz_targets/program.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "files"
+path = "fuzz_targets/files.rs"
+test = false
+doc = false
+bench = false

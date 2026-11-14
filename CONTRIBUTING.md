@@ -117,6 +117,17 @@ Other scripted states are listed at `run_demo` in
   content scraped from third-party sites. Test fixtures must be synthetic
   or written by you.
 
+## Fuzzing
+
+The parsers that read synth replies and files are fuzzed (`fuzz/`, with
+[cargo-fuzz](https://github.com/rust-fuzz/cargo-fuzz) on nightly Rust):
+
+```sh
+cd fuzz && cargo +nightly fuzz run sysex    # or: program, files
+```
+
+A new parser gets a target, or a line in one.
+
 ## Add a synth
 
 Read the [driver guide](docs/drivers.md). It covers the contract, the

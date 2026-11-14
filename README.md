@@ -150,12 +150,6 @@ Oscyl wants three kinds of help most:
 and [GOVERNANCE.md](GOVERNANCE.md) covers roles, decisions and RFCs. Report
 security problems as described in [SECURITY.md](SECURITY.md).
 
-If Oscyl is useful to you, a star helps other synth owners find it.
-
-<a href="https://github.com/oscyl/oscyl/stargazers"><img src="https://reporoster.com/stars/dark/oscyl/oscyl" alt="People who starred Oscyl"></a>
-
-<a href="https://github.com/oscyl/oscyl/graphs/contributors"><img src="https://contrib.rocks/image?repo=oscyl/oscyl" alt="Contributors to Oscyl"></a>
-
 ## Trademarks
 
 Oscyl is an independent project. It is not affiliated with, endorsed by or
@@ -168,3 +162,19 @@ owner. This repository contains no vendor firmware, presets or software.
 Code: [Apache License 2.0](LICENSE-APACHE) or [MIT licence](LICENSE-MIT), at
 your option. The bundled Albert Sans font is under the SIL Open Font License
 1.1.
+
+---
+
+<div align="center">
+
+If Oscyl is useful to you, a star helps other synth owners find it.
+
+[![Star Oscyl on GitHub](https://img.shields.io/github/stars/oscyl/oscyl?style=social)](https://github.com/oscyl/oscyl/stargazers)
+[![Fork Oscyl](https://img.shields.io/github/forks/oscyl/oscyl?style=social)](https://github.com/oscyl/oscyl/fork)
+[![Watch Oscyl](https://img.shields.io/github/watchers/oscyl/oscyl?style=social)](https://github.com/oscyl/oscyl/subscription)
+
+<a href="https://github.com/oscyl/oscyl/stargazers"><img src="https://api.star-history.com/svg?repos=oscyl/oscyl&type=Date" width="560" alt="Oscyl's stars over time"></a>
+
+<a href="https://github.com/oscyl/oscyl/graphs/contributors"><img src="https://contrib.rocks/image?repo=oscyl/oscyl" alt="Contributors to Oscyl"></a>
+
+</div>

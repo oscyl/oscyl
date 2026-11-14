@@ -3,15 +3,27 @@
 ## Reporting a vulnerability
 
 Please report security problems privately, through GitHub's private
-vulnerability reporting: open the repository's **Security** tab and choose
-**Report a vulnerability**. Do not open a public issue for a security problem.
+vulnerability reporting:
+<https://github.com/oscyl/oscyl/security/advisories/new> (the repository's
+**Security** tab, **Report a vulnerability**). Do not open a public issue
+for a security problem.
 
 Include what you found, how to reproduce it (a synthetic input file or MIDI
 message sequence is ideal), and what you think the impact is. A maintainer
 will acknowledge the report, work on a fix with you, and credit you in the
 release notes unless you prefer otherwise.
 
-Oscyl is pre-release; fixes land on `main` and in the next release.
+What to expect:
+
+- an acknowledgement within 7 days;
+- an assessment and a plan within 30 days;
+- coordinated disclosure: we publish the advisory when a fix is released,
+  and no later than 90 days after your report unless we agree otherwise.
+
+## Supported versions
+
+Oscyl is pre-release; fixes land on `main` and in the next release. Once
+releases exist, the latest one gets security fixes.
 
 ## Scope
 
