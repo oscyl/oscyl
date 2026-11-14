@@ -30,7 +30,10 @@ picture, and writes back only the slots you changed, after backing them up.
 It works with the synth unplugged too: open a library file, edit it, sync
 later.
 
-**Status:** pre-alpha. No release yet, so today you build it from source.
+**Status:** pre-alpha. Early builds are on the
+[Releases](https://github.com/oscyl/oscyl/releases) page: the Linux Flatpak,
+the Android APK and the `oscyl` command-line tool for Linux, macOS and
+Windows.
 
 ## See it move
 

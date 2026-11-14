@@ -6,6 +6,7 @@ on:
     paths: ['apps/mobile/**', 'crates/**', 'Cargo.*', 'design/**', '.github/workflows/android.yml']
   pull_request:
     paths: ['apps/mobile/**', 'crates/**', 'Cargo.*', 'design/**', '.github/workflows/android.yml']
+  workflow_dispatch:
 
 permissions: {}
 

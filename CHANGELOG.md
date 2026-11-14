@@ -6,19 +6,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-- **The `oscyl` command-line tool builds on macOS and Windows** (CoreMIDI
-  and WinMM through `midir`). CI tests it there, and a release publishes
-  it for both. It has not yet run with a synth on either; testers are
-  welcome. The GNOME app stays Linux only.
-
-## [0.4.0] - 2026-11-13
+## [0.4.0] - 2026-11-14
 
 Oscyl now runs on Android, with an iOS app ready for its first Mac build,
 and supports two more synths: the KORG prologue and the Sequential Prophet
 Rev2.
 
 ### Added
+- **The `oscyl` command-line tool builds on macOS and Windows** (CoreMIDI
+  and WinMM through `midir`). CI tests it there, and a release publishes
+  it for both. It has not yet run with a synth on either; testers are
+  welcome. The GNOME app stays Linux only.
 - **The Android app** (Compose Multiplatform, `apps/mobile`). It does what
   the desktop app does, on phones, foldables and tablets. It has been tested
   on the emulator with the simulated synth, but not yet with a synth on a
@@ -189,7 +187,4 @@ Rev2.
   leaves the synth answering every request with the previous request's data.
 
 [Unreleased]: https://github.com/oscyl/oscyl/compare/v0.4.0...HEAD
-[0.4.0]: https://github.com/oscyl/oscyl/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/oscyl/oscyl/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/oscyl/oscyl/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/oscyl/oscyl/releases/tag/v0.1.0
+[0.4.0]: https://github.com/oscyl/oscyl/releases/tag/v0.4.0
