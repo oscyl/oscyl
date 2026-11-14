@@ -31,9 +31,10 @@ It works with the synth unplugged too: open a library file, edit it, sync
 later.
 
 **Status:** pre-alpha. Early builds are on the
-[Releases](https://github.com/oscyl/oscyl/releases) page: the Linux Flatpak,
-the Android APK and the `oscyl` command-line tool for Linux, macOS and
-Windows.
+[Releases](https://github.com/oscyl/oscyl/releases) page: the Linux Flatpak
+and the `oscyl` command-line tool for Linux, macOS and Windows. The Android
+build there is not signed yet, so for a phone
+[build it from source](docs/building.md#android).
 
 ## See it move
 
