@@ -39,9 +39,10 @@ const val UniffiSource = "https://github.com/mozilla/uniffi-rs"
 /**
  * Every notice, sorted and unique: the Rust crates ([rustJson], from
  * `scripts/licences.sh`), the Kotlin and Android libraries ([kotlinJson], from the
- * AboutLibraries Gradle plugin's export), UniFFI's MPL-2.0 notice and the Albert Sans font.
+ * AboutLibraries Gradle plugin's export), UniFFI's MPL-2.0 notice, the Albert Sans font and
+ * KORG's logue SDK (in the oscillator engine unit Oscyl loads into synths).
  */
-fun notices(rustJson: String, kotlinJson: String, albertSansLicence: String): List<Notice> {
+fun notices(rustJson: String, kotlinJson: String, albertSansLicence: String, logueSdkLicence: String): List<Notice> {
     val rust = Json.parseToJsonElement(rustJson).jsonObject
     val texts = rust.getValue("licences").jsonArray.map { it.jsonObject }
     val crates = rust.getValue("crates").jsonArray.map { element ->
@@ -75,6 +76,7 @@ fun notices(rustJson: String, kotlinJson: String, albertSansLicence: String): Li
     val own = listOf(
         Notice("UniFFI", "UniFFI", version = null, licence = "MPL-2.0", url = UniffiSource, texts = listOf(mpl)),
         Notice("Albert Sans", "Albert Sans", version = null, licence = "OFL-1.1", url = "https://github.com/usted/Albert-Sans", texts = listOf(albertSansLicence)),
+        Notice("logue SDK", "logue SDK", version = null, licence = "BSD-3-Clause", url = "https://github.com/korginc/logue-sdk", texts = listOf(logueSdkLicence)),
     )
     return (own + crates + libraries).distinctBy { it.id to it.version }.sortedWith(NoticeOrder)
 }
@@ -89,6 +91,7 @@ suspend fun loadNotices(): List<Notice> = noticesLock.withLock {
             rustJson = Res.readBytes("files/licences/rust.json").decodeToString(),
             kotlinJson = Res.readBytes("files/aboutlibraries.json").decodeToString(),
             albertSansLicence = Res.readBytes("files/licences/OFL-AlbertSans.txt").decodeToString(),
+            logueSdkLicence = Res.readBytes("files/licences/BSD-3-Clause-logue-sdk.txt").decodeToString(),
         )
     }.also { noticesCache = it }
 }

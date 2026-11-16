@@ -12,6 +12,7 @@ class LicencesTest {
         rustJson = files.resolve("licences/rust.json").readText(),
         kotlinJson = files.resolve("aboutlibraries.json").readText(),
         albertSansLicence = files.resolve("licences/OFL-AlbertSans.txt").readText(),
+        logueSdkLicence = files.resolve("licences/BSD-3-Clause-logue-sdk.txt").readText(),
     )
 
     @Test
@@ -23,6 +24,9 @@ class LicencesTest {
         val albert = notices.single { it.name == "Albert Sans" }
         assertEquals("OFL-1.1", albert.licence)
         assertTrue(albert.texts.single().contains("SIL Open Font License"))
+        val logue = notices.single { it.name == "logue SDK" }
+        assertEquals("BSD-3-Clause", logue.licence)
+        assertTrue(logue.texts.single().contains("KORG INC."))
         // Both sides: a Rust crate and a Kotlin library, each with its text.
         assertTrue(notices.any { it.name == "uniffi_core" && it.texts.isNotEmpty() })
         assertTrue(notices.any { it.id == "androidx.activity:activity" && it.texts.isNotEmpty() })
