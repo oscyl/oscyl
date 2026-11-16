@@ -77,7 +77,14 @@ impl Shelf {
         let unit = Self::read(d, bytes)?;
         let dir = self.dir(d)?;
         let ext = unit_ext(d).unwrap_or("unit");
-        let file = format!("{}.{ext}", safe_name(&unit.name));
+        // A name that is empty or starts with a dot would make a file
+        // `path` refuses: it could never be loaded or removed.
+        let stem = safe_name(&unit.name);
+        let stem = match stem.trim_start_matches('.') {
+            "" => "unit",
+            s => s,
+        };
+        let file = format!("{stem}.{ext}");
         std::fs::create_dir_all(&dir)
             .and_then(|()| std::fs::write(dir.join(&file), bytes))
             .map_err(|e| e.to_string())?;
@@ -208,6 +215,14 @@ pub(crate) mod tests {
         shelf.remove(xd, "waves.mnlgxdunit").unwrap();
         assert_eq!(shelf.list(xd).len(), 2);
         assert!(shelf.remove(xd, "waves.mnlgxdunit").is_err());
+        // A unit without a usable name still gets a file it can be taken by.
+        for name in ["", ".."] {
+            let added = shelf
+                .add(xd, &unit_file("minilogue-xd", "osc", name))
+                .unwrap();
+            shelf.unit(xd, &added.file).unwrap();
+            shelf.remove(xd, &added.file).unwrap();
+        }
         std::fs::remove_dir_all(&root).unwrap();
     }
 }
