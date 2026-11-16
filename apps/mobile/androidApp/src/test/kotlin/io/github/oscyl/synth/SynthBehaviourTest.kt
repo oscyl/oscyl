@@ -138,6 +138,9 @@ class FakeMidi(vararg plugged: MidiPortInfo) : MidiPlatform {
     /** How many opens to refuse USB access before allowing it. */
     var denials = 0
 
+    /** Synths opened from now on hold every reply but the identity until [answer]. */
+    var holdReplies = false
+
     private val open = mutableMapOf<String, FakeXd>()
 
     /** The ports the app let go of. */
@@ -157,10 +160,13 @@ class FakeMidi(vararg plugged: MidiPortInfo) : MidiPlatform {
             return OpenResult.PermissionDenied
         }
         open.remove(port.id)?.detach()
-        val xd = FakeXd()
+        val xd = FakeXd(holdReplies)
         open[port.id] = xd
         return OpenResult.Opened(xd, xd::attach)
     }
+
+    /** Deliver every reply the open synths held. */
+    fun answer() = synchronized(open) { open.values.forEach(FakeXd::answer) }
 
     /** The cable comes out: the sink goes first, then the port. */
     fun unplug(port: MidiPortInfo) {
@@ -169,25 +175,39 @@ class FakeMidi(vararg plugged: MidiPortInfo) : MidiPlatform {
     }
 }
 
-private class FakeXd : MidiOut {
+/** A minilogue xd behind a fake USB port: the core's simulator answers what the app sends. */
+private class FakeXd(private var holding: Boolean = false) : MidiOut {
     private var sink: MidiInputSink? = null
-    private var asked = false
+    private val synth = io.github.oscyl.core.Simulator("korg-minilogue-xd")
+
+    /** Replies given before the app attached its input, or held. */
+    private val waiting = mutableListOf<ByteArray>()
     val sent = java.util.Collections.synchronizedList(mutableListOf<ByteArray>())
 
     @Synchronized
     override fun send(bytes: ByteArray) {
         sent += bytes
-        // The universal device inquiry: F0 7E <channel> 06 01 F7.
-        if (bytes.size >= 5 && bytes[1] == 0x7E.toByte() && bytes[3] == 0x06.toByte() && bytes[4] == 0x01.toByte()) {
-            asked = true
-            sink?.push(IDENTITY)
+        for (reply in synth.handle(bytes)) {
+            val identity = reply.size > 1 && reply[1] == 0x7E.toByte()
+            val now = sink.takeIf { !holding || identity }
+            now?.push(reply) ?: waiting.add(reply)
         }
     }
 
     @Synchronized
     fun attach(sink: MidiInputSink) {
         this.sink = sink
-        if (asked) sink.push(IDENTITY)
+        val (now, held) = waiting.partition { !holding || (it.size > 1 && it[1] == 0x7E.toByte()) }
+        now.forEach(sink::push)
+        waiting.retainAll(held)
+    }
+
+    /** Stop holding: what was held goes out now. */
+    @Synchronized
+    fun answer() {
+        holding = false
+        sink?.let { s -> waiting.forEach(s::push) }
+        if (sink != null) waiting.clear()
     }
 
     @Synchronized
@@ -195,12 +215,5 @@ private class FakeXd : MidiOut {
         sink?.disconnect()
         sink?.close()
         sink = null
-    }
-
-    private companion object {
-        /** The minilogue xd's identity reply, firmware 2.10. */
-        val IDENTITY = byteArrayOf(
-            0xF0.toByte(), 0x7E, 0x00, 0x06, 0x02, 0x42, 0x51, 0x01, 0x00, 0x00, 0x02, 0x00, 0x0A, 0x00, 0xF7.toByte(),
-        )
     }
 }

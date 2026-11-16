@@ -9,7 +9,7 @@
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::mpsc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use oscyl_driver::engine::OpError;
 use oscyl_driver::{Driver, SessionEvent, SessionOp};
@@ -146,7 +146,25 @@ impl SynthHandle {
     }
 }
 
+/// Opens a port again for [`Recovery`]: the device inquiry goes out.
+type Reopen =
+    Box<dyn FnMut(&'static dyn Driver, &str) -> Result<Opening, oscyl_midi::Error> + Send>;
+
 pub fn spawn() -> (SynthHandle, async_channel::Receiver<Ev>) {
+    // Desktop ports reopen by name; a platform's links cannot be reopened.
+    #[cfg(feature = "midir")]
+    let reopen: Option<Reopen> = Some(Box::new(|driver, port| {
+        Opening::open(&Candidate {
+            driver,
+            port: port.into(),
+        })
+    }));
+    #[cfg(not(feature = "midir"))]
+    let reopen: Option<Reopen> = None;
+    spawn_with(reopen, RETRY)
+}
+
+fn spawn_with(reopen: Option<Reopen>, retry: Retry) -> (SynthHandle, async_channel::Receiver<Ev>) {
     let (tx, rx) = mpsc::channel();
     let (bell, rung) = mpsc::channel();
     let (etx, erx) = async_channel::unbounded();
@@ -160,6 +178,8 @@ pub fn spawn() -> (SynthHandle, async_channel::Receiver<Ev>) {
                 next_id: 1,
                 events: etx,
                 bell: ring,
+                reopen,
+                retry,
             }
             .run(rx, rung)
         })
@@ -233,9 +253,37 @@ enum UnitJob {
     Backup(Module, u8, PathBuf, Option<Vec<u8>>),
 }
 
+/// How long a port stays closed between attempts to reach a synth that
+/// stopped answering, and how many attempts there are (about a minute).
+/// A minilogue xd asked for a program as it boots ignores SysEx until its
+/// port has been closed; it answers again some seconds later.
+const RETRY: Retry = Retry {
+    gap: Duration::from_secs(2),
+    attempts: 15,
+};
+
+/// How a synth that stopped answering is retried.
+#[derive(Clone, Copy)]
+struct Retry {
+    /// How long its port stays closed between attempts.
+    gap: Duration,
+    attempts: u32,
+}
+
+/// A synth that stopped answering: its port closed, then opened again
+/// until the synth answers the device inquiry.
+struct Recovery {
+    opening: Option<Opening>,
+    /// When the port opens again (while `opening` is `None`).
+    next: Instant,
+    attempts_left: u32,
+}
+
 struct Dev {
     id: DeviceId,
+    /// Closed while `recovery` runs.
     device: Device,
+    recovery: Option<Recovery>,
     simulated: bool,
     jobs: VecDeque<Job>,
     read: Option<Read>,
@@ -251,6 +299,9 @@ struct Worker {
     events: async_channel::Sender<Ev>,
     /// Kept to hand to new devices; the worker never rings it itself.
     bell: mpsc::Sender<()>,
+    /// `None` where ports cannot be reopened.
+    reopen: Option<Reopen>,
+    retry: Retry,
 }
 
 impl Worker {
@@ -301,6 +352,14 @@ impl Worker {
         }
         let mut k = 0;
         while k < self.devices.len() {
+            if self.devices[k].recovery.is_some() {
+                // `None`: given up, the device was dropped.
+                if let Some(t) = self.recover(k, now) {
+                    at(t);
+                    k += 1;
+                }
+                continue;
+            }
             let mut evs = Vec::new();
             let pumped = self.devices[k].device.pump(&mut |e| evs.push(e.clone()));
             let mut busy = !evs.is_empty();
@@ -440,6 +499,7 @@ impl Worker {
         self.devices.push(Dev {
             id,
             device,
+            recovery: None,
             simulated,
             jobs: VecDeque::new(),
             read: None,
@@ -457,6 +517,14 @@ impl Worker {
         }
         while let Some(e) = self.devices[k].device.poll_unit_event() {
             self.on_unit_event(k, e);
+        }
+        // A read between slots (its synth being reopened) has no op to end it.
+        if self.devices[k].read.take().is_some() {
+            let id = self.devices[k].id;
+            self.emit(Ev::ReadDone {
+                id,
+                cancelled: true,
+            });
         }
         let d = self.devices.remove(k);
         self.emit(Ev::Disconnected(d.id));
@@ -500,6 +568,10 @@ impl Worker {
                 if let Some(r) = self.devices[k].read.as_mut() {
                     r.cancelled = true;
                 }
+                // No slot of it is in flight to end it.
+                if self.devices[k].recovery.is_some() {
+                    self.next_read(k);
+                }
             }
             Cmd::Audition(_, p) => self.devices[k].outbox.audition(p),
             Cmd::Live(_, m) => self.devices[k].outbox.live(m),
@@ -535,6 +607,14 @@ impl Worker {
     /// Queue unit op `op` on device `k`, for `job`.
     fn unit(&mut self, k: usize, op: UnitOp, job: UnitJob) {
         let d = &mut self.devices[k];
+        if d.recovery.is_some() {
+            let id = d.id;
+            self.emit(Ev::Error(
+                Some(id),
+                tr("The synth is reconnecting. Try again in a moment."),
+            ));
+            return;
+        }
         match d.device.submit_units(op) {
             Ok(()) => d.units.push_back(job),
             Err(e) => {
@@ -594,11 +674,17 @@ impl Worker {
 
     fn submit(&mut self, k: usize, op: SessionOp, job: Job) {
         let d = &mut self.devices[k];
-        match d.device.submit(op) {
+        let submitted = if d.recovery.is_some() {
+            Err(tr("The synth is reconnecting. Try again in a moment."))
+        } else {
+            d.device
+                .submit(op)
+                .map_err(|e| describe(&e, Some(d.device.driver())))
+        };
+        match submitted {
             Ok(()) => d.jobs.push_back(job),
-            Err(e) => {
-                let (id, driver) = (d.id, d.device.driver());
-                let why = describe(&e, Some(driver));
+            Err(why) => {
+                let id = d.id;
                 if matches!(job, Job::Write(_)) {
                     self.emit(Ev::WriteFailed(id, why));
                     return;
@@ -619,6 +705,10 @@ impl Worker {
     fn next_read(&mut self, k: usize) {
         let d = &mut self.devices[k];
         let Some(r) = d.read.as_ref() else { return };
+        // A synth reconnecting resumes the read itself.
+        if d.recovery.is_some() && !r.cancelled {
+            return;
+        }
         if r.cancelled || r.done >= r.slots.len() {
             let (id, cancelled) = (d.id, r.cancelled);
             d.read = None;
@@ -676,6 +766,19 @@ impl Worker {
             SessionEvent::Failed(err) => {
                 let driver = self.devices[k].device.driver();
                 let job = self.devices[k].jobs.pop_front();
+                if matches!(err, OpError::Timeout { .. }) && self.start_recovery(k) {
+                    match job {
+                        // The read goes on at the same slot once the synth
+                        // answers again.
+                        Some(Job::Read) => return,
+                        Some(Job::Write(_)) => {
+                            let why = describe(&oscyl_midi::Error::Op(err), Some(driver));
+                            self.emit(Ev::WriteFailed(id, why));
+                        }
+                        _ => {}
+                    }
+                    return;
+                }
                 let why = describe(&oscyl_midi::Error::Op(err.clone()), Some(driver));
                 if matches!(job, Some(Job::Write(_))) {
                     self.emit(Ev::WriteFailed(id, why));
@@ -691,6 +794,104 @@ impl Worker {
                 }
             }
         }
+    }
+}
+
+impl Worker {
+    /// Device `k` stopped answering: close its port and start reopening
+    /// it (where ports cannot be reopened, [`Worker::recover`] drops it
+    /// for the platform to open again). False for a simulated synth, or
+    /// when recovery already runs.
+    fn start_recovery(&mut self, k: usize) -> bool {
+        if self.devices[k].simulated || self.devices[k].recovery.is_some() {
+            return false;
+        }
+        // Whatever else was queued ends now, as cancelled.
+        let mut evs = Vec::new();
+        self.devices[k].device.cancel(&mut |e| evs.push(e.clone()));
+        self.devices[k].device.close();
+        self.devices[k].recovery = Some(Recovery {
+            opening: None,
+            next: Instant::now() + self.retry.gap,
+            attempts_left: self.retry.attempts,
+        });
+        for e in evs {
+            self.on_event(k, e);
+        }
+        while let Some(e) = self.devices[k].device.poll_unit_event() {
+            self.on_unit_event(k, e);
+        }
+        let id = self.devices[k].id;
+        self.emit(Ev::Error(
+            Some(id),
+            tr("The synth stopped answering. Reconnecting…"),
+        ));
+        true
+    }
+
+    /// One step of device `k`'s recovery: when to come back, or `None`
+    /// once given up (the device is dropped).
+    fn recover(&mut self, k: usize, now: Instant) -> Option<Instant> {
+        // A platform's link: the platform opens the port again.
+        if self.reopen.is_none() {
+            self.drop_device(k);
+            return None;
+        }
+        let d = &mut self.devices[k];
+        let (driver, port) = (d.device.driver(), d.device.port_name().to_string());
+        let r = d.recovery.as_mut().expect("recovering");
+        if let Some(o) = r.opening.take() {
+            match o.poll(now) {
+                Opened::Ready(mut device) => {
+                    device.ring_on_input(self.bell.clone());
+                    d.device = *device;
+                    d.recovery = None;
+                    // A read in progress goes on where it stopped.
+                    self.next_read(k);
+                    return Some(now);
+                }
+                Opened::Waiting(o) => {
+                    let t = o.deadline();
+                    r.opening = Some(o);
+                    return Some(t);
+                }
+                // The port closed again with the attempt.
+                Opened::Failed(_) => r.next = now + self.retry.gap,
+            }
+        } else if now >= r.next {
+            if r.attempts_left == 0 {
+                return self.give_up(k);
+            }
+            r.attempts_left -= 1;
+            let reopen = self.reopen.as_mut().expect("recovery needs reopen");
+            match reopen(driver, &port) {
+                Ok(mut o) => {
+                    o.ring_on_input(self.bell.clone());
+                    let t = o.deadline();
+                    r.opening = Some(o);
+                    return Some(t);
+                }
+                Err(_) => r.next = now + self.retry.gap,
+            }
+        }
+        Some(r.next)
+    }
+
+    /// The synth never answered again: end its read and drop it.
+    fn give_up(&mut self, k: usize) -> Option<Instant> {
+        let id = self.devices[k].id;
+        self.emit(Ev::Error(
+            Some(id),
+            tr("The synth does not answer. Turn it off and on again, then connect."),
+        ));
+        if self.devices[k].read.take().is_some() {
+            self.emit(Ev::ReadDone {
+                id,
+                cancelled: true,
+            });
+        }
+        self.drop_device(k);
+        None
     }
 }
 
@@ -843,6 +1044,11 @@ mod tests {
     }
 
     fn threaded(d: &'static dyn Driver, gate: Option<mpsc::Receiver<()>>) -> Box<Device> {
+        let link = threaded_link(d, gate);
+        Box::new(Device::connect(d, link, format!("threaded {}", d.info().id)).unwrap())
+    }
+
+    fn threaded_link(d: &'static dyn Driver, gate: Option<mpsc::Receiver<()>>) -> Box<Threaded> {
         let (to_synth, rx) = mpsc::channel::<Vec<u8>>();
         let (tx, from_synth) = mpsc::channel();
         let bell = Arc::new(Mutex::new(None::<mpsc::Sender<()>>));
@@ -867,12 +1073,229 @@ mod tests {
                 }
             }
         });
-        let link = Threaded {
+        Box::new(Threaded {
             to_synth,
             from_synth,
             bell,
+        })
+    }
+
+    /// A minilogue xd that answers the device inquiry, then nothing: as
+    /// one asked for a program while it boots.
+    struct Wedged(VecDeque<Vec<u8>>);
+
+    impl oscyl_midi::Link for Wedged {
+        fn send(&mut self, bytes: &[u8]) -> Result<(), oscyl_midi::Error> {
+            if bytes == oscyl_driver::sysex::DEVICE_INQUIRY {
+                let mut sim = driver("korg-minilogue-xd").simulator();
+                self.0.extend(sim.handle(bytes));
+            }
+            Ok(())
+        }
+
+        fn recv_until(&mut self, _: Instant) -> Result<Option<Vec<u8>>, oscyl_midi::Error> {
+            Ok(self.0.pop_front())
+        }
+    }
+
+    /// A synth that stops answering mid-read is closed and opened again
+    /// until it answers; the read then goes on, under the same id.
+    #[test]
+    fn a_synth_that_stops_answering_is_reopened_and_the_read_resumes() {
+        let xd = driver("korg-minilogue-xd");
+        let reopened = Arc::new(Mutex::new(0));
+        let count = reopened.clone();
+        let (handle, rx) = spawn_with(
+            Some(Box::new(move |d, port| {
+                *count.lock().unwrap() += 1;
+                Opening::start(d, threaded_link(d, None), port.into())
+            })),
+            FAST,
+        );
+        let wedged = Device::connect(xd, Box::new(Wedged(VecDeque::new())), "usb xd".into());
+        let id = attach(&handle, &rx, Box::new(wedged.unwrap()));
+        handle.send(Cmd::ReadAll(id));
+        let (mut read, mut told) = (0, false);
+        loop {
+            match rx.recv_blocking().expect("worker alive") {
+                Ev::Error(Some(i), e) if i == id && e.contains("Reconnecting") => told = true,
+                Ev::Program(i, ..) if i == id => read += 1,
+                Ev::ReadDone { id: i, cancelled } if i == id => break assert!(!cancelled),
+                Ev::Error(_, e) | Ev::ConnectFailed(e) => panic!("unexpected error: {e}"),
+                _ => {}
+            }
+        }
+        assert!(told);
+        assert_eq!(read, 500);
+        assert_eq!(*reopened.lock().unwrap(), 1);
+    }
+
+    /// Retries for tests: a short gap, two attempts.
+    const FAST: Retry = Retry {
+        gap: Duration::from_millis(10),
+        attempts: 2,
+    };
+
+    /// A port that answers nothing, not even the device inquiry.
+    struct Mute;
+
+    impl oscyl_midi::Link for Mute {
+        fn send(&mut self, _: &[u8]) -> Result<(), oscyl_midi::Error> {
+            Ok(())
+        }
+
+        fn recv_until(&mut self, _: Instant) -> Result<Option<Vec<u8>>, oscyl_midi::Error> {
+            Ok(None)
+        }
+    }
+
+    fn wedged_xd() -> Box<Device> {
+        let xd = driver("korg-minilogue-xd");
+        let d = Device::connect(xd, Box::new(Wedged(VecDeque::new())), "usb xd".into());
+        Box::new(d.unwrap())
+    }
+
+    /// Waits for the worker's "Reconnecting" notice about `id`.
+    fn reconnecting(rx: &async_channel::Receiver<Ev>, id: DeviceId) {
+        loop {
+            match rx.recv_blocking().expect("worker alive") {
+                Ev::Error(Some(i), e) if i == id && e.contains("Reconnecting") => return,
+                Ev::Error(_, e) | Ev::ConnectFailed(e) => panic!("unexpected error: {e}"),
+                _ => {}
+            }
+        }
+    }
+
+    /// Unplugged while being reopened: the read ends, the synth is
+    /// dropped, and its port is not opened again.
+    #[test]
+    fn gone_during_recovery_drops_without_reopening() {
+        let reopened = Arc::new(Mutex::new(0));
+        let count = reopened.clone();
+        let slow = Retry {
+            gap: Duration::from_secs(30),
+            attempts: 2,
         };
-        Box::new(Device::connect(d, Box::new(link), format!("threaded {}", d.info().id)).unwrap())
+        let (handle, rx) = spawn_with(
+            Some(Box::new(move |d, port| {
+                *count.lock().unwrap() += 1;
+                Opening::start(d, threaded_link(d, None), port.into())
+            })),
+            slow,
+        );
+        let id = attach(&handle, &rx, wedged_xd());
+        handle.send(Cmd::ReadAll(id));
+        reconnecting(&rx, id);
+        handle.send(Cmd::Gone("usb xd".into()));
+        assert!(matches!(
+            next(&rx, |e| matches!(e, Ev::ReadDone { .. })),
+            Ev::ReadDone { id: i, cancelled: true } if i == id
+        ));
+        assert!(matches!(
+            next(&rx, |e| matches!(e, Ev::Disconnected(_))),
+            Ev::Disconnected(i) if i == id
+        ));
+        assert_eq!(*reopened.lock().unwrap(), 0);
+    }
+
+    /// A write that gets no reply fails as a write; the synth is reopened
+    /// and answers the next op.
+    #[test]
+    fn a_write_that_gets_no_reply_fails_and_the_synth_recovers() {
+        let (handle, rx) = spawn_with(
+            Some(Box::new(|d, port| {
+                Opening::start(d, threaded_link(d, None), port.into())
+            })),
+            FAST,
+        );
+        let id = attach(&handle, &rx, wedged_xd());
+        let program = driver("korg-minilogue-xd").init_program();
+        handle.send(Cmd::Write(id, vec![(3, program)]));
+        loop {
+            match rx.recv_blocking().expect("worker alive") {
+                Ev::WriteFailed(i, _) if i == id => break,
+                Ev::Written { .. } => panic!("nothing answered the write"),
+                _ => {}
+            }
+        }
+        handle.send(Cmd::ReadCurrent(id));
+        loop {
+            match rx.recv_blocking().expect("worker alive") {
+                Ev::Current(i, _) if i == id => break,
+                // The reconnect still under way refuses it: ask again.
+                Ev::Error(Some(i), e) if i == id && e.contains("reconnecting") => {
+                    handle.send(Cmd::ReadCurrent(id))
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// Reopened and silent every time: the worker gives up after its
+    /// attempts, says what to do, ends the read and drops the synth.
+    #[test]
+    fn silence_after_every_reopen_gives_up() {
+        let reopened = Arc::new(Mutex::new(0));
+        let count = reopened.clone();
+        let (handle, rx) = spawn_with(
+            Some(Box::new(move |_, _| {
+                *count.lock().unwrap() += 1;
+                Err(oscyl_midi::Error::NotFound)
+            })),
+            FAST,
+        );
+        let id = attach(&handle, &rx, wedged_xd());
+        handle.send(Cmd::ReadAll(id));
+        reconnecting(&rx, id);
+        match rx.recv_blocking().expect("worker alive") {
+            Ev::Error(Some(i), e) if i == id => assert!(e.contains("does not answer"), "{e}"),
+            _ => panic!("expected the give-up notice"),
+        }
+        assert!(matches!(
+            rx.recv_blocking().unwrap(),
+            Ev::ReadDone { id: i, cancelled: true } if i == id
+        ));
+        assert!(matches!(rx.recv_blocking().unwrap(), Ev::Disconnected(i) if i == id));
+        assert_eq!(*reopened.lock().unwrap(), 2);
+    }
+
+    /// Where the platform moves the bytes the worker cannot reopen the
+    /// port: it drops the synth, so the platform opens it again.
+    #[test]
+    fn a_platform_link_that_stops_answering_is_dropped_for_the_platform_to_reopen() {
+        let (handle, rx) = spawn_with(None, FAST);
+        let id = attach(&handle, &rx, wedged_xd());
+        handle.send(Cmd::ReadAll(id));
+        reconnecting(&rx, id);
+        assert!(matches!(
+            rx.recv_blocking().unwrap(),
+            Ev::ReadDone { id: i, cancelled: true } if i == id
+        ));
+        assert!(matches!(rx.recv_blocking().unwrap(), Ev::Disconnected(i) if i == id));
+    }
+
+    /// Escape while the synth is being reopened ends the read at once.
+    #[test]
+    fn cancel_during_recovery_ends_the_read() {
+        let (handle, rx) = spawn_with(
+            Some(Box::new(|d, port| {
+                Opening::start(d, Box::new(Mute), port.into())
+            })),
+            Retry {
+                gap: Duration::from_secs(30),
+                attempts: 2,
+            },
+        );
+        let id = attach(&handle, &rx, wedged_xd());
+        handle.send(Cmd::ReadAll(id));
+        reconnecting(&rx, id);
+        let t0 = Instant::now();
+        handle.send(Cmd::CancelRead(id));
+        assert!(matches!(
+            next(&rx, |e| matches!(e, Ev::ReadDone { .. })),
+            Ev::ReadDone { id: i, cancelled: true } if i == id
+        ));
+        assert!(t0.elapsed() < Duration::from_secs(1), "{:?}", t0.elapsed());
     }
 
     fn attach(

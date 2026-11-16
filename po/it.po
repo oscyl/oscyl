@@ -1623,6 +1623,12 @@ msgstr "Normale"
 msgid "Not connected"
 msgstr "Non connesso"
 
+msgid "Not read"
+msgstr "Non letto"
+
+msgid "Not stored"
+msgstr "Non memorizzata"
+
 msgid "Nothing was synced."
 msgstr "Non è stato sincronizzato nulla."
 
@@ -2030,10 +2036,8 @@ msgstr "Da {min} a {max}"
 msgid "Rate"
 msgstr "Velocità"
 
-msgid "Reading stopped. Programs not yet read show as “Reading…”."
-msgstr ""
-"Lettura interrotta. I programmi non ancora letti sono indicati come "
-"«Lettura…»."
+msgid "Reading stopped. Programs not yet read show as “Not read”."
+msgstr "Lettura interrotta. I programmi non ancora letti sono indicati come «Non letto»."
 
 msgid "Reading the synth's user slots…"
 msgstr "Lettura degli slot utente del synth…"
@@ -2405,6 +2409,9 @@ msgstr "Slot {number}"
 msgid "Slot {number} opens as soon as it has been read from the synth."
 msgstr "Lo slot {number} si apre appena è stato letto dal synth."
 
+msgid "Slot {number} was not read. Disconnect and connect again to read it."
+msgstr "Lo slot {number} non è stato letto. Disconnetti e riconnetti per leggerlo."
+
 msgid "Slot {slot} cleared"
 msgstr "Slot {slot} svuotato"
 
@@ -2509,9 +2516,6 @@ msgstr "Memorizza: {snapshot}"
 
 msgid "Stored"
 msgstr "Memorizzata"
-
-msgid "Not stored"
-msgstr "Non memorizzata"
 
 msgid "Studio"
 msgstr "Studio"
@@ -2670,8 +2674,17 @@ msgstr "Il synth contiene già questi programmi."
 msgid "The synth didn't answer. Check the cable and try again."
 msgstr "Il synth non ha risposto. Controlla il cavo e riprova."
 
+msgid "The synth does not answer. Turn it off and on again, then connect."
+msgstr "Il synth non risponde. Spegnilo e riaccendilo, poi connettiti."
+
 msgid "The synth is not connected."
 msgstr "Il synth non è connesso."
+
+msgid "The synth is reconnecting. Try again in a moment."
+msgstr "Il synth si sta riconnettendo. Riprova tra un attimo."
+
+msgid "The synth stopped answering. Reconnecting…"
+msgstr "Il synth ha smesso di rispondere. Riconnessione…"
 
 msgid "The synth was disconnected. Check the cable and press Connect."
 msgstr "Il synth è stato scollegato. Controlla il cavo e premi Connetti."

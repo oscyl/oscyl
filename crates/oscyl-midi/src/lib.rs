@@ -152,7 +152,20 @@ impl MidirLink {
 
         let (inbox, feed) = inbox();
         let conn_in = input
-            .connect(&in_ports[i], "in", move |_, bytes, _| feed.push(bytes), ())
+            .connect(
+                &in_ports[i],
+                "in",
+                move |_, bytes, _| {
+                    // Clock and active sensing never reach a session: they
+                    // would wake the reader 48 times a second for nothing.
+                    if bytes.iter().all(|&b| b >= 0xF8) {
+                        return;
+                    }
+                    trace("<-", bytes);
+                    feed.push(bytes)
+                },
+                (),
+            )
             .map_err(midi_err)?;
         let out = output.connect(&out_ports[o], "out").map_err(midi_err)?;
         let link = MidirLink {
@@ -170,6 +183,7 @@ impl Link for MidirLink {
     /// each `send`, so each SysEx message of `bytes` goes out on its own.
     fn send(&mut self, bytes: &[u8]) -> Result<(), Error> {
         for chunk in split_messages(bytes) {
+            trace("->", chunk);
             self.out
                 .send(chunk)
                 .map_err(|e| Error::Disconnected(e.to_string()))?;
@@ -184,6 +198,23 @@ impl Link for MidirLink {
     fn ring_on_input(&mut self, bell: Sender<()>) {
         self.inbox.ring_on_input(bell);
     }
+}
+
+/// `OSCYL_MIDI_TRACE=1`: every message sent or received (not clock or
+/// active sensing) on stderr, with milliseconds since the first one.
+#[cfg(feature = "midir")]
+fn trace(dir: &str, bytes: &[u8]) {
+    use std::sync::LazyLock;
+    static START: LazyLock<Option<Instant>> =
+        LazyLock::new(|| std::env::var_os("OSCYL_MIDI_TRACE").map(|_| Instant::now()));
+    let Some(start) = *START else { return };
+    let head: Vec<String> = bytes.iter().take(12).map(|b| format!("{b:02X}")).collect();
+    eprintln!(
+        "{:>9.3} {dir} {} ({} bytes)",
+        start.elapsed().as_secs_f64(),
+        head.join(" "),
+        bytes.len()
+    );
 }
 
 type Bell = Arc<Mutex<Option<Sender<()>>>>;

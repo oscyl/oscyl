@@ -1532,6 +1532,9 @@ msgstr ""
 msgid "Not connected"
 msgstr ""
 
+msgid "Not read"
+msgstr ""
+
 msgid "Not stored"
 msgstr ""
 
@@ -1877,7 +1880,7 @@ msgstr ""
 msgid "Rate"
 msgstr ""
 
-msgid "Reading stopped. Programs not yet read show as “Reading…”."
+msgid "Reading stopped. Programs not yet read show as “Not read”."
 msgstr ""
 
 msgid "Reading the synth's user slots…"
@@ -2241,6 +2244,9 @@ msgstr ""
 msgid "Slot {number} opens as soon as it has been read from the synth."
 msgstr ""
 
+msgid "Slot {number} was not read. Disconnect and connect again to read it."
+msgstr ""
+
 msgid "Slot {slot} cleared"
 msgstr ""
 
@@ -2462,7 +2468,16 @@ msgstr ""
 msgid "The synth didn't answer. Check the cable and try again."
 msgstr ""
 
+msgid "The synth does not answer. Turn it off and on again, then connect."
+msgstr ""
+
 msgid "The synth is not connected."
+msgstr ""
+
+msgid "The synth is reconnecting. Try again in a moment."
+msgstr ""
+
+msgid "The synth stopped answering. Reconnecting…"
 msgstr ""
 
 msgid "The synth was disconnected. Check the cable and press Connect."

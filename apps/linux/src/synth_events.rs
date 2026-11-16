@@ -278,8 +278,12 @@ impl App {
                 self.restore_status(id);
                 if cancelled {
                     self.win.toast(&tr(
-                        "Reading stopped. Programs not yet read show as “Reading…”.",
+                        "Reading stopped. Programs not yet read show as “Not read”.",
                     ));
+                    if self.active.get() == Some(id) && *self.doc_place.borrow() == Place::Synth {
+                        self.list.refresh();
+                        self.refresh_program();
+                    }
                 }
                 self.update_actions();
             }

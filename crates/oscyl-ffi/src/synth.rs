@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use oscyl_app::synth::{Cmd, Ev, SynthHandle, spawn};
 use oscyl_driver::Driver;
+use oscyl_driver::sysex::Framer;
 use oscyl_midi::{InputSender, PushLink};
 
 /// The platform's MIDI output to one synth (Android `MidiInputPort`,
@@ -228,6 +229,36 @@ pub(crate) fn module_of(name: &str) -> Result<oscyl_midi::logue::Module, FfiErro
         })
 }
 
+/// A driver's simulated synth answering raw MIDI: what a platform's tests
+/// put behind a fake port, so it answers as the synth would (its demo
+/// programs).
+#[derive(uniffi::Object)]
+pub struct Simulator(std::sync::Mutex<(Box<dyn oscyl_driver::Simulator>, Framer)>);
+
+#[uniffi::export]
+impl Simulator {
+    #[uniffi::constructor]
+    pub fn new(driver_id: String) -> Result<Arc<Simulator>, FfiError> {
+        let sim = driver(&driver_id)?.demo_simulator();
+        Ok(Arc::new(Simulator(std::sync::Mutex::new((
+            sim,
+            Framer::new(),
+        )))))
+    }
+
+    /// The synth's replies to `bytes` (any part of a message: it is framed
+    /// with what came before), one message each.
+    pub fn handle(&self, bytes: Vec<u8>) -> Vec<Vec<u8>> {
+        let mut guard = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        let (sim, framer) = &mut *guard;
+        framer
+            .push(&bytes)
+            .iter()
+            .flat_map(|m| sim.handle(m))
+            .collect()
+    }
+}
+
 pub(crate) fn driver(id: &str) -> Result<&'static dyn Driver, FfiError> {
     oscyl_midi::driver(id).ok_or_else(|| FfiError::UnknownDriver { id: id.into() })
 }
@@ -394,6 +425,24 @@ impl Synth {
 mod tests {
     use super::*;
     use std::sync::mpsc;
+
+    /// The simulator answers what a real minilogue xd answers, framed: the
+    /// identity, then program 0 when asked for it.
+    #[test]
+    fn simulator_answers_like_the_synth() {
+        let sim = Simulator::new(XD.into()).unwrap();
+        let identity = sim.handle(vec![0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7]);
+        assert_eq!(identity.len(), 1);
+        assert_eq!(&identity[0][..6], &[0xF0, 0x7E, 0x00, 0x06, 0x02, 0x42]);
+        // Split across two sends, as a platform may deliver it.
+        assert!(sim.handle(vec![0xF0, 0x42, 0x30, 0x00]).is_empty());
+        let program = sim.handle(vec![0x01, 0x51, 0x1C, 0x00, 0x00, 0xF7]);
+        assert_eq!(
+            &program[0][..7],
+            &[0xF0, 0x42, 0x30, 0x00, 0x01, 0x51, 0x4C]
+        );
+        assert!(Simulator::new("nope".into()).is_err());
+    }
     use std::sync::{Arc, Mutex};
 
     const XD: &str = "korg-minilogue-xd";

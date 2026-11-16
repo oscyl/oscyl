@@ -319,6 +319,16 @@ impl App {
                 .unwrap_or(false)
     }
 
+    /// What an unread slot of the active synth shows: still coming, or
+    /// not read because reading stopped.
+    pub(crate) fn unread_label(&self) -> String {
+        if self.with_synth(|s| s.reading).unwrap_or(false) {
+            tr("Reading…")
+        } else {
+            tr("Not read")
+        }
+    }
+
     /// Run `f` on the active synth.
     pub(crate) fn with_synth<R>(&self, f: impl FnOnce(&mut Synth) -> R) -> Option<R> {
         self.with_synth_id(self.active.get()?, f)
@@ -563,11 +573,16 @@ impl App {
         if !self.is_loaded(i) {
             // An unread slot holds a placeholder; editing it could
             // overwrite the real program on sync.
-            self.win.editor_page.set_title(&tr("Reading…"));
+            let label = self.unread_label();
+            let detail = if self.with_synth(|s| s.reading).unwrap_or(false) {
+                tr("Slot {number} opens as soon as it has been read from the synth.")
+            } else {
+                tr("Slot {number} was not read. Disconnect and connect again to read it.")
+            };
+            self.win.editor_page.set_title(&label);
             self.editor.show_status(
-                &tr("Reading…"),
-                &tr("Slot {number} opens as soon as it has been read from the synth.")
-                    .replace("{number}", &self.slot_label(i)),
+                &label,
+                &detail.replace("{number}", &self.slot_label(i)),
                 false,
             );
             self.update_actions();
@@ -612,12 +627,13 @@ impl App {
         g.set_driver(self.doc_driver());
         let target = self.current.get().and_then(|i| {
             let loaded = self.is_loaded(i);
+            let unread = self.unread_label();
             let (p, name) = self
                 .with_doc(|d| Some((d.work(i)?.to_vec(), d.name(i))))
                 .flatten()?;
             Some(Target {
                 slot: self.slot_label(i),
-                name: if loaded { name } else { tr("Reading…") },
+                name: if loaded { name } else { unread },
                 base: loaded.then_some(p),
             })
         });
@@ -1237,6 +1253,11 @@ impl App {
 impl RowSource for App {
     fn row(&self, i: usize) -> RowData {
         let loaded = self.is_loaded(i);
+        let unread = if loaded {
+            String::new()
+        } else {
+            self.unread_label()
+        };
         self.with_doc(|d| {
             if i >= d.len() {
                 return RowData::default();
@@ -1250,7 +1271,7 @@ impl RowSource for App {
             });
             RowData {
                 slot: crate::slots::slot_label(d.driver, i),
-                name: if loaded { d.name(i) } else { tr("Reading…") },
+                name: if loaded { d.name(i) } else { unread },
                 edited: d.is_edited(i),
                 picture,
             }
@@ -1306,7 +1327,7 @@ impl RowSource for App {
 
     fn name(&self, i: usize) -> String {
         if !self.is_loaded(i) {
-            return tr("Reading…");
+            return self.unread_label();
         }
         self.with_doc(|d| d.name(i)).unwrap_or_default()
     }

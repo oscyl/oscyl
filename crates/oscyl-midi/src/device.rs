@@ -241,6 +241,13 @@ impl Device {
         Device::open(&c)
     }
 
+    /// Close the port now, ending its link; the device answers nothing
+    /// until replaced. A minilogue xd asked for a program while it boots
+    /// stops answering SysEx until its port has been closed.
+    pub fn close(&mut self) {
+        self.link = Box::new(Closed);
+    }
+
     /// Ring `bell` whenever this device's synth sends something.
     pub fn ring_on_input(&mut self, bell: Sender<()>) {
         self.link.ring_on_input(bell.clone());
@@ -518,6 +525,19 @@ impl Device {
         });
         results.pop().expect("one device")?;
         failed.map_or(Ok(()), |e| Err(Error::Op(e)))
+    }
+}
+
+/// The link of a closed [`Device`].
+struct Closed;
+
+impl Link for Closed {
+    fn send(&mut self, _: &[u8]) -> Result<(), Error> {
+        Err(Error::Disconnected("closed".into()))
+    }
+
+    fn recv_until(&mut self, _: Instant) -> Result<Option<Vec<u8>>, Error> {
+        Err(Error::Disconnected("closed".into()))
     }
 }
 

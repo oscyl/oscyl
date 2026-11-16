@@ -544,11 +544,14 @@ class EditorBehaviourTest {
 
     @Test
     fun aSlotNotReadYetSaysSoRefusesEditsAndNeverPlays() {
-        // A USB xd that never answers reads: no slot is read.
-        val midi = FakeMidi(USB_XD)
+        // A USB xd whose first read is held while the read is stopped: no slot is read.
+        val midi = FakeMidi(USB_XD).apply { holdReplies = true }
         show(midi, open = false)
         await { synth.cards.value.any { it.connected } }
         val card = synth.cards.value.first()
+        compose.runOnIdle { synth.cancelRead(card) }
+        midi.answer()
+        await { synth.cards.value.first().read == null }
         compose.runOnIdle { library.select(synthSource(card.id)) }
         await { library.ui.value.programs?.rows?.isNotEmpty() == true }
         compose.runOnIdle { library.selectProgram(5) }
