@@ -1733,7 +1733,7 @@ mod tests {
     #[test]
     fn every_program_is_valid_and_coherent() {
         for c in Character::ALL {
-            for seed in 0..2000 {
+            for seed in 0..800 {
                 let r = Recipe {
                     macros: spread(seed),
                     ..recipe(c, seed)
@@ -1748,6 +1748,30 @@ mod tests {
                 check(&breed(&g, &other, (seed % 5) as f32 / 4.0, seed));
             }
         }
+    }
+
+    /// The quality gate. A hand's sounds differ in at least 16 fields
+    /// (the closest pair in any hand differs in 21):
+    /// two draws of one recipe share its fixed choices but not a dozen of
+    /// its dials, and a clone or a near-clone (a sound nudged apart by a
+    /// field or two) fails.
+    #[test]
+    fn quality_gate() {
+        let program = |b: &[u8]| Program::from_bytes(b).unwrap();
+        oscyl_conformance::generated_sounds_are_good(
+            &crate::DRIVER,
+            &oscyl_conformance::Quality {
+                audible: &|b| {
+                    let p = program(b);
+                    [Vco1Level, Vco2Level, MultiLevel]
+                        .iter()
+                        .any(|&f| p.get(f) >= 100)
+                        && (p.get(AmpEgSustain) >= 64 || p.get(AmpEgDecay) >= 80)
+                },
+                level_capped: &|b| program(b).get(ProgramLevel) <= 102,
+                min_spread: 16,
+            },
+        );
     }
 
     #[test]

@@ -912,6 +912,28 @@ mod tests {
         }
     }
 
+    /// The quality gate. A hand's sounds differ in at least 16 fields
+    /// (the closest pair in any hand differs in 30):
+    /// two draws of one recipe share its fixed choices but not a dozen of
+    /// its dials, and a clone or a near-clone fails.
+    #[test]
+    fn quality_gate() {
+        let program = |b: &[u8]| Program::from_bytes(b).unwrap();
+        oscyl_conformance::generated_sounds_are_good(
+            &crate::DRIVER,
+            &oscyl_conformance::Quality {
+                audible: &|b| {
+                    let p = program(b);
+                    audible(&p)
+                        && (p.get(field("Main Amp EG Sustain")) >= 100
+                            || p.get(field("Main Amp EG Decay")) >= 200)
+                },
+                level_capped: &|b| program(b).get(field("Program Level")) <= 102,
+                min_spread: 16,
+            },
+        );
+    }
+
     #[test]
     fn restricted_and_fixed_fields_stay() {
         assert_eq!(mutability(field("Main Filter Cutoff")), Mutability::Free);

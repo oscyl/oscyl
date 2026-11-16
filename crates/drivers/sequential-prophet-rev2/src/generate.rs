@@ -850,6 +850,28 @@ mod tests {
         }
     }
 
+    /// The quality gate. The Rev2 has no program level the generator
+    /// sets: its cap is the resonance and the effect mix. A hand's sounds
+    /// differ in at least 16 fields (the closest pair in any hand differs in 22): two draws of one recipe share its
+    /// fixed choices but not a dozen of its dials, and a clone or a
+    /// near-clone fails.
+    #[test]
+    fn quality_gate() {
+        let get = |p: &[u8], n: &str| DRIVER.get(p, idx(n)).unwrap();
+        oscyl_conformance::generated_sounds_are_good(
+            &DRIVER,
+            &oscyl_conformance::Quality {
+                audible: &|b| {
+                    super::audible(&crate::Program::from_bytes(b).unwrap())
+                        && get(b, "A Amp env amount") >= 90
+                        && (get(b, "A Amp env sustain") >= 20 || get(b, "A Amp env decay") >= 40)
+                },
+                level_capped: &|b| get(b, "A Resonance") <= 110 && get(b, "A FX mix") <= 100,
+                min_spread: 16,
+            },
+        );
+    }
+
     #[test]
     fn same_seed_same_bytes() {
         let a = DRIVER.generate(&recipe(0, 42), None).unwrap();

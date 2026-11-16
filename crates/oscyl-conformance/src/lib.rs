@@ -6,8 +6,8 @@
 pub mod pump;
 
 use oscyl_driver::{
-    Control, Curation, Driver, DriverError, DriverSession, LibProgram, LibraryData, Mutability,
-    Page, Recipe, SessionEvent, SessionOp, Simulator,
+    Control, Curation, Driver, DriverError, DriverSession, LibProgram, LibraryData, Macros,
+    Mutability, Page, Recipe, SessionEvent, SessionOp, Simulator,
 };
 
 use oscyl_driver::sysex::DEVICE_INQUIRY;
@@ -957,6 +957,72 @@ fn generation_keeps_the_base(d: &dyn Driver, character: usize, pages: &[Page], o
             bad.is_none(),
             "{what} changed non-free {bad:?}"
         );
+    }
+}
+
+/// What a driver's generated sounds must be beyond valid, by its own
+/// rules.
+pub struct Quality<'a> {
+    /// The program makes a sound a player hears.
+    pub audible: &'a dyn Fn(&[u8]) -> bool,
+    /// The program stays at or under the driver's level cap.
+    pub level_capped: &'a dyn Fn(&[u8]) -> bool,
+    /// The fewest fields any two sounds of a dealt hand differ in.
+    pub min_spread: usize,
+}
+
+/// The quality gate: every character, at 200 seeds and at every corner of
+/// the four macros (each at 0, 0.5 and 1), generates a valid, audible
+/// program at or under the level cap; and the six sounds of a dealt hand
+/// differ pairwise in at least `min_spread` fields, so a hand is never
+/// six of nearly the same sound. Each seed takes one corner, so the 81
+/// corners come round more than twice per character.
+pub fn generated_sounds_are_good(d: &dyn Driver, q: &Quality) {
+    const STEPS: [f32; 3] = [0.0, 0.5, 1.0];
+    let corner = |k: usize| Macros {
+        bright: STEPS[k % 3],
+        movement: STEPS[k / 3 % 3],
+        grit: STEPS[k / 9 % 3],
+        space: STEPS[k / 27 % 3],
+    };
+    // Only free fields can differ.
+    let free: Vec<usize> = (0..d.fields().len())
+        .filter(|&i| d.mutability(i) == Mutability::Free)
+        .collect();
+    for (character, ch) in d.characters().iter().enumerate() {
+        let recipe = |seed: u64, k: usize| Recipe {
+            character,
+            macros: corner(k),
+            seed,
+            ..Recipe::default()
+        };
+        for seed in 0..200u64 {
+            let k = seed as usize + character;
+            let what = format!("{} seed {seed} corner {}", ch.id, k % 81);
+            let p = valid_generated(d, &what, d.generate(&recipe(seed, k), None));
+            check!(d, "quality", (q.audible)(&p), "{what} is not audible");
+            check!(d, "quality", (q.level_capped)(&p), "{what} is too loud");
+        }
+        // Hands at the middle of the macros and at their corners.
+        for deal in 0..24usize {
+            let k = if deal < 8 { 40 } else { deal * 5 };
+            let hand = oscyl_core::generate::hand(d, character, deal as u64, 6, |s| {
+                d.generate(&recipe(s, k), None)
+            })
+            .unwrap_or_else(|e| panic!("{}: quality: {}: {e}", d.info().id, ch.id));
+            for (i, a) in hand.iter().enumerate() {
+                for b in &hand[i + 1..] {
+                    let spread = free.iter().filter(|&&f| d.get(a, f) != d.get(b, f)).count();
+                    check!(
+                        d,
+                        "quality",
+                        spread >= q.min_spread,
+                        "{} deal {deal}: two sounds differ in only {spread} fields",
+                        ch.id
+                    );
+                }
+            }
+        }
     }
 }
 

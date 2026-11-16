@@ -8,4 +8,5 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+oscyl-core = { path = "../oscyl-core" }
 oscyl-driver = { path = "../oscyl-driver" }
