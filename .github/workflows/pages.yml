@@ -32,7 +32,7 @@ jobs:
         run: |
           mkdir -p _site/images
           cp site/* _site/
-          cp docs/images/*.webp docs/images/social-preview.png docs/images/linux-editor-*.png _site/images/
+          cp docs/images/*.png _site/images/
           cp apps/linux/data/fonts/AlbertSans-Bold.ttf _site/
           cp apps/linux/data/icons/hicolor/scalable/apps/io.github.oscyl.Oscyl.svg _site/icon.svg
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
