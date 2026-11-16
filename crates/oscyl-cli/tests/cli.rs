@@ -299,3 +299,145 @@ fn generate_writes_program_files_then_varies_breeds_and_auditions_them() {
     assert!(rev2.join("Bell 0005.syx").is_file());
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+/// A unit file for the minilogue xd: a section's unit called `name`, with
+/// three parameters.
+fn unit_file(dir: &std::path::Path, module: &str, name: &str) -> String {
+    use std::io::Write;
+    let manifest = serde_json::json!({"header": {
+        "platform": "minilogue-xd", "module": module, "api": "1.1-0",
+        "dev_id": 0, "prg_id": 0, "version": "1.0-0", "name": name,
+        "num_param": 3,
+        "params": [["Wave", 0, 45, ""], ["Mix", 0, 100, "%"], ["Tilt", -100, 100, "%"]]
+    }});
+    let magic: &[u8] = if module == "osc" { b"UOSC" } else { b"UREV" };
+    let mut zip =
+        zip::ZipWriter::new(std::fs::File::create(dir.join(format!("{name}.mnlgxdunit"))).unwrap());
+    let options = zip::write::SimpleFileOptions::default();
+    zip.start_file(format!("{name}/manifest.json"), options)
+        .unwrap();
+    zip.write_all(manifest.to_string().as_bytes()).unwrap();
+    zip.start_file(format!("{name}/payload.bin"), options)
+        .unwrap();
+    zip.write_all(&[magic, &[0u8; 60]].concat()).unwrap();
+    zip.finish().unwrap();
+    dir.join(format!("{name}.mnlgxdunit"))
+        .to_str()
+        .unwrap()
+        .to_string()
+}
+
+#[test]
+fn units_info_and_the_shelf() {
+    let dir = std::env::temp_dir().join(format!("oscyl-cli-shelf-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let data = dir.join("data");
+    let run = |args: &[&str]| {
+        let out = oscyl()
+            .env("XDG_DATA_HOME", &data)
+            .args(args)
+            .assert()
+            .success();
+        String::from_utf8(out.get_output().stdout.clone()).unwrap()
+    };
+    let waves = unit_file(&dir, "osc", "anthem");
+    let hall = unit_file(&dir, "revfx", "bighall");
+    // What a unit says about itself, with no synth.
+    let info = run(&["units", "info", &waves]);
+    let lines: Vec<&str> = info.lines().collect();
+    assert_eq!(
+        lines[0].split_whitespace().collect::<Vec<_>>(),
+        ["osc", "anthem"],
+        "{info}"
+    );
+    assert!(
+        lines[1].contains("Wave") && lines[1].ends_with("1 to 46"),
+        "{info}"
+    );
+    assert!(lines[2].ends_with("0 % to 100 %"), "{info}");
+    assert!(lines[3].ends_with("-100 % to +100 %"), "{info}");
+    assert!(failure(&["units", "info", "missing.mnlgxdunit"]).contains("cannot open"));
+    assert!(failure(&["units", "info", "notes.txt"]).contains("no synth loads"));
+    // The shelf keeps copies under the app's data, by platform.
+    assert_eq!(run(&["units", "shelf", "list"]), "");
+    run(&["units", "shelf", "add", &waves, &hall]);
+    assert!(
+        data.join("oscyl/units/minilogue-xd/anthem.mnlgxdunit")
+            .is_file()
+    );
+    let listed = run(&["units", "shelf", "list"]);
+    assert!(
+        listed.contains("anthem") && listed.contains("bighall") && listed.contains("Tilt"),
+        "{listed}"
+    );
+    assert_eq!(
+        run(&["--synth", "korg-prologue", "units", "shelf", "list"]),
+        "",
+        "each synth its own"
+    );
+    // Load: the first free slot of its section; here on the simulated synth.
+    let loaded = oscyl()
+        .env("XDG_DATA_HOME", &data)
+        .args(["--simulator", "units", "shelf", "load", "anthem"])
+        .assert()
+        .success()
+        .get_output()
+        .stderr
+        .clone();
+    let loaded = String::from_utf8(loaded).unwrap();
+    assert!(
+        loaded.contains("loaded \"anthem\" into osc slot"),
+        "{loaded}"
+    );
+    run(&["units", "shelf", "remove", "anthem"]);
+    assert!(!run(&["units", "shelf", "list"]).contains("anthem"));
+    let gone = oscyl()
+        .env("XDG_DATA_HOME", &data)
+        .args(["units", "shelf", "remove", "anthem"])
+        .assert()
+        .failure();
+    assert!(
+        String::from_utf8(gone.get_output().stderr.clone())
+            .unwrap()
+            .contains("shelf list")
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn generate_with_units_says_which_sound_uses_which() {
+    let args = [
+        "--simulator",
+        "generate",
+        "--character",
+        "pad",
+        "--seed",
+        "11",
+        "--units",
+        "--count",
+        "12",
+    ];
+    let text = stdout(&args);
+    assert_eq!(text, stdout(&args), "the same seed, the same sounds");
+    let with: Vec<&str> = text.lines().filter(|l| l.contains("  with ")).collect();
+    assert!(
+        (1..12).contains(&with.len()),
+        "some sounds, not all: {text}"
+    );
+    // A sound that uses a unit has no code; the others do.
+    for line in text.lines() {
+        assert_ne!(line.contains("pad-"), line.contains("  with "), "{line}");
+    }
+    // Without --units, none does.
+    let plain = stdout(&[
+        "generate",
+        "--character",
+        "pad",
+        "--seed",
+        "11",
+        "--count",
+        "12",
+    ]);
+    assert!(!plain.contains("  with "));
+}

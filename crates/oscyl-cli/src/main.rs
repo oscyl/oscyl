@@ -13,7 +13,8 @@ use oscyl_midi::{DRIVERS, Device};
 // User units, global and tuning data are minilogue xd matters the
 // contract does not model; they run through `Device::run_units` on
 // every logue synth (minilogue xd, prologue).
-use oscyl_logue::unit::Unit;
+use oscyl_app::shelf::Shelf;
+use oscyl_logue::unit::{ParamKind, Unit, UnitInfo, palette_unit};
 use oscyl_midi::logue::{Module, UnitEvent as Event, UnitOp as Op, platform, unit_name};
 
 #[derive(Parser)]
@@ -112,6 +113,10 @@ struct Generate {
     /// Play the first sound on the synth, without storing it.
     #[arg(long)]
     audition: bool,
+    /// Let the sounds use the user oscillators and effects the synth
+    /// holds (about one sound in three): needs the synth, or --simulator.
+    #[arg(long, conflicts_with_all = ["code", "vary", "breed"])]
+    units: bool,
     /// Deal variations of the program in a file instead.
     #[arg(long, value_name = "FILE", conflicts_with_all = ["character", "code", "breed"])]
     vary: Option<PathBuf>,
@@ -140,6 +145,29 @@ enum UnitsCmd {
         #[arg(long)]
         slot: u8,
     },
+    /// Show what a unit file says about itself: section, name and
+    /// parameters. Needs no synth.
+    Info { file: PathBuf },
+    /// The shelf: unit files Oscyl keeps, ready to load.
+    Shelf {
+        #[command(subcommand)]
+        cmd: ShelfCmd,
+    },
+}
+
+#[derive(Subcommand)]
+enum ShelfCmd {
+    /// Copy unit files onto the shelf.
+    Add {
+        #[arg(required = true)]
+        files: Vec<PathBuf>,
+    },
+    /// List the shelf, each unit with its parameters.
+    List,
+    /// Take a unit off the shelf, by name.
+    Remove { name: String },
+    /// Load a unit of the shelf into the first free slot of its section.
+    Load { name: String },
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -191,6 +219,12 @@ enum Job {
     Clear {
         module: Module,
         slot: u8,
+    },
+    /// Load slot data into the first free slot of its section.
+    Load {
+        module: Module,
+        name: String,
+        data: Vec<u8>,
     },
 }
 
@@ -257,6 +291,23 @@ fn prepare(
                 let slot = slot_index(unit.module, slot)?;
                 (Job::Upload { unit, slot, force }, Some(logue))
             }
+            UnitsCmd::Info { .. } => unreachable!("handled before connecting"),
+            UnitsCmd::Shelf { cmd } => {
+                let ShelfCmd::Load { name } = cmd else {
+                    unreachable!("handled before connecting")
+                };
+                let shelf = Shelf::at(&data_dir()?.join("units"));
+                let file = shelf_file(&shelf, logue, &name)?;
+                let unit = shelf.unit(logue, &file).map_err(|e| anyhow::anyhow!(e))?;
+                (
+                    Job::Load {
+                        module: unit.module,
+                        name: unit.name,
+                        data: unit.data,
+                    },
+                    Some(logue),
+                )
+            }
             UnitsCmd::Clear { module, slot } => {
                 let module = Module::from(module);
                 (
@@ -292,6 +343,12 @@ fn main() -> Result<()> {
     };
     let cmd = match cli.cmd {
         Cmd::Generate(g) => return generate(g, chosen, cli.simulator, cli.port.as_deref()),
+        Cmd::Units {
+            cmd: UnitsCmd::Info { file },
+        } => return unit_info(&file, chosen),
+        Cmd::Units {
+            cmd: UnitsCmd::Shelf { cmd },
+        } if !matches!(cmd, ShelfCmd::Load { .. }) => return shelf(cmd, chosen),
         cmd => cmd,
     };
     let (job, from_file) = prepare(cmd, chosen)?;
@@ -311,6 +368,140 @@ fn main() -> Result<()> {
         open(driver, cli.port.as_deref())?
     };
     run(job, &mut device)
+}
+
+/// The synth a unit file is for: `chosen`, else the one whose unit files
+/// have its extension.
+fn unit_driver(path: &Path, chosen: Option<&'static dyn Driver>) -> Result<&'static dyn Driver> {
+    let e = ext(path);
+    chosen
+        .or_else(|| {
+            DRIVERS
+                .iter()
+                .copied()
+                .find(|d| oscyl_midi::logue::unit_ext(*d) == Some(e.as_str()))
+        })
+        .with_context(|| format!("{}: no synth loads .{e} units", path.display()))
+}
+
+/// A unit's section, name and parameters, as lines.
+fn print_unit(info: &UnitInfo) {
+    println!("{:<6} {}", info.module.name(), info.name);
+    for (i, p) in info.params.iter().flatten().enumerate() {
+        // As the synth shows them: a choice reads one higher.
+        let range = match p.kind {
+            ParamKind::Percent => format!("{} % to {} %", p.min, p.max),
+            ParamKind::Bipolar => format!("{:+} % to {:+} %", p.min, p.max),
+            ParamKind::Select => format!("{} to {}", i16::from(p.min) + 1, i16::from(p.max) + 1),
+        };
+        println!("  {}  {:<12}  {range}", i + 1, p.name);
+    }
+}
+
+/// `oscyl units info FILE`.
+fn unit_info(path: &Path, chosen: Option<&'static dyn Driver>) -> Result<()> {
+    let d = unit_driver(path, chosen)?;
+    let p = platform(d).with_context(|| format!("the {} has no user units", d.info().model))?;
+    let f = File::open(path).with_context(|| format!("cannot open {}", path.display()))?;
+    let unit = Unit::read(&p, BufReader::new(f))
+        .with_context(|| format!("cannot read {}", path.display()))?;
+    print_unit(&unit.info());
+    Ok(())
+}
+
+/// The file of the shelf unit called `name` (its name, or its file's).
+fn shelf_file(shelf: &Shelf, d: &dyn Driver, name: &str) -> Result<String> {
+    shelf
+        .list(d)
+        .into_iter()
+        .find(|u| u.info.name == name || u.file == name)
+        .map(|u| u.file)
+        .with_context(|| {
+            format!("no unit called {name:?} on the shelf; see `oscyl units shelf list`")
+        })
+}
+
+/// `oscyl units shelf add|list|remove`: the shelf itself, no synth.
+fn shelf(cmd: ShelfCmd, chosen: Option<&'static dyn Driver>) -> Result<()> {
+    let shelf = Shelf::at(&data_dir()?.join("units"));
+    let logue = || {
+        chosen.unwrap_or_else(|| {
+            DRIVERS
+                .iter()
+                .copied()
+                .find(|d| !d.capabilities().units.is_empty())
+                .unwrap_or(DRIVERS[0])
+        })
+    };
+    match cmd {
+        ShelfCmd::Add { files } => {
+            for path in files {
+                let d = unit_driver(&path, chosen)?;
+                let bytes = std::fs::read(&path)
+                    .with_context(|| format!("cannot open {}", path.display()))?;
+                let added = shelf
+                    .add(d, &bytes)
+                    .map_err(|e| anyhow::anyhow!("{}: {e}", path.display()))?;
+                eprintln!(
+                    "shelved \"{}\" ({})",
+                    added.info.name,
+                    added.info.module.name()
+                );
+            }
+        }
+        ShelfCmd::List => {
+            for u in shelf.list(logue()) {
+                print_unit(&u.info);
+            }
+        }
+        ShelfCmd::Remove { name } => {
+            let d = logue();
+            let file = shelf_file(&shelf, d, &name)?;
+            shelf.remove(d, &file).map_err(|e| anyhow::anyhow!(e))?;
+            eprintln!("took \"{name}\" off the shelf");
+        }
+        ShelfCmd::Load { .. } => unreachable!("needs the synth"),
+    }
+    Ok(())
+}
+
+/// What the synth holds, as Generate's palette: every unit, and each
+/// oscillator's parameters, read from its slot.
+fn palette_of(device: &mut Device) -> Result<oscyl_driver::Palette> {
+    let d = device.driver();
+    let mut held = vec![];
+    device.run_units(Op::ReadSlots, |e| {
+        if let Event::Slot {
+            module,
+            slot,
+            header: Some(h),
+        } = e
+        {
+            held.push((*module, *slot, h.clone()));
+        }
+    })?;
+    let mut units = vec![];
+    for (module, slot, status) in held {
+        let mut header = status;
+        if module == Module::Osc {
+            device.run_units(Op::ReadSlotData { module, slot }, |e| {
+                if let Event::SlotData { data, .. } = e
+                    && let Some(blob) = data.get(8..)
+                {
+                    header = blob.to_vec();
+                }
+            })?;
+        }
+        let kind = d
+            .capabilities()
+            .units
+            .iter()
+            .find(|k| k.name == module.name());
+        if let (Some(kind), Ok(info)) = (kind, UnitInfo::from_header(&header)) {
+            units.push(palette_unit(*kind, slot, &info));
+        }
+    }
+    Ok(oscyl_driver::Palette { units })
 }
 
 /// The first program of a file, and the synth it is for (which must be
@@ -369,7 +560,7 @@ fn generate(
             let mut v = d.vary(&p, generator::AMOUNTS[1], step(k)).map_err(fail)?;
             d.set_name(&mut v, &numbered(d, &name, k + 1))
                 .map_err(fail)?;
-            out.push((v, None));
+            out.push((v, None, vec![]));
         }
         (d, out)
     } else if let Some(files) = &g.breed {
@@ -383,7 +574,7 @@ fn generate(
             let mut c = d.breed(&a, &b, mix, step(k)).map_err(fail)?;
             d.set_name(&mut c, &numbered(d, &name, k + 1))
                 .map_err(fail)?;
-            out.push((c, None));
+            out.push((c, None, vec![]));
         }
         (d, out)
     } else {
@@ -426,12 +617,33 @@ fn generate(
                 "say what to generate: --character (see `oscyl generate --list`), --code, --vary or --breed"
             ),
         };
-        let dealt = generator::deal(d, &recipe, None, recipe.seed, Some(recipe.seed), count)
-            .map_err(fail)?;
-        (d, dealt.into_iter().map(|s| (s.program, s.code)).collect())
+        // With --units the first sound may take one too: no seed is its own.
+        let (mut recipe, mut first) = (recipe, Some(seed).filter(|_| !g.units));
+        if g.code.is_some() {
+            first = Some(recipe.seed);
+        }
+        if g.units {
+            let mut device = if simulator {
+                Device::demo(d)?
+            } else {
+                open(Some(d), port)?
+            };
+            recipe.palette = palette_of(&mut device)?;
+            if recipe.palette.units.is_empty() {
+                eprintln!("the synth holds no user units");
+            }
+        }
+        let dealt = generator::deal(d, &recipe, None, recipe.seed, first, count).map_err(fail)?;
+        let dealt = dealt.into_iter().map(|s| (s.program, s.code, s.units));
+        (d, dealt.collect())
     };
-    for (p, code) in &sounds {
-        println!("{:<14}{}", d.name(p)?, code.as_deref().unwrap_or(""));
+    for (p, code, units) in &sounds {
+        let with = match units.as_slice() {
+            [] => String::new(),
+            names => format!("  with {}", names.join(", ")),
+        };
+        let line = format!("{:<14}{}{with}", d.name(p)?, code.as_deref().unwrap_or(""));
+        println!("{}", line.trim_end());
     }
     if let Some(dir) = &g.out {
         // The last format a driver lists is its smallest: a single
@@ -441,7 +653,7 @@ fn generate(
             .last()
             .map_or(oscyl_core::native::EXT, |f| f.ext);
         let mut used: Vec<String> = vec![];
-        for (p, _) in &sounds {
+        for (p, ..) in &sounds {
             let name: String = d
                 .name(p)?
                 .chars()
@@ -472,7 +684,7 @@ fn generate(
         eprintln!("wrote {} programs to {}", sounds.len(), dir.display());
     }
     if g.audition
-        && let Some((p, _)) = sounds.first()
+        && let Some((p, ..)) = sounds.first()
     {
         let mut device = if simulator {
             Device::demo(d)?
@@ -660,6 +872,29 @@ fn run(job: Job, device: &mut Device) -> Result<()> {
                 slot + 1,
                 t0.elapsed()
             );
+        }
+        Job::Load { module, name, data } => {
+            xd_only(device)?;
+            let mut free = None;
+            device.run_units(Op::ReadSlots, |e| {
+                if let Event::Slot {
+                    module: m,
+                    slot,
+                    header: None,
+                } = e
+                    && *m == module
+                {
+                    free = Some(free.map_or(*slot, |f: u8| f.min(*slot)));
+                }
+            })?;
+            let Some(slot) = free else {
+                bail!(
+                    "every {} slot is full; clear one with `oscyl units clear`",
+                    module.name()
+                );
+            };
+            device.run_units(Op::UploadUnit { module, slot, data }, |_| {})?;
+            eprintln!("loaded \"{name}\" into {} slot {}", module.name(), slot + 1);
         }
         Job::Clear { module, slot } => {
             xd_only(device)?;
