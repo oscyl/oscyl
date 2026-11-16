@@ -2,10 +2,11 @@
 //! sidebar's status card, for every connected synth.
 
 use gtk::prelude::*;
-use std::cell::RefCell;
-use std::rc::Rc;
+#[cfg(target_os = "linux")]
+use std::{cell::RefCell, rc::Rc};
 
 use gtk::glib;
+#[cfg(target_os = "linux")]
 use oscyl_midi::hotplug::{Change, PortWatcher};
 
 use crate::app::{App, Synth, reattach_index, synth_name};
@@ -20,6 +21,7 @@ impl App {
     /// watched from the main loop). Plugging one in connects it;
     /// unplugging drops it at once instead of waiting for a request to
     /// fail.
+    #[cfg(target_os = "linux")]
     pub(crate) fn watch_hotplug(&self) {
         // Simulated synths connect at once; real ones as they are found.
         if self.win.settings.borrow().simulator() {
@@ -74,6 +76,28 @@ impl App {
                 on_change(());
                 glib::ControlFlow::Continue
             });
+        }
+    }
+
+    /// Other desktops have no hotplug yet: connect the synths plugged in at
+    /// launch; later ones connect when the user asks (Connect rescans).
+    #[cfg(not(target_os = "linux"))]
+    pub(crate) fn watch_hotplug(&self) {
+        if self.win.settings.borrow().simulator() {
+            self.connect_synth();
+            return;
+        }
+        let found = oscyl_midi::scan().unwrap_or_else(|e| {
+            glib::g_warning!("oscyl", "cannot list MIDI ports: {e}");
+            Vec::new()
+        });
+        if found.is_empty() {
+            return;
+        }
+        self.connecting.set(true);
+        self.refresh_status();
+        for c in found {
+            self.synth.send(Cmd::Open(c));
         }
     }
 

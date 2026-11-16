@@ -1,4 +1,6 @@
 //! Oscyl for GNOME.
+// A release build on Windows opens no console window beside the app.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod actions;
 mod app;
@@ -93,7 +95,35 @@ fn parse_options() -> Result<Options, String> {
     Ok(o)
 }
 
+/// The `share` directory of the Windows folder (`bin/../share`) or the
+/// macOS app bundle (`Contents/Resources/share`); Linux installs use the
+/// system's.
+#[cfg(not(target_os = "linux"))]
+pub fn bundle_share() -> Option<std::path::PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let top = exe.parent()?.parent()?;
+    let share = if cfg!(target_os = "macos") {
+        top.join("Resources").join("share")
+    } else {
+        top.join("share")
+    };
+    share.is_dir().then_some(share)
+}
+
+/// GLib finds its data next to its DLL on Windows, but Homebrew's GLib
+/// looks under Homebrew's prefix: point it at the bundle's icons and
+/// schemas instead.
+#[cfg(target_os = "macos")]
+fn use_bundle_data() {
+    if let Some(share) = bundle_share() {
+        // SAFETY: the first thing main does, before any other thread exists.
+        unsafe { std::env::set_var("XDG_DATA_DIRS", share) };
+    }
+}
+
 fn main() -> glib::ExitCode {
+    #[cfg(target_os = "macos")]
+    use_bundle_data();
     let options = match parse_options() {
         Ok(o) => o,
         Err(e) => {
