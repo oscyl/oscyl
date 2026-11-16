@@ -15,6 +15,7 @@ use oscyl_driver::engine::OpError;
 use oscyl_driver::{Driver, SessionEvent, SessionOp};
 // User units are a logue-family capability the contract does not model:
 // they run as `Device` unit ops on drivers that list units.
+use oscyl_logue::unit::UnitInfo;
 #[cfg(feature = "midir")]
 use oscyl_midi::Candidate;
 use oscyl_midi::logue::{Module, UnitEvent, UnitOp, unit_name};
@@ -133,6 +134,10 @@ pub struct SlotInfo {
     pub module: Module,
     pub slot: u8,
     pub name: Option<String>,
+    /// What the unit in the slot says about itself. A first listing names
+    /// an oscillator's parameters only when they are known already; the
+    /// worker then reads them from the synth and lists the slots again.
+    pub info: Option<UnitInfo>,
 }
 
 /// The UI's handle on the worker.
@@ -185,6 +190,7 @@ fn spawn_with(reopen: Option<Reopen>, retry: Retry) -> (SynthHandle, async_chann
                 bell: ring,
                 reopen,
                 retry,
+                known_units: Vec::new(),
             }
             .run(rx, rung)
         })
@@ -256,6 +262,8 @@ enum UnitJob {
     Change,
     /// Read a slot's unit to back it up to the path, then clear the slot.
     Backup(Module, u8, PathBuf, Option<Vec<u8>>),
+    /// Read a slot's unit to learn its parameters.
+    Info(Option<UnitInfo>),
 }
 
 /// How long a port stays closed between attempts to reach a synth that
@@ -298,6 +306,9 @@ struct Dev {
     read: Option<Read>,
     outbox: Outbox,
     units: VecDeque<UnitJob>,
+    /// The slots as listed last, while their oscillators' parameters are
+    /// being read.
+    listed: Vec<SlotInfo>,
 }
 
 struct Worker {
@@ -311,6 +322,9 @@ struct Worker {
     /// `None` where ports cannot be reopened.
     reopen: Option<Reopen>,
     retry: Retry,
+    /// Units whose parameters were read from a synth in this run (the
+    /// app's palettes remember those of earlier runs).
+    known_units: Vec<UnitInfo>,
 }
 
 impl Worker {
@@ -527,6 +541,7 @@ impl Worker {
             read: None,
             outbox: Outbox::default(),
             units: VecDeque::new(),
+            listed: Vec::new(),
         });
     }
 
@@ -646,6 +661,44 @@ impl Worker {
         }
     }
 
+    /// Device `k` listed `slots`: tell the app, with the parameters known
+    /// so far, and note them as the synth's palette
+    /// ([`crate::palette`]). With `learn`, the oscillators whose parameters are not
+    /// known are then read from the synth (an effect has none to turn),
+    /// and the slots told again once they are.
+    fn listed(&mut self, k: usize, mut slots: Vec<SlotInfo>, learn: bool) {
+        let (id, driver) = (self.devices[k].id, self.devices[k].device.driver());
+        let mut unknown = vec![];
+        let remembered = crate::palette::shared().known();
+        for s in &mut slots {
+            let Some(info) = &mut s.info else { continue };
+            let known = self
+                .known_units
+                .iter()
+                .chain(&remembered)
+                .find(|u| u.same_unit(info));
+            match known {
+                Some(u) => info.params.clone_from(&u.params),
+                None if s.module == Module::Osc => unknown.push((s.module, s.slot)),
+                None => {}
+            }
+        }
+        if learn && !unknown.is_empty() {
+            self.devices[k].listed.clone_from(&slots);
+        }
+        crate::palette::shared().listed(driver, &slots);
+        self.emit(Ev::Slots(id, slots));
+        if learn {
+            for (module, slot) in unknown {
+                self.unit(
+                    k,
+                    UnitOp::ReadSlotData { module, slot },
+                    UnitJob::Info(None),
+                );
+            }
+        }
+    }
+
     fn on_unit_event(&mut self, k: usize, e: UnitEvent) {
         let id = self.devices[k].id;
         let driver = self.devices[k].device.driver();
@@ -661,12 +714,35 @@ impl Worker {
                 module,
                 slot,
                 name: header.as_deref().map(unit_name),
+                info: header
+                    .as_deref()
+                    .and_then(|h| UnitInfo::from_header(h).ok()),
             }),
+            (UnitEvent::SlotData { data, .. }, Some(UnitJob::Info(info))) => {
+                // TABLE 7: size, checksum, then the blob, whose start is the header.
+                *info = data
+                    .get(8..)
+                    .and_then(|blob| UnitInfo::from_header(blob).ok());
+            }
             (UnitEvent::SlotData { data, .. }, Some(UnitJob::Backup(.., saved))) => {
                 *saved = Some(data)
             }
             (UnitEvent::Done, _) => match self.devices[k].units.pop_front() {
-                Some(UnitJob::List(slots)) => self.emit(Ev::Slots(id, slots)),
+                Some(UnitJob::List(slots)) => self.listed(k, slots, true),
+                Some(UnitJob::Info(info)) => {
+                    self.known_units.extend(info.filter(|i| i.params.is_some()));
+                    // The last one read: the slots again, parameters and all.
+                    let more = self.devices[k]
+                        .units
+                        .iter()
+                        .any(|j| matches!(j, UnitJob::Info(_)));
+                    let slots = std::mem::take(&mut self.devices[k].listed);
+                    if more {
+                        self.devices[k].listed = slots;
+                    } else if !slots.is_empty() {
+                        self.listed(k, slots, false);
+                    }
+                }
                 Some(UnitJob::Backup(module, slot, backup, saved)) => {
                     // Never clear what could not be backed up first.
                     match write_backup(&backup, saved) {
@@ -1797,11 +1873,30 @@ mod tests {
             handle.send(Cmd::Live(id, xd.live_messages(&edited, cutoff, 0).unwrap()));
         }
         handle.send(Cmd::ReadSlots(id));
-        let slots = match next(&rx, |e| matches!(e, Ev::Slots(..))) {
-            Ev::Slots(_, s) => s,
-            _ => unreachable!(),
+        // The slots are listed at once; the oscillators' parameters follow,
+        // read from the synth, in a second listing (the first already has
+        // them when an earlier listing learned them).
+        let slots = loop {
+            let Ev::Slots(_, s) = next(&rx, |e| matches!(e, Ev::Slots(..))) else {
+                unreachable!()
+            };
+            assert_eq!(s.len(), 48);
+            let mut oscillators = s
+                .iter()
+                .filter(|x| x.module == Module::Osc)
+                .filter_map(|x| x.info.as_ref());
+            if oscillators.all(|i| i.params.is_some()) {
+                break s;
+            }
         };
-        assert_eq!(slots.len(), 48);
+        let waves = slots
+            .iter()
+            .filter_map(|x| x.info.as_ref())
+            .find(|i| i.module == Module::Osc)
+            .expect("a demo oscillator");
+        // The listing is the synth's palette for Generate.
+        let palette = crate::palette::shared().palette(xd);
+        assert!(palette.units.iter().any(|u| u.name == waves.name));
 
         // Clearing backs the unit up first, then empties the slot.
         let used = slots
@@ -1827,6 +1922,15 @@ mod tests {
             }
             _ => unreachable!(),
         }
+        // A cleared slot leaves the palette.
+        let palette = crate::palette::shared().all(xd);
+        let kind = used.module.name();
+        assert!(
+            !palette
+                .units
+                .iter()
+                .any(|u| (u.kind.name, u.slot) == (kind, used.slot))
+        );
         let saved = std::fs::read(&backup).expect("backup written");
         assert!(saved.len() > 8);
         let _ = std::fs::remove_file(backup);

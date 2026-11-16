@@ -8,6 +8,7 @@ pub mod files;
 pub mod generator;
 pub mod i18n;
 pub mod libraries;
+pub mod palette;
 pub mod panel;
 pub mod program_menu;
 pub mod review;

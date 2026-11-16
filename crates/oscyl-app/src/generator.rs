@@ -38,6 +38,19 @@ pub struct Hand {
     /// dealt sounds. Variations, children, morphs and sounds that hold
     /// pages of a base program have none.
     pub codes: Vec<Option<String>>,
+    /// The user units each sound relies on, by name ("waves"); empty for
+    /// most.
+    pub units: Vec<Vec<String>>,
+}
+
+/// A dealt sound.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Sound {
+    pub program: Program,
+    /// Its recipe code, when a recipe alone makes it again.
+    pub code: Option<String>,
+    /// The user units it relies on, by name.
+    pub units: Vec<String>,
 }
 
 /// Dealt seeds are 32 bits, so a code is 13 characters after the
@@ -169,16 +182,27 @@ pub struct Hands {
     hands: Vec<Hand>,
     at: usize,
     seed: u64,
+    /// The user units the synth holds, for the next deals
+    /// ([`Hands::set_palette`]).
+    palette: Palette,
 }
 
 /// `n` sounds of `recipe`'s character, dials (each at the nearest of its
-/// 101 steps) and kept pages, each with its recipe code when a recipe
-/// names it (none when pages are held from `base`; a base alone lends
-/// only what is the player's, tuning and controllers, which a code does
-/// not carry): the first from seed `first`
-/// when given, the others from 32-bit seeds drawn from `seed`
-/// (`recipe.seed` is not read). What a hand of the page is made of, for
-/// callers without a page too (the command line).
+/// 101 steps) and kept pages: the first from seed `first` when given, the
+/// others from 32-bit seeds drawn from `seed` (`recipe.seed` is not read).
+/// What a hand of the page is made of, for callers without a page too (the
+/// command line).
+///
+/// `recipe.palette` is what the synth holds: about one sound in three is
+/// dealt with it (which, each sound's seed decides), and one at least when
+/// the character can take a unit at all. The sound a code names (`first`)
+/// never is.
+///
+/// Each sound comes with its recipe code when a recipe names it: none when
+/// pages are held from `base` (a base alone lends only what is the
+/// player's, tuning and controllers, which a code does not carry), and
+/// none for a sound that relies on a user unit, which a code says nothing
+/// about.
 pub fn deal(
     d: &dyn Driver,
     recipe: &Recipe,
@@ -186,27 +210,57 @@ pub fn deal(
     seed: u64,
     first: Option<u64>,
     n: usize,
-) -> Result<Vec<(Program, Option<String>)>, DriverError> {
-    let recipe = |seed| Recipe {
+) -> Result<Vec<Sound>, DriverError> {
+    let palette = &recipe.palette;
+    let with_units = |seed: u64| {
+        !palette.units.is_empty() && first != Some(seed) && Pick(seed).next().is_multiple_of(3)
+    };
+    let plain = |seed| Recipe {
         macros: stepped(recipe.macros),
         seed,
+        palette: Palette::default(),
         ..recipe.clone()
     };
-    let held = base.is_some() && !recipe(0).keep.is_empty();
-    let dealt = hand_seeded(d, recipe(0).character, seed, SEED_MASK, first, n, |seed| {
-        d.generate(&recipe(seed), base)
+    let unit = |seed| Recipe {
+        palette: palette.clone(),
+        ..plain(seed)
+    };
+    let held = base.is_some() && !recipe.keep.is_empty();
+    let mut dealt = hand_seeded(d, recipe.character, seed, SEED_MASK, first, n, |seed| {
+        let r = if with_units(seed) {
+            unit(seed)
+        } else {
+            plain(seed)
+        };
+        d.generate(&r, base)
     })?;
+    // No sound of the hand took a unit: the last one does, if it can.
+    let none = dealt.iter().all(|(p, _)| d.needs(p).is_empty());
+    if let (true, false, Some((last, Some(seed)))) =
+        (none, palette.units.is_empty(), dealt.last_mut())
+        && first != Some(*seed)
+    {
+        let with = d.generate(&unit(*seed), base)?;
+        if !d.needs(&with).is_empty() {
+            *last = with;
+        }
+    }
     Ok(dealt
         .into_iter()
-        .map(|(p, seed)| {
-            let code = seed.filter(|_| !held).and_then(|seed| {
+        .map(|(program, seed)| {
+            let units = crate::palette::unit_names(d, &program, palette);
+            let code = seed.filter(|_| !held && units.is_empty()).and_then(|seed| {
                 let free = Recipe {
                     keep: vec![],
-                    ..recipe(seed)
+                    ..plain(seed)
                 };
                 code(d, &free)
             });
-            (p, code)
+            Sound {
+                program,
+                code,
+                units,
+            }
         })
         .collect())
 }
@@ -231,6 +285,7 @@ impl Hands {
             hands: Vec::new(),
             at: 0,
             seed,
+            palette: Palette::default(),
         }
     }
 
@@ -242,6 +297,12 @@ impl Hands {
     /// The next hand's seed: a step of SplitMix64 on the hands' own. (The
     /// state itself would not do: a hand steps its seed the same way, so
     /// two hands in a row would share five of their six sounds.)
+    /// The user units the next hands may use (see [`deal`]): what the
+    /// synth holds, less what the player switched off. Empty: none.
+    pub fn set_palette(&mut self, palette: Palette) {
+        self.palette = palette;
+    }
+
     fn next_seed(&mut self) -> u64 {
         let mut pick = Pick(self.seed);
         let s = pick.next();
@@ -308,13 +369,18 @@ impl Hands {
             macros,
             seed: 0,
             keep: keep.to_vec(),
-            palette: Palette::default(),
+            palette: self.palette.clone(),
         };
         let Ok(dealt) = deal(d, &recipe, base, seed, first, HAND) else {
             return false;
         };
-        let (programs, codes) = dealt.into_iter().unzip();
-        self.push_coded(programs, codes, character, tr(title))
+        let (mut programs, mut codes, mut units) = (vec![], vec![], vec![]);
+        for s in dealt {
+            programs.push(s.program);
+            codes.push(s.code);
+            units.push(s.units);
+        }
+        self.push_coded(programs, codes, units, character, tr(title))
     }
 
     /// A random character and dials (at steps of five), dealt; what it
@@ -368,6 +434,7 @@ impl Hands {
         let programs = hand(d, c, seed, HAND, |s| d.vary(&p, amount, s));
         let name = d.name(&p).unwrap_or_default();
         self.push(
+            d,
             programs,
             c,
             tr("Variations of “{name}”").replace("{name}", &name),
@@ -402,6 +469,7 @@ impl Hands {
         });
         let name = |p: &[u8]| d.name(p).unwrap_or_default();
         self.push(
+            d,
             programs,
             c,
             tr("Children of “{a}” and “{b}”")
@@ -442,6 +510,7 @@ impl Hands {
             })
             .collect();
         self.push(
+            d,
             programs,
             c,
             tr("From “{a}” to “{b}”")
@@ -453,6 +522,7 @@ impl Hands {
     /// Show a new hand of sounds with no codes (see [`Hands::push_coded`]).
     fn push(
         &mut self,
+        d: &dyn Driver,
         programs: Result<Vec<Program>, DriverError>,
         character: usize,
         origin: String,
@@ -461,7 +531,12 @@ impl Hands {
             return false;
         };
         let codes = vec![None; programs.len()];
-        self.push_coded(programs, codes, character, origin)
+        // A variation or a child keeps its parent's units.
+        let units = programs
+            .iter()
+            .map(|p| crate::palette::unit_names(d, p, &self.palette))
+            .collect();
+        self.push_coded(programs, codes, units, character, origin)
     }
 
     /// Show a new hand after the current one, dropping any hands ahead of
@@ -470,6 +545,7 @@ impl Hands {
         &mut self,
         programs: Vec<Program>,
         codes: Vec<Option<String>>,
+        units: Vec<Vec<String>>,
         character: usize,
         origin: String,
     ) -> bool {
@@ -481,6 +557,7 @@ impl Hands {
             selected: 0,
             kept: None,
             codes,
+            units,
         });
         if self.hands.len() > HISTORY {
             self.hands.remove(0);
@@ -727,6 +804,69 @@ mod tests {
         // Kept pages cannot be named by a code.
         let kept = Recipe { keep: vec![0], ..r };
         assert_eq!(super::code(d, &kept), None);
+    }
+
+    /// One oscillator in slot 3, with a parameter.
+    fn one_oscillator(d: &dyn Driver) -> Palette {
+        Palette {
+            units: vec![oscyl_driver::PaletteUnit {
+                kind: d.capabilities().units[0],
+                slot: 3,
+                name: "waves".into(),
+                params: Some(vec![oscyl_driver::UnitParam {
+                    name: "Wave".into(),
+                    min: 0,
+                    max: 45,
+                    kind: oscyl_driver::UnitParamKind::Choice,
+                }]),
+            }],
+        }
+    }
+
+    #[test]
+    fn with_a_palette_some_sounds_of_a_hand_use_a_unit() {
+        let d = xd();
+        let pad = d.characters().iter().position(|c| c.id == "pad").unwrap();
+        let wind = d.characters().iter().position(|c| c.id == "wind").unwrap();
+        let mut h = Hands::new(1);
+        h.set_palette(one_oscillator(d));
+        let (mut using, mut hands) = (0, 0);
+        for _ in 0..30 {
+            assert!(h.deal(d, pad, Macros::default(), &[], None));
+            let hand = h.current().unwrap().clone();
+            let n = hand.units.iter().filter(|u| !u.is_empty()).count();
+            assert!(n >= 1, "one at least");
+            using += n;
+            hands += 1;
+            for (i, p) in hand.programs.iter().enumerate() {
+                let relies = !d.needs(p).is_empty();
+                assert_eq!(hand.units[i] == ["waves"], relies);
+                // A code says nothing about units: such a sound has none;
+                // the others' still make them again.
+                assert_eq!(hand.codes[i].is_none(), relies);
+                if let Some(code) = &hand.codes[i] {
+                    let r = parse_code(d, code).unwrap();
+                    assert_eq!(&d.generate(&r, None).unwrap(), p);
+                }
+            }
+        }
+        let share = using as f32 / (hands * HAND) as f32;
+        assert!((0.2..0.5).contains(&share), "about one in three: {share}");
+        // A variation of a sound with a unit keeps it, and says so.
+        let hand = h.current().unwrap().clone();
+        h.select(hand.units.iter().position(|u| !u.is_empty()).unwrap());
+        assert!(h.vary(d, 0));
+        assert!(h.current().unwrap().units.iter().all(|u| u == &["waves"]));
+        // A character that cannot take the oscillator deals none.
+        assert!(h.deal(d, wind, Macros::default(), &[], None));
+        assert!(h.current().unwrap().units.iter().all(Vec::is_empty));
+        // No palette, no units; a code's own sound is never given one.
+        let code = h.code().unwrap();
+        assert!(h.deal_code(d, &code).is_ok());
+        assert!(h.current().unwrap().units[0].is_empty());
+        h.set_palette(Palette::default());
+        assert!(h.deal(d, pad, Macros::default(), &[], None));
+        assert!(h.current().unwrap().units.iter().all(Vec::is_empty));
     }
 
     #[test]

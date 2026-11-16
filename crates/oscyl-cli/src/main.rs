@@ -428,7 +428,7 @@ fn generate(
         };
         let dealt = generator::deal(d, &recipe, None, recipe.seed, Some(recipe.seed), count)
             .map_err(fail)?;
-        (d, dealt)
+        (d, dealt.into_iter().map(|s| (s.program, s.code)).collect())
     };
     for (p, code) in &sounds {
         println!("{:<14}{}", d.name(p)?, code.as_deref().unwrap_or(""));
