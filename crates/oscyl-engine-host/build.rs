@@ -11,6 +11,9 @@ fn main() {
         .include(unit)
         .file(format!("{unit}/engine.c"))
         .file("src/host.c")
+        // Plain multiply then add, as the Rust port does: Apple's clang
+        // fuses them by default, which drifts FM and feedback apart.
+        .flag_if_supported("-ffp-contract=off")
         .warnings(true)
         .compile("oscyl_engine");
 }

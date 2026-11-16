@@ -331,7 +331,9 @@ class LibraryBehaviourTest {
         val factory = model.ui.value.programs!!.rows.indexOfFirst { it.readOnly }
         assertTrue(factory > 0)
         // Read first: a name that arrives later is not an edit.
-        await { model.ui.value.programs!!.rows[factory].loaded }
+        // The factory banks come after the user banks: on a slow CI runner that read
+        // outlasts the usual bound.
+        compose.waitUntil(READ_MS) { model.ui.value.programs!!.rows[factory].loaded }
         val before = model.ui.value.programs!!.rows[factory].name
         model.renameProgram(factory, "Mine")
         compose.waitForIdle()
@@ -346,5 +348,6 @@ class LibraryBehaviourTest {
     private companion object {
         const val MENU = "More options"
         const val TIMEOUT_MS = 10_000L
+        const val READ_MS = 60_000L
     }
 }

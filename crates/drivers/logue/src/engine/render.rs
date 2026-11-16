@@ -240,8 +240,8 @@ impl<'a> Engine<'a> {
             b.s = [0.0; 6];
             b.n = 0;
             if b.kind == Kind::Supersaw as u8 {
-                for i in 0..5 {
-                    b.s[i] = 0.2 * i as f32;
+                for (i, s) in b.s.iter_mut().take(5).enumerate() {
+                    *s = 0.2 * i as f32;
                 }
             }
         }
