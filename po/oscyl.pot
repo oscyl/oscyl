@@ -873,6 +873,9 @@ msgstr ""
 msgid "Export…"
 msgstr ""
 
+msgid "FM"
+msgstr ""
+
 msgid "FM Bass"
 msgstr ""
 
@@ -928,6 +931,9 @@ msgid "Flanger"
 msgstr ""
 
 msgid "Flanger flavour, from Light to jet-like High and Pan sweeps."
+msgstr ""
+
+msgid "Fold"
 msgstr ""
 
 msgid "Folder name"
@@ -1108,6 +1114,9 @@ msgid "How the four voices are used: Poly, Unison, Chord or Arp/Latch."
 msgstr ""
 
 msgid "Huge low hit with a tail"
+msgstr ""
+
+msgid "Hybrid"
 msgstr ""
 
 msgid "Impact"
@@ -2699,6 +2708,9 @@ msgstr ""
 msgid "This sound uses {units}. A synth plays it as it sounds here only with that unit in the same slot."
 msgstr ""
 
+msgid "This synth cannot play Oscyl's oscillators."
+msgstr ""
+
 msgid "This synth deals no sounds"
 msgstr ""
 
@@ -3036,6 +3048,9 @@ msgid "Waveform of VCO 1: square, triangle or sawtooth."
 msgstr ""
 
 msgid "Waveform of VCO 2: square, triangle or sawtooth."
+msgstr ""
+
+msgid "Wavetable"
 msgstr ""
 
 msgid "Welcome"

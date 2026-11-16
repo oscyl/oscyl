@@ -441,6 +441,29 @@ impl Synth {
         Ok(unit.name)
     }
 
+    /// Keep oscillator `patch` (`OscillatorTile.patch`): put it on the
+    /// shelf and load it into the first free oscillator slot of synth `id`
+    /// (an `Error` event follows when they are all taken); the slots are
+    /// listed again after, and it joins Generate's units. Its name.
+    /// Blocks (writes the file).
+    pub fn keep_oscillator(
+        &self,
+        id: u64,
+        driver_id: String,
+        shelf: Arc<crate::units::Shelf>,
+        patch: Vec<u8>,
+    ) -> Result<String, FfiError> {
+        let patch = crate::oscillators::patch(&patch)?;
+        let unit = oscyl_app::oscillators::keep(&shelf.0, driver(&driver_id)?, &patch)
+            .map_err(|reason| FfiError::Refused { reason })?;
+        self.handle.send(Cmd::LoadUnit {
+            id,
+            module: unit.module,
+            data: unit.data,
+        });
+        Ok(unit.name)
+    }
+
     /// Save the slot's unit to the file `backup`, then clear the slot (never
     /// without the backup); the slots are listed again after.
     pub fn clear_slot(

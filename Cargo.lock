@@ -1347,6 +1347,7 @@ dependencies = [
  "oscyl-app",
  "oscyl-core",
  "oscyl-driver",
+ "oscyl-logue",
  "oscyl-midi",
  "thiserror 2.0.21",
  "uniffi",

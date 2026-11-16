@@ -41,6 +41,10 @@ const SOURCES: &[(&str, &str)] = &[
         include_str!("../../../crates/oscyl-app/src/shelf.rs"),
     ),
     (
+        "oscyl-app/oscillators.rs",
+        include_str!("../../../crates/oscyl-app/src/oscillators.rs"),
+    ),
+    (
         "oscyl-app/review.rs",
         include_str!("../../../crates/oscyl-app/src/review.rs"),
     ),

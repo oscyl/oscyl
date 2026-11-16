@@ -913,6 +913,9 @@ msgstr "Esporta libreria"
 msgid "Export…"
 msgstr "Esporta…"
 
+msgid "FM"
+msgstr "FM"
+
 msgid "FM Bass"
 msgstr "Basso FM"
 
@@ -970,6 +973,9 @@ msgstr "Flanger"
 
 msgid "Flanger flavour, from Light to jet-like High and Pan sweeps."
 msgstr "Variante del flanger, da Light agli sweep High e Pan simili a un jet."
+
+msgid "Fold"
+msgstr "Fold"
 
 msgid "Folder name"
 msgstr "Nome della cartella"
@@ -1188,6 +1194,9 @@ msgstr "Come vengono usate le quattro voci: Poly, Unison, Chord o Arp/Latch."
 
 msgid "Huge low hit with a tail"
 msgstr "Colpo basso enorme con coda"
+
+msgid "Hybrid"
+msgstr "Ibrido"
 
 msgid "Impact"
 msgstr "Impatto"
@@ -2908,6 +2917,9 @@ msgstr "Questo suono usa {units}, che il synth non ha in quello slot. Suonerà d
 msgid "This sound uses {units}. A synth plays it as it sounds here only with that unit in the same slot."
 msgstr "Questo suono usa {units}. Un synth lo suona come qui solo con quell'unità nello stesso slot."
 
+msgid "This synth cannot play Oscyl's oscillators."
+msgstr "Questo synth non può suonare gli oscillatori di Oscyl."
+
 msgid "This synth deals no sounds"
 msgstr "Questo synth non genera suoni"
 
@@ -3266,6 +3278,9 @@ msgstr "Attendi che tutti i programmi siano stati letti dal synth."
 
 msgid "Wave"
 msgstr "Onda"
+
+msgid "Wavetable"
+msgstr "Wavetable"
 
 msgid "Waveform of VCO 1: square, triangle or sawtooth."
 msgstr "Forma d'onda del VCO 1: quadra, triangolare o dente di sega."

@@ -24,6 +24,7 @@ cli = ["uniffi/cli"]
 # 1.3.x) requires exactly this version.
 uniffi = "=0.32.0"
 oscyl-app = { path = "../oscyl-app", default-features = false }
+oscyl-logue = { path = "../drivers/logue" }
 oscyl-core = { path = "../oscyl-core" }
 oscyl-driver = { path = "../oscyl-driver" }
 oscyl-midi = { path = "../oscyl-midi", default-features = false }

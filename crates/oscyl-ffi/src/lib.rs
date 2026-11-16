@@ -10,6 +10,7 @@ mod document;
 mod editor;
 mod generator;
 mod library;
+mod oscillators;
 mod settings;
 mod synth;
 mod units;
@@ -27,6 +28,9 @@ pub use editor::{
 };
 pub use generator::{CharacterInfo, Dealt, Generator, HandState, MacroInfo, SoundTile, UnitChip};
 pub use library::{Libraries, NodeKind, OutlineLine, Trashed};
+pub use oscillators::{
+    OscillatorFamily, OscillatorHand, OscillatorTile, Oscillators, oscillator_families,
+};
 pub use settings::{PlayLayout, Role, Settings, Theme, set_locale};
 pub use synth::{
     FfiError, LinkError, MidiInputSink, MidiOut, SlotInfo, SlotProgram, Synth, SynthEvent,
