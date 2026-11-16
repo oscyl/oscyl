@@ -573,6 +573,74 @@ class EditorBehaviourTest {
         }
     }
 
+    /** A whole program sent to the synth's edit buffer (current-program dump). */
+    private fun isDump(m: ByteArray) = m.size > 6 && m[0] == 0xF0.toByte() && m[6] == 0x40.toByte()
+
+    /** The panel picks program [n] (of the first hundred). */
+    private fun pick(midi: FakeMidi, n: Int) =
+        midi.panel(byteArrayOf(0xB0.toByte(), 0, 0, 0xB0.toByte(), 0x20, 0, 0xC0.toByte(), n.toByte()))
+
+    /** A USB xd read in full, its slot [at] open, with Live on when [live]; the mark of what was sent so far. */
+    private fun openOnUsbXd(midi: FakeMidi, at: Int, live: Boolean): Pair<io.github.oscyl.ui.synth.SynthCard, Int> {
+        show(midi, open = false)
+        await { synth.cards.value.any { it.connected } }
+        val card = synth.cards.value.first()
+        await { synth.document(card.id)?.allRead() == true && synth.cards.value.first().read == null }
+        compose.runOnIdle { library.select(synthSource(card.id)) }
+        await { library.ui.value.programs?.rows?.isNotEmpty() == true }
+        compose.runOnIdle { library.selectProgram(at) }
+        await { editor.head.value?.canLive == true }
+        if (live) {
+            compose.runOnIdle { editor.toggleLive() }
+            await { editor.head.value?.live == true }
+            // Live on plays the open program: past that, nothing else should go.
+            await { midi.sent.any(::isDump) }
+        }
+        return card to midi.sent.size
+    }
+
+    /** Live on: the synth's panel picking a program opens it here, and nothing is sent back. */
+    @Test
+    fun liveFollowsTheSynthPanel() {
+        val midi = FakeMidi(USB_XD)
+        val (_, mark) = openOnUsbXd(midi, at = 3, live = true)
+        pick(midi, 7)
+        await { library.open.value?.index == 7 }
+        pick(midi, 8)
+        pick(midi, 9)
+        await { library.open.value?.index == 9 }
+        compose.runOnIdle { assertTrue(midi.sent.drop(mark).none(::isDump)) }
+    }
+
+    /** The slot picked holds unsynced edits here: they are sent, so the synth plays what is shown. */
+    @Test
+    fun followingASlotWithEditsSendsThem() {
+        val midi = FakeMidi(USB_XD)
+        val (card, _) = openOnUsbXd(midi, at = 3, live = true)
+        compose.runOnIdle {
+            synth.document(card.id)!!.editor(7u).use { e ->
+                val f = e.fields(e.firstPage()).first { it.control is io.github.oscyl.core.ControlKind.Dial }
+                e.set(f.field, if (f.raw > 500u) f.raw - 100u else f.raw + 100u)
+            }
+        }
+        val mark = midi.sent.size
+        pick(midi, 7)
+        await { library.open.value?.index == 7 }
+        await { midi.sent.drop(mark).any(::isDump) }
+    }
+
+    /** Live off: the app stays where it is. */
+    @Test
+    fun withoutLiveTheAppStays() {
+        val midi = FakeMidi(USB_XD)
+        val (card, _) = openOnUsbXd(midi, at = 3, live = false)
+        pick(midi, 7)
+        // Asked after the pick, the slots' listing comes back after it has been handled.
+        compose.runOnIdle { synth.listUnits(card) }
+        await { card.id in synth.units.value }
+        compose.runOnIdle { assertEquals(3, library.open.value?.index) }
+    }
+
     private companion object {
         const val TIMEOUT_MS = 10_000L
         const val XD = "korg-minilogue-xd"

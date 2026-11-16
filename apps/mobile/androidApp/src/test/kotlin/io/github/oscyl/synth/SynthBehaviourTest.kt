@@ -290,6 +290,9 @@ class FakeMidi(vararg plugged: MidiPortInfo) : MidiPlatform {
         return OpenResult.Opened(xd, xd::attach)
     }
 
+    /** The synths' panels send [bytes] (a program picked, say). */
+    fun panel(bytes: ByteArray) = synchronized(open) { open.values.forEach { it.panel(bytes) } }
+
     /** Deliver every reply the open synths held. */
     fun answer() = synchronized(open) { open.values.forEach(FakeXd::answer) }
 
@@ -328,6 +331,12 @@ private class FakeXd(private var holding: Boolean = false) : MidiOut {
         val (now, held) = waiting.partition { !holding || (it.size > 1 && it[1] == 0x7E.toByte()) }
         now.forEach(sink::push)
         waiting.retainAll(held)
+    }
+
+    /** Its panel sends [bytes]. */
+    @Synchronized
+    fun panel(bytes: ByteArray) {
+        sink?.push(bytes)
     }
 
     /** Stop holding: what was held goes out now. */

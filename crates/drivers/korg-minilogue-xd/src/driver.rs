@@ -667,11 +667,30 @@ impl Driver for MinilogueXd {
             _ => None,
         }
     }
+
+    /// Bank Select MSB 0 and LSB 0-4 pick the hundred, the Program Change
+    /// 0-99 the program in it (MIDI Implementation, notes *1-1).
+    fn program_slot(&self, bank_msb: u8, bank_lsb: u8, program: u8) -> Option<u16> {
+        (bank_msb == 0 && bank_lsb <= 4 && program <= 99)
+            .then(|| u16::from(bank_lsb) * 100 + u16::from(program))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The panel's bank (LSB 0-4) and program change (0-99) name a slot;
+    /// anything outside the 500 does not.
+    #[test]
+    fn program_slot_from_the_panel() {
+        let d = &DRIVER;
+        assert_eq!(d.program_slot(0, 2, 5), Some(205));
+        assert_eq!(d.program_slot(0, 4, 99), Some(499));
+        assert_eq!(d.program_slot(0, 5, 0), None);
+        assert_eq!(d.program_slot(1, 0, 0), None);
+        assert_eq!(d.program_slot(0, 0, 100), None);
+    }
     use crate::{Field, Program};
     use oscyl_driver::Driver;
 

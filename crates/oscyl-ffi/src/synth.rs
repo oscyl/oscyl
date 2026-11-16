@@ -132,6 +132,11 @@ pub enum SynthEvent {
         id: Option<u64>,
         message: String,
     },
+    /// The synth's own panel picked program `slot` (it plays it now).
+    Selected {
+        id: u64,
+        slot: u16,
+    },
 }
 
 impl From<Ev> for SynthEvent {
@@ -179,6 +184,7 @@ impl From<Ev> for SynthEvent {
             },
             Ev::Error(id, message) => SynthEvent::Error { id, message },
             Ev::Current(id, data) => SynthEvent::Current { id, data },
+            Ev::Selected(id, slot) => SynthEvent::Selected { id, slot },
         }
     }
 }

@@ -306,6 +306,12 @@ pub trait Driver: Send + Sync {
     fn firmware(&self, _identity_reply: &[u8]) -> Option<String> {
         None
     }
+    /// The program slot the synth's panel picked, from the Bank Select
+    /// it sent last (CC 0 and CC 32) and a Program Change: apps follow it.
+    /// `None` when out of range or the driver does not say.
+    fn program_slot(&self, _bank_msb: u8, _bank_lsb: u8, _program: u8) -> Option<u16> {
+        None
+    }
     /// What to check on the synth when it does not answer the device
     /// inquiry (a setting that routes SysEx elsewhere), or empty.
     fn setup_hint(&self) -> &'static str {

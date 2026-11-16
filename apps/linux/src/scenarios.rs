@@ -244,3 +244,58 @@ fn simulated_synths_still_leave() {
         assert!(app.synths.borrow().is_empty());
     });
 }
+
+/// Live on, the synth's programs shown: picking a program on the synth's
+/// panel moves the app to it, sending nothing (the synth already plays
+/// it); turning the program knob fast ends on the last one.
+#[test]
+fn live_follows_the_synth_panel() {
+    with_app(|app| {
+        app.on_synth(connected(1, PORT_A));
+        read_all(&app, 1);
+        app.show_program(3);
+        app.audition.set(true);
+        app.auditions_sent.set(0);
+        app.on_synth(Ev::Selected(1, 7));
+        assert_eq!(app.current.get(), Some(7));
+        for n in [8, 9, 10] {
+            app.on_synth(Ev::Selected(1, n));
+        }
+        assert_eq!(app.current.get(), Some(10));
+        assert_eq!(app.auditions_sent.get(), 0);
+    });
+}
+
+/// The slot the panel picks holds unsynced edits in the app: those are
+/// sent, so the synth plays what the app shows.
+#[test]
+fn following_a_slot_with_edits_sends_them() {
+    with_app(|app| {
+        app.on_synth(connected(1, PORT_A));
+        read_all(&app, 1);
+        app.show_program(7);
+        app.edit(cutoff(), 600);
+        app.show_program(3);
+        app.audition.set(true);
+        app.auditions_sent.set(0);
+        app.on_synth(Ev::Selected(1, 7));
+        assert_eq!(app.current.get(), Some(7));
+        assert_eq!(app.auditions_sent.get(), 1);
+    });
+}
+
+/// Live off, or another page shown: the app stays where it is.
+#[test]
+fn without_live_or_off_the_synth_page_the_app_stays() {
+    with_app(|app| {
+        app.on_synth(connected(1, PORT_A));
+        read_all(&app, 1);
+        app.show_program(3);
+        app.on_synth(Ev::Selected(1, 7));
+        assert_eq!(app.current.get(), Some(3), "live is off");
+        app.audition.set(true);
+        app.go(Place::Generate);
+        app.on_synth(Ev::Selected(1, 8));
+        assert_eq!(app.current.get(), Some(3), "generating");
+    });
+}

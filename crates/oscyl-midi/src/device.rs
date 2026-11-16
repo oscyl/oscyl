@@ -123,6 +123,8 @@ pub struct Device {
     units: Option<Box<dyn UnitSession>>,
     unit_outstanding: usize,
     unit_events: VecDeque<UnitEvent>,
+    /// What the synth's panel picks.
+    panel: Panel,
     /// Session ops submitted while unit ops run: they go next.
     held: VecDeque<SessionOp>,
 }
@@ -194,6 +196,7 @@ impl Device {
             unit_outstanding: 0,
             unit_events: VecDeque::new(),
             held: VecDeque::new(),
+            panel: Panel::default(),
         }
     }
 
@@ -226,7 +229,16 @@ impl Device {
     /// The next complete SysEx message from the synth outside the session,
     /// or `None` once `deadline` passes (protocol probes). Only while idle.
     pub fn recv_until(&mut self, deadline: Instant) -> Result<Option<Vec<u8>>, Error> {
-        self.link.recv_until(deadline)
+        loop {
+            match self.link.recv_until(deadline)? {
+                Some(msg) => {
+                    if let Some(msg) = self.input(msg) {
+                        return Ok(Some(msg));
+                    }
+                }
+                None => return Ok(None),
+            }
+        }
     }
 
     #[cfg(feature = "midir")]
@@ -246,6 +258,18 @@ impl Device {
     /// stops answering SysEx until its port has been closed.
     pub fn close(&mut self) {
         self.link = Box::new(Closed);
+    }
+
+    /// The next program slot the synth's panel picked (see
+    /// [`Driver::program_slot`]).
+    pub fn poll_selected(&mut self) -> Option<u16> {
+        self.panel.selected.pop_front()
+    }
+
+    /// `msg` from the synth: a SysEx message, returned for a session, or
+    /// a channel message for [`Panel::input`].
+    fn input(&mut self, msg: Vec<u8>) -> Option<Vec<u8>> {
+        self.panel.input(self.driver, self.channel, msg)
     }
 
     /// Ring `bell` whenever this device's synth sends something.
@@ -337,7 +361,9 @@ impl Device {
             self.link.send(&msg)?;
         }
         while let Some(msg) = self.link.recv_until(now)? {
-            self.session.handle_input(&msg);
+            if let Some(msg) = self.input(msg) {
+                self.session.handle_input(&msg);
+            }
         }
         self.session.handle_timeout(now);
         self.events(on_event);
@@ -365,7 +391,9 @@ impl Device {
             self.link.send(&msg)?;
         }
         while let Some(msg) = self.link.recv_until(now)? {
-            units.handle_input(&msg);
+            if let Some(msg) = self.panel.input(self.driver, self.channel, msg) {
+                units.handle_input(&msg);
+            }
         }
         units.handle_timeout(now);
         if let Some(deadline) = units.next_deadline()
@@ -467,7 +495,9 @@ impl Device {
             if let Some(deadline) = session.next_deadline() {
                 match self.link.recv_until(deadline)? {
                     Some(msg) => {
-                        session.handle_input(&msg);
+                        if let Some(msg) = self.input(msg) {
+                            session.handle_input(&msg);
+                        }
                         session.handle_timeout(Instant::now());
                     }
                     // Nothing arrives by the deadline.
@@ -541,6 +571,39 @@ impl Link for Closed {
     }
 }
 
+/// The program the synth's panel picks, from what it sends.
+#[derive(Default)]
+struct Panel {
+    /// The Bank Select (MSB, LSB) the synth sent last.
+    bank: (u8, u8),
+    /// Program slots it picked, oldest first.
+    selected: VecDeque<u16>,
+}
+
+impl Panel {
+    /// A SysEx message is returned, for a session. A Bank Select or
+    /// Program Change on the synth's `channel` is noted; anything else
+    /// (notes, knobs) is dropped.
+    fn input(&mut self, driver: &dyn Driver, channel: u8, msg: Vec<u8>) -> Option<Vec<u8>> {
+        if msg.first() == Some(&0xF0) {
+            return Some(msg);
+        }
+        if msg.first().is_none_or(|s| s & 0x0F != channel) {
+            return None;
+        }
+        match (msg[0] & 0xF0, msg.get(1), msg.get(2)) {
+            (0xB0, Some(0), Some(&v)) => self.bank.0 = v,
+            (0xB0, Some(32), Some(&v)) => self.bank.1 = v,
+            (0xC0, Some(&p), _) => {
+                let (msb, lsb) = self.bank;
+                self.selected.extend(driver.program_slot(msb, lsb, p));
+            }
+            _ => {}
+        }
+        None
+    }
+}
+
 /// A synth being opened: the device inquiry is out, the answer awaited
 /// without blocking ([`Opening::poll`] from a pumping loop).
 pub struct Opening {
@@ -594,8 +657,12 @@ impl Opening {
         self.link_mut().ring_on_input(bell);
     }
 
-    /// The device, an error, or `None` for a message that says nothing.
+    /// The device, an error, or `None` for a message that says nothing
+    /// (a note or knob from the panel included).
     fn answer(&mut self, msg: Vec<u8>) -> Option<Result<Device, Error>> {
+        if msg.first() != Some(&0xF0) {
+            return None;
+        }
         if msg == DEVICE_INQUIRY {
             return Some(Err(Error::Loopback(self.port_name.clone())));
         }
@@ -689,5 +756,69 @@ pub fn run_all(
             return results;
         }
         wait(&rung, next);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{InputSender, PushLink};
+    use std::sync::{Arc, Mutex};
+
+    /// A minilogue xd behind a platform link: its simulator answers, and
+    /// the test pushes what its panel sends.
+    fn xd() -> (Device, InputSender) {
+        let d = driver("korg-minilogue-xd").unwrap();
+        let back: Arc<Mutex<Option<InputSender>>> = Arc::default();
+        let to = back.clone();
+        let mut sim = d.simulator();
+        let mut framer = oscyl_driver::sysex::Framer::new();
+        let (link, input) = PushLink::new(Box::new(move |bytes| {
+            for m in framer.push(bytes) {
+                for reply in sim.handle(&m) {
+                    if let Some(i) = to.lock().unwrap().as_ref() {
+                        i.push(&reply);
+                    }
+                }
+            }
+            Ok(())
+        }));
+        *back.lock().unwrap() = Some(input.clone());
+        (
+            Device::connect(d, Box::new(link), "usb xd".into()).unwrap(),
+            input,
+        )
+    }
+
+    /// The panel picking a program (bank select, then program change, on
+    /// the synth's channel) is reported as its slot; the bank holds for
+    /// later changes; other channels are not the synth's.
+    #[test]
+    fn the_synth_picking_a_program_is_reported_as_its_slot() {
+        let (mut d, input) = xd();
+        input.push(&[0xB0, 0x00, 0x00, 0xB0, 0x20, 0x02, 0xC0, 0x05]);
+        input.push(&[0xC1, 0x07, 0x90, 0x40, 0x7F]);
+        input.push(&[0xC0, 0x09]);
+        d.pump(&mut |_| {}).unwrap();
+        assert_eq!(d.poll_selected(), Some(205));
+        assert_eq!(d.poll_selected(), Some(209));
+        assert_eq!(d.poll_selected(), None);
+    }
+
+    /// A program picked on the panel while a read runs neither breaks the
+    /// read nor is lost.
+    #[test]
+    fn a_program_picked_during_a_read_leaves_the_read_whole() {
+        let (mut d, input) = xd();
+        input.push(&[0xB0, 0x20, 0x01, 0xC0, 0x00]);
+        let mut got = None;
+        d.run(SessionOp::ReadCurrent, |e| {
+            if let SessionEvent::Current(p) = e {
+                got = Some(p.len());
+            }
+        })
+        .unwrap();
+        assert!(got.is_some());
+        assert_eq!(d.poll_selected(), Some(100));
     }
 }

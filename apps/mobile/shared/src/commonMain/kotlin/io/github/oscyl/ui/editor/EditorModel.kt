@@ -278,6 +278,24 @@ class EditorModel(
             combine(library.open, synths) { open, cards -> open to cards }
                 .collect { (open, cards) -> show(open, cards) }
         }
+        viewModelScope.launch { synth.selected.collect { (card, slot) -> follow(card, slot) } }
+    }
+
+    /** The row the synth's panel just picked, opened by following it. */
+    private var following: Int? = null
+
+    /**
+     * Live on and a program of synth [card] open: its panel picked [slot], so it opens
+     * here too (in the list when it shows that synth). The synth already plays the
+     * stored version: nothing is sent unless the app holds unsynced edits to it.
+     */
+    private fun follow(card: ULong, slot: UShort) {
+        val open = opened ?: return
+        if (!live || open.synthId != card || library.ui.value.programs?.source != open.source) return
+        val index = open.document.slotIndex(slot)?.toInt() ?: return
+        if (index == open.index) return
+        following = index
+        library.selectProgram(index)
     }
 
     /** The pages in view, as the screen last said. */
@@ -305,8 +323,11 @@ class EditorModel(
             editor = e
             rollSeed = kotlin.random.Random.nextLong().toULong()
             panel = PanelState.of(e, role())
-            // A program opened while Live is on plays at once (never a slot not read yet).
-            if (live && e.loaded()) play(Audition.Program(e.program()))
+            // A program opened while Live is on plays at once (never a slot not read yet);
+            // one the synth's panel picked plays there already, unless edited here.
+            val followed = following == open.index
+            following = null
+            if (live && e.loaded() && (!followed || e.edited())) play(Audition.Program(e.program()))
         }
         refreshHead()
         // Once the program's editor is there: the play page asks it for the model's defaults.

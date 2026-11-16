@@ -168,6 +168,11 @@ class SynthModel(
 
     private val _backups = MutableStateFlow<List<BackupFile>>(emptyList())
 
+    private val _selected = MutableSharedFlow<Pair<ULong, UShort>>(extraBufferCapacity = 16, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** A synth's own panel picked a program (card id, slot): it plays it now. */
+    val selected: SharedFlow<Pair<ULong, UShort>> = _selected.asSharedFlow()
+
     /** The backups Oscyl took, newest first. */
     val backups: StateFlow<List<BackupFile>> = _backups.asStateFlow()
 
@@ -471,6 +476,7 @@ class SynthModel(
         is SynthEvent.WriteFailed -> event.id
         is SynthEvent.Slots -> event.id
         is SynthEvent.Current -> event.id
+        is SynthEvent.Selected -> event.id
         else -> null
     }
 
@@ -555,6 +561,7 @@ class SynthModel(
                     errorFor = null
                 }
             }
+            is SynthEvent.Selected -> _selected.tryEmit(id to event.slot)
             is SynthEvent.WriteProgress -> _writes.update { it + (id to WriteState.Writing(event.done.toInt(), event.total.toInt())) }
             is SynthEvent.Written -> {
                 // What was written becomes each slot's saved version; an edit made

@@ -177,6 +177,13 @@ impl Document {
     /// The synth sent the program in `slot`: it becomes that slot's saved
     /// version (and its working copy, unless edited). Returns the slot's
     /// index, or `None` for a slot this document does not have.
+    /// The row of the synth's slot `slot` (a program its panel picked).
+    pub fn slot_index(&self, slot: u16) -> Option<u32> {
+        let inner = self.lock();
+        let i = slots(inner.doc.driver).iter().position(|&s| s == slot)?;
+        u32::try_from(i).ok()
+    }
+
     pub fn receive(&self, slot: u16, data: Vec<u8>) -> Option<u32> {
         let mut inner = self.lock();
         let i = slots(inner.doc.driver).iter().position(|&s| s == slot)?;
@@ -687,6 +694,14 @@ pub fn export_file(doc: &Document, ext: String) -> Result<Vec<u8>, FfiError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A synth's slot number names its row; one it does not have, none.
+    #[test]
+    fn slot_index_finds_the_row() {
+        let d = Document::synth("korg-minilogue-xd".into(), "xd".into()).unwrap();
+        assert_eq!(d.slot_index(205), Some(205));
+        assert_eq!(d.slot_index(500), None);
+    }
 
     const XD: &str = "korg-minilogue-xd";
     const REV2: &str = "sequential-prophet-rev2";

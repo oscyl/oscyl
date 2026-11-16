@@ -44,6 +44,11 @@ pub struct App {
     /// Connecting, before the first synth answers.
     pub(crate) connecting: Cell<bool>,
     pub(crate) audition: Cell<bool>,
+    /// Following the synth's panel: what is selected is not sent.
+    following: Cell<bool>,
+    /// Tests: how many auditions went to a synth.
+    #[cfg(test)]
+    pub(crate) auditions_sent: Cell<usize>,
     /// Snapshots A, B and C of the program open.
     pub(crate) snapshots: RefCell<crate::history::Snapshots>,
     /// Backslash is held (Compare from the keyboard).
@@ -159,6 +164,9 @@ impl App {
             current: Cell::new(None),
             connecting: Cell::new(false),
             audition: Cell::new(false),
+            following: Cell::new(false),
+            #[cfg(test)]
+            auditions_sent: Cell::new(0),
             compare_key: Cell::new(false),
             snapshots: RefCell::default(),
             primary: RefCell::new(None),
@@ -574,6 +582,19 @@ impl App {
         self.audition_current();
     }
 
+    /// Live is on and the synth's panel picked program `i` of the synth
+    /// shown: show it too. The synth already plays its stored version, so
+    /// it is sent only when the app holds unsynced edits to it.
+    pub(crate) fn follow_program(&self, i: usize) {
+        self.following.set(true);
+        self.show_program(i);
+        self.following.set(false);
+        self.list.reveal_selected();
+        if self.with_doc(|d| d.is_edited(i)).unwrap_or(false) {
+            self.audition_current();
+        }
+    }
+
     /// Show the program `delta` rows away in the list as searched and
     /// filtered; at either end, stay and say so with the bell.
     pub(crate) fn step_program(&self, delta: isize) {
@@ -894,6 +915,9 @@ impl App {
     }
 
     fn audition_current(&self) {
+        if self.following.get() {
+            return;
+        }
         if let Some((i, p, _)) = self.current_pair()
             && self.is_loaded(i)
         {
@@ -903,6 +927,8 @@ impl App {
 
     fn audition(&self, p: Program) {
         if let Some(id) = self.audition_target().filter(|_| self.audition.get()) {
+            #[cfg(test)]
+            self.auditions_sent.set(self.auditions_sent.get() + 1);
             self.synth.send(Cmd::Audition(id, p));
             self.blink();
         }

@@ -121,6 +121,8 @@ pub enum Ev {
     Current(DeviceId, Vec<u8>),
     Slots(DeviceId, Vec<SlotInfo>),
     Error(Option<DeviceId>, String),
+    /// The synth's own panel picked program `n` (it plays it now).
+    Selected(DeviceId, u16),
 }
 
 #[derive(Debug, Clone)]
@@ -373,6 +375,10 @@ impl Worker {
             while let Some(e) = self.devices[k].device.poll_unit_event() {
                 busy = true;
                 self.on_unit_event(k, e);
+            }
+            while let Some(n) = self.devices[k].device.poll_selected() {
+                let id = self.devices[k].id;
+                self.emit(Ev::Selected(id, n));
             }
             match pumped {
                 Ok(t) => {
@@ -1537,6 +1543,28 @@ mod tests {
         }));
         *input.lock().unwrap() = Some(sender.clone());
         (link, sender, input)
+    }
+
+    /// The synth's panel picking a program reaches the app as that slot.
+    #[test]
+    fn a_program_picked_on_the_synth_is_reported() {
+        let xd = driver("korg-minilogue-xd");
+        let (link, sender, _back) = push_xd();
+        let (handle, rx) = spawn();
+        handle.send(Cmd::OpenLink {
+            driver: xd,
+            link: Box::new(link),
+            port: "usb xd".into(),
+        });
+        let id = match next(&rx, |e| matches!(e, Ev::Connected { .. })) {
+            Ev::Connected { id, .. } => id,
+            _ => unreachable!(),
+        };
+        sender.push(&[0xB0, 0x00, 0x00, 0xB0, 0x20, 0x02, 0xC0, 0x05]);
+        assert!(matches!(
+            next(&rx, |e| matches!(e, Ev::Selected(..))),
+            Ev::Selected(i, 205) if i == id
+        ));
     }
 
     /// A second link on a port already open fails instead of vanishing

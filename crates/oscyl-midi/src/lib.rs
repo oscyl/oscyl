@@ -12,6 +12,7 @@ mod device;
 #[cfg(all(feature = "midir", target_os = "linux"))]
 pub mod hotplug;
 pub mod logue;
+mod parse;
 mod push;
 #[cfg(feature = "midir")]
 pub use device::scan;
@@ -223,7 +224,8 @@ type Bell = Arc<Mutex<Option<Sender<()>>>>;
 /// queued by its [`Feed`], framed into SysEx messages on the reader side.
 struct Inbox {
     rx: Receiver<Vec<u8>>,
-    framer: Framer,
+    /// SysEx and channel messages (a panel's program change).
+    parser: parse::Parser,
     pending: VecDeque<Vec<u8>>,
     bell: Bell,
 }
@@ -243,7 +245,7 @@ fn inbox() -> (Inbox, Feed) {
     };
     let inbox = Inbox {
         rx,
-        framer: Framer::new(),
+        parser: parse::Parser::default(),
         pending: VecDeque::new(),
         bell,
     };
@@ -281,7 +283,7 @@ impl Inbox {
             }
             let wait = deadline.saturating_duration_since(Instant::now());
             match self.rx.recv_timeout(wait) {
-                Ok(bytes) => self.pending.extend(self.framer.push(&bytes)),
+                Ok(bytes) => self.pending.extend(self.parser.push(&bytes)),
                 Err(RecvTimeoutError::Timeout) => return Ok(None),
                 Err(RecvTimeoutError::Disconnected) => {
                     return Err(Error::Disconnected("input closed".into()));

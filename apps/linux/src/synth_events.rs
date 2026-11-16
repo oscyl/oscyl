@@ -352,6 +352,18 @@ impl App {
                 self.refresh_generator();
                 self.update_actions();
             }
+            // Live on and its programs shown: the app follows the synth's panel.
+            Ev::Selected(id, n) => {
+                let follows = self.audition.get()
+                    && self.active.get() == Some(id)
+                    && *self.place.borrow() == Place::Synth
+                    && *self.doc_place.borrow() == Place::Synth;
+                if let Some(i) = self.position(id, n).filter(|_| follows)
+                    && self.current.get() != Some(i)
+                {
+                    self.follow_program(i);
+                }
+            }
             Ev::ReadProgress { id, done, total } => {
                 self.set_synth_status(id, SynthStatus::Reading { done, total });
             }
