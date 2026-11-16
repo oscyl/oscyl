@@ -313,7 +313,7 @@ toast {
   border-radius: var(--oscyl-radius-panel);
   background: var(--oscyl-raised);
   color: var(--oscyl-ink);
-  box-shadow: 0 0 0 1px var(--oscyl-rule-strong),
+  box-shadow: 0 0 0 1px var(--oscyl-floating-rim),
               0 1px 3px var(--oscyl-shadow),
               0 10px 28px var(--oscyl-shadow);
 }

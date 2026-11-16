@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -36,33 +35,18 @@ internal val FloatingShape = RoundedCornerShape(FloatingRadius)
 val OscylColors.disabled: androidx.compose.ui.graphics.Color get() = legend.copy(alpha = 0.6f)
 
 /**
- * A floating part's rim: on dark and AMOLED a crisp light edge (the way Claude's composer
- * floats: a flat raised fill, a clear outline; a lighter fill erased the rules drawn inside
- * sheets), so the part reads against a ground of nearly its own tone; light keeps the rule,
- * its shadow lifts it.
- */
-internal fun OscylColors.floatingRim(): androidx.compose.ui.graphics.Color {
-    val amoled = shadow.alpha == 0f
-    val dark = ground.luminance() < 0.5f
-    return when {
-        amoled -> ruleStrong
-        dark -> androidx.compose.ui.graphics.lerp(rule, ruleStrong, 0.7f)
-        else -> rule
-    }
-}
-
-/**
  * A floating part (DESIGN.md "Floating"): raised enamel lifted by two shadow layers,
  * a close 3 dp one and a soft 28 dp one, with a 1 dp highlight along its inner top
- * edge and the 1 dp rule around it. AMOLED casts no shadow (its `shadow` is clear),
- * so there the rule is `rule-strong`: the rim is the lift.
+ * edge and the 1 dp `floating-rim` around it (tokens.json, shared with the desktop's
+ * notices: the rule on light, near `rule-strong` on dark, `rule-strong` on AMOLED, which
+ * casts no shadow, so there the rim is the lift).
  *
  * [lift] (0..1) fades the whole lift in, read in the draw phase only: the top bar
  * rises from the page this way as its title scrolls into it, with no recomposition.
  */
 fun Modifier.floating(colors: OscylColors, shape: Shape = FloatingShape, lift: (() -> Float)? = null, edgeToEdge: Boolean = false): Modifier {
     val f = OscylTokens.Floating
-    val rim = colors.floatingRim()
+    val rim = colors.floatingRim
     val shadows = this
         .softShadow(shape, f.farRadius, DpOffset(0.dp, f.farOffset), colors.shadow.copy(alpha = colors.shadow.alpha * f.farAlpha)) { lift?.invoke() ?: 1f }
         .softShadow(shape, f.nearRadius, DpOffset(0.dp, f.nearOffset), colors.shadow.copy(alpha = colors.shadow.alpha * f.nearAlpha)) { lift?.invoke() ?: 1f }

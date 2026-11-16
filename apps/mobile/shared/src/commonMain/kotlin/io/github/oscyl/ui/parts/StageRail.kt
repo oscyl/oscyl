@@ -432,7 +432,7 @@ private fun Modifier.railBody(c: OscylColors, rows: RowGeometry, atStart: Boolea
     val lifted = SoftShadow(c.shadow, 3.dp.toPx(), inner)
     val liftedBy = 1.dp.toPx().roundToInt().toFloat()
     val enamel = Brush.verticalGradient(listOf(lerp(c.plate, Color.White, 0.06f), lerp(c.plate, Color.Black, 0.05f)))
-    val rim = c.floatingRim()
+    val rim = c.floatingRim
     val w = OscylTokens.ruleWidth.toPx()
     val stroke = Stroke(w)
     val insetX = PlateInsetX.toPx()

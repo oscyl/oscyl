@@ -34,6 +34,8 @@ colors:
   dark-act: "#f08a24"
   dark-on-act: "#202122"
   dark-graph-faint: "rgb(236 235 231 / 34%)"
+  floating-rim: "#cbc9c3"
+  dark-floating-rim: "#5a5b5c"
 typography:
   display:
     fontFamily: "Albert Sans, sans-serif"
@@ -187,6 +189,7 @@ Grey enamel in three tones plus a plate, and two function lamps.
 - **Graph Faint** (`graph-faint`): the saved shape, drawn dashed behind an edited graph.
 - **Hover / Press** (`hover`, `press`): ink at 6% and 11% over any surface. A held Compare button sits in `press`.
 - **Shadow** (`shadow`): the dial disc's and the review bar's shadow. Zero in AMOLED.
+- **Floating Rim** (`floating-rim`): the 1 px rim of a floating part (the phone's island, rail and sheets; both apps' notices): `rule` on light, 70% of the way to `rule-strong` on dark, `rule-strong` on AMOLED, where it is the lift. The phone's values follow its own `rule-strong` (`mobile.color`).
 
 ### Named Rules
 **The Function Colour Rule.** Colour only ever means a function. Green is connected, synced or live. Orange is edited or waiting to be written. Everything else is achromatic. A new state that is neither gets a shape, a word or the plate, never a third hue. Every coloured mark is paired with a shape and a word (the accessible description says "edited", the lamp sits beside "Connected").
@@ -232,7 +235,7 @@ Flat ground, lifted parts. Surfaces, grouping and hover are tone (sidebar darker
 - **Review bar** (`box-shadow: 0 -1px 0 var(--oscyl-rule-strong), 0 -8px 28px var(--oscyl-shadow)`): the one upward shadow, for the bar and sheet at the editor's foot.
 - **Docked scope** (`box-shadow: 0 1px 0 var(--oscyl-rule-strong), 0 8px 24px var(--oscyl-shadow)`): the strip hanging from the editor's top edge.
 - **Popover** (`box-shadow: 0 0 0 1px var(--oscyl-rule), 0 4px 12px var(--oscyl-shadow)`): floats over content.
-- **Floating** (`mobile.floating` in `design/tokens.json`; on the desktop the notice (toast) only, `0 0 0 1px rule-strong, 0 1px 3px shadow, 0 10px 28px shadow` with panel corners, its action outlined): two layers in `shadow`, a close one (blur 3 dp, 1 dp down) and a soft one (blur 28 dp, 10 dp down), on `raised` with a 1 dp `rule`. On dark the rim sits near `rule-strong` (70% of the way from `rule`): a flat `raised` fill and a crisp outline (a lighter fill erased the `rule` lines inside sheets), so the part reads against a ground of nearly its own tone. AMOLED casts no shadow, so its floating parts carry a 1 dp `rule-strong` rim instead. No inner highlight. Under the bottom island the page fades into `ground` (from 16 dp above it, where the rail and the keys stand clear of it), as Claude's and Telegram's composers do: rows never read through beside the island. Floating parts: the island, the stage rail, sheets, menus and the lifted top bar. While the page scrolls by hand, the island, its fade and the foot's keys dim to 40% (draw only), so dense rows read through them; the fling's end or the next touch brings them back.
+- **Floating** (`mobile.floating` in `design/tokens.json`; on the desktop the notice (toast) only, `0 0 0 1px floating-rim, 0 1px 3px shadow, 0 10px 28px shadow` with panel corners, its action outlined): two layers in `shadow`, a close one (blur 3 dp, 1 dp down) and a soft one (blur 28 dp, 10 dp down), on `raised` with a 1 dp `rule`. On dark the rim sits near `rule-strong` (70% of the way from `rule`): a flat `raised` fill and a crisp outline (a lighter fill erased the `rule` lines inside sheets), so the part reads against a ground of nearly its own tone. AMOLED casts no shadow, so its floating parts carry a 1 dp `rule-strong` rim instead. No inner highlight. Under the bottom island the page fades into `ground` (from 16 dp above it, where the rail and the keys stand clear of it), as Claude's and Telegram's composers do: rows never read through beside the island. Floating parts: the island, the stage rail, sheets, menus and the lifted top bar. While the page scrolls by hand, the island, its fade and the foot's keys dim to 40% (draw only), so dense rows read through them; the fling's end or the next touch brings them back.
 - **Section panel sweep** (`linear-gradient(to bottom, ink 3%, transparent 45%)`): a faint enamel sheen on the panel's top, no shadow. The panel's frame is a 1 px `rule` with 10 px corners, and the section's legend (the uppercase label style) is engraved into its top rule: the rule breaks around it (6 px each side), the legend starts 18 px from the start edge, and a long name ends in an ellipsis inside the frame. A section named like its stage has no legend and an unbroken rule. Both apps (desktop: the `sectionframe` widget; phone: `SectionPanel`).
 
 ### Named Rules
