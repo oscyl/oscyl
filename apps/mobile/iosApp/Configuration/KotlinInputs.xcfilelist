@@ -237,10 +237,12 @@ $(SRCROOT)/../../../crates/oscyl-app/src/generator.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/i18n.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/lib.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/libraries.rs
+$(SRCROOT)/../../../crates/oscyl-app/src/palette.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/panel.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/program_menu.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/review.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/settings.rs
+$(SRCROOT)/../../../crates/oscyl-app/src/shelf.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/slots.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/state.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/synth.rs
