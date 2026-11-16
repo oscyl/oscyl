@@ -538,6 +538,9 @@ msgstr "Copia il suono"
 msgid "Copy program to a library"
 msgstr "Copia il programma in una libreria"
 
+msgid "Copy the recipe code"
+msgstr "Copia il codice ricetta"
+
 msgid "Copy to Another Library"
 msgstr "Copia in un’altra libreria"
 
@@ -662,14 +665,23 @@ msgstr "Cutoff, risonanza e ottava del secondo oscillatore"
 msgid "Dark"
 msgstr "Scuro"
 
+msgid "Deal"
+msgstr "Crea"
+
 msgid "Deal six children of this sound and another"
 msgstr "Crea sei incroci tra questo suono e un altro"
 
 msgid "Deal six new sounds (Space)"
 msgstr "Crea sei nuovi suoni (Spazio)"
 
+msgid "Deal six steps from this sound to another"
+msgstr "Crea sei passi da questo suono a un altro"
+
 msgid "Deal six variations of this sound"
 msgstr "Crea sei variazioni di questo suono"
+
+msgid "Deal the sound a recipe code names"
+msgstr "Crea il suono indicato da un codice ricetta"
 
 msgid "Decay"
 msgstr "Decay"
@@ -820,6 +832,9 @@ msgstr "Modifica"
 msgid "Editor"
 msgstr "Editor"
 
+msgid "Effect"
+msgstr "Effetto"
+
 msgid "Effects"
 msgstr "Effetti"
 
@@ -852,6 +867,9 @@ msgstr "Ensemble"
 
 msgid "Ensemble variation: Stereo, Light or Mono."
 msgstr "Variante di ensemble: Stereo, Light o Mono."
+
+msgid "Enter a Code…"
+msgstr "Inserisci un codice…"
 
 msgid "Envelopes"
 msgstr "Inviluppi"
@@ -895,6 +913,9 @@ msgstr ""
 
 msgid "Fall time of the EG back to zero."
 msgstr "Tempo di ritorno a zero dell'EG."
+
+msgid "Family"
+msgstr "Famiglia"
 
 msgid "Fast"
 msgstr "Fast"
@@ -1497,6 +1518,12 @@ msgstr "Mono BPM"
 msgid "Mono Sweep"
 msgstr "Mono Sweep"
 
+msgid "Morph To…"
+msgstr "Trasforma in…"
+
+msgid "Morph to"
+msgstr "Trasforma in"
+
 msgid "Motion Slot 1 On"
 msgstr "Motion slot 1 attivo"
 
@@ -1931,6 +1958,9 @@ msgstr ""
 "programma nell'elenco, la sezione nella fascia e ogni riga sotto Modifiche. "
 "Una manopola modificata mostra il valore precedente."
 
+msgid "Pick a character and dials for me, and deal"
+msgstr "Scegli tu carattere e manopole, e crea"
+
 msgid "Ping BPM"
 msgstr "Ping BPM"
 
@@ -2126,6 +2156,12 @@ msgstr "Richiama: {snapshot}"
 msgid "Recalled snapshot {letter}"
 msgstr "Richiamata l’istantanea {letter}"
 
+msgid "Recipe code"
+msgstr "Codice ricetta"
+
+msgid "Recipe code copied"
+msgstr "Codice ricetta copiato"
+
 msgid "Redo"
 msgstr "Ripeti"
 
@@ -2242,6 +2278,9 @@ msgstr "Ripristina {name}"
 
 msgid "Revert {parameter}"
 msgstr "Ripristina {parameter}"
+
+msgid "Rhythm"
+msgstr "Ritmo"
 
 msgid "Ring"
 msgstr "Ring"
@@ -2615,6 +2654,9 @@ msgstr "Submarine"
 
 msgid "Subtle"
 msgstr "Sottili"
+
+msgid "Surprise Me"
+msgstr "Sorprendimi"
 
 msgid "Sustain"
 msgstr "Sustain"

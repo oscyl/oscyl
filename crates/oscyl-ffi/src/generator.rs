@@ -185,8 +185,8 @@ impl Generator {
     }
 
     /// The selected sound's recipe code, to share ("pad-4f2a…"); none
-    /// for a variation, a child, a morph step or a sound dealt onto a base
-    /// program.
+    /// for a variation, a child, a morph step or a sound that holds pages
+    /// of a base program.
     pub fn code(&self) -> Option<String> {
         self.lock().code()
     }
@@ -391,7 +391,7 @@ mod tests {
         assert_eq!((h.sounds.len(), h.count), (6, 3));
         assert!(h.origin.starts_with("From"));
         assert_eq!(b.code(), None);
-        // A base program's sounds have no code.
+        // Sounds that hold a base program's pages have no code.
         let base = a.selected_program();
         assert!(a.deal(0, vec![0.5; 4], vec![0], base));
         assert_eq!(a.code(), None);

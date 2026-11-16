@@ -157,6 +157,12 @@ pub fn messages() -> BTreeMap<String, Option<String>> {
         driver_strings(d, &mut msgs);
     }
     msgs.extend(crate::actions::ACTIONS.iter().map(|a| a.label.to_string()));
+    // The Generate page's family row.
+    msgs.extend(
+        oscyl_driver::Family::ALL
+            .iter()
+            .map(|f| f.title().to_string()),
+    );
     msgs.retain(|m| !m.trim().is_empty());
     msgs.into_iter()
         .map(|m| {

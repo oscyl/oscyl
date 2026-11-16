@@ -2,8 +2,11 @@
 //! deal six sounds (the driver's `generate`, `vary` and `breed`, dealt by
 //! `oscyl_core::generate::hand`). Picking a sound plays it on
 //! the synth; one can be kept over the program selected in the list (one
-//! undo step), varied, or bred with another. The last hands stay
-//! reachable with Back and Forward.
+//! undo step), varied, bred with another, or morphed into another. The
+//! last hands stay reachable with Back and Forward. A family row filters
+//! the characters; Surprise picks a character and dials by itself; a dealt
+//! sound's recipe code can be copied, and a code typed in deals its sound
+//! again.
 //!
 //! The page owns no documents: it tells the app what to do through
 //! [`Ask`], and the app tells it the target slot and the connection.
@@ -14,7 +17,7 @@ use std::rc::{Rc, Weak};
 use adw::prelude::*;
 use gtk::glib;
 use oscyl_app::generator::Hands;
-use oscyl_driver::{Driver, Macros, Recipe};
+use oscyl_driver::{Driver, Family, Macros, Recipe};
 
 use crate::callback::Slot;
 use crate::editor::graph_of;
@@ -35,6 +38,8 @@ pub enum Ask {
     Open,
     /// Keep was pressed with no slot selected.
     PickSlot,
+    /// The selected sound's recipe code went to the clipboard.
+    Copied,
 }
 
 /// The selected slot: where Keep puts a sound, and the base for kept
@@ -48,8 +53,18 @@ pub struct Target {
 pub struct Generator {
     pub root: gtk::Widget,
     generate: gtk::Button,
+    surprise: gtk::Button,
     driver: Cell<&'static dyn Driver>,
+    /// "All" and one chip per family the synth has characters of.
+    families: adw::WrapBox,
+    family_chips: RefCell<Vec<(Option<Family>, gtk::ToggleButton)>>,
+    /// The family whose characters show (`None`: all). Kept for the
+    /// session, across synths; until one is picked, the first character's,
+    /// so the page opens on a handful of tiles, not on all of them.
+    family: Cell<Option<Family>>,
+    family_picked: Cell<bool>,
     characters: gtk::FlowBox,
+    characters_plate: Plated,
     dials: Vec<Dial>,
     /// One chip per editor page: keep that page from the selected program.
     chips: adw::WrapBox,
@@ -74,6 +89,15 @@ pub struct Generator {
     amount: adw::ToggleGroup,
     breed_list: gtk::ListBox,
     breed: gtk::MenuButton,
+    morph_list: gtk::ListBox,
+    morph: gtk::MenuButton,
+    /// The selected sound's recipe code and its Copy; hidden without one.
+    code_row: gtk::Box,
+    code: gtk::Label,
+    /// "Enter a Code…": its field and what is wrong with what was typed.
+    enter: gtk::MenuButton,
+    code_entry: gtk::Entry,
+    code_error: gtk::Label,
     lamps: RefCell<Vec<gtk::Widget>>,
     character: Cell<usize>,
     macros: Cell<Macros>,
@@ -261,8 +285,17 @@ impl Generator {
 
         // Character.
         page.append(&legend(&tr("Character")));
+        let families = adw::WrapBox::builder()
+            .child_spacing(6)
+            .line_spacing(6)
+            .css_classes(["gen-families"])
+            .build();
+        let row = families.upcast_ref::<gtk::Widget>();
+        row.set_accessible_role(gtk::AccessibleRole::Group);
+        row.update_property(&[gtk::accessible::Property::Label(&tr("Family"))]);
+        page.append(&families);
         let characters = flow(&tr("Character"), 6);
-        let (_, frame) = framed(&characters);
+        let (characters_plate, frame) = framed(&characters);
         page.append(&frame);
 
         // Shape, and the action.
@@ -312,7 +345,43 @@ impl Generator {
             .xalign(0.0)
             .css_classes(["dim-label", "caption"])
             .build();
+        let surprise = gtk::Button::builder()
+            .label(tr("Surprise Me"))
+            .tooltip_text(tr("Pick a character and dials for me, and deal"))
+            .build();
+        // A code typed or pasted deals its sound again.
+        let code_entry = gtk::Entry::builder()
+            .placeholder_text(tr("Recipe code"))
+            .width_chars(26)
+            .input_purpose(gtk::InputPurpose::FreeForm)
+            .build();
+        code_entry.update_property(&[gtk::accessible::Property::Label(&tr("Recipe code"))]);
+        let code_deal = gtk::Button::builder().label(tr("Deal")).build();
+        let code_field = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+        code_field.append(&code_entry);
+        code_field.append(&code_deal);
+        let code_error = gtk::Label::builder()
+            .xalign(0.0)
+            .wrap(true)
+            .max_width_chars(30)
+            .visible(false)
+            .css_classes(["caption", "gen-code-error"])
+            .build();
+        // Said at once when it appears.
+        code_error.set_accessible_role(gtk::AccessibleRole::Alert);
+        let code_box = gtk::Box::new(gtk::Orientation::Vertical, 6);
+        code_box.add_css_class("gen-code-box");
+        code_box.append(&code_field);
+        code_box.append(&code_error);
+        let enter = gtk::MenuButton::builder()
+            .label(tr("Enter a Code…"))
+            .tooltip_text(tr("Deal the sound a recipe code names"))
+            .popover(&gtk::Popover::builder().child(&code_box).build())
+            .css_classes(["flat"])
+            .build();
         go.append(&generate);
+        go.append(&surprise);
+        go.append(&enter);
         go.append(&offline);
         shape_row.append(&go);
         page.append(&shape_row);
@@ -419,6 +488,43 @@ impl Generator {
             .tooltip_text(tr("Deal six children of this sound and another"))
             .popover(&popover)
             .build();
+        let morph_list = gtk::ListBox::builder()
+            .selection_mode(gtk::SelectionMode::None)
+            .css_classes(["gen-breed-list"])
+            .build();
+        morph_list.update_property(&[gtk::accessible::Property::Label(&tr("Morph to"))]);
+        let morph = gtk::MenuButton::builder()
+            .label(tr("Morph To…"))
+            .tooltip_text(tr("Deal six steps from this sound to another"))
+            .popover(&gtk::Popover::builder().child(&morph_list).build())
+            .build();
+        // The selected sound's recipe code, small, with its Copy.
+        let code_row = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+        code_row.add_css_class("gen-code");
+        let code_legend = gtk::Label::builder()
+            .label(tr("Recipe code"))
+            .css_classes(["dim-label", "caption"])
+            .build();
+        let code = gtk::Label::builder()
+            .selectable(true)
+            .ellipsize(pango::EllipsizeMode::Middle)
+            .css_classes(["caption", "numeric", "gen-code-text"])
+            .build();
+        code.update_relation(&[gtk::accessible::Relation::LabelledBy(&[
+            code_legend.upcast_ref()
+        ])]);
+        let copy = gtk::Button::builder()
+            .icon_name("edit-copy-symbolic")
+            .tooltip_text(tr("Copy the recipe code"))
+            .css_classes(["flat"])
+            .build();
+        copy.update_property(&[gtk::accessible::Property::Label(&tr(
+            "Copy the recipe code",
+        ))]);
+        code_row.append(&code_legend);
+        code_row.append(&code);
+        code_row.append(&copy);
+        code_row.set_visible(false);
         let keeps = gtk::Box::new(gtk::Orientation::Horizontal, 6);
         keeps.append(&keep);
         keeps.append(&keep_library);
@@ -426,8 +532,10 @@ impl Generator {
         actions.append(&open);
         actions.append(&vary_group);
         actions.append(&breed);
+        actions.append(&morph);
         actions.set_visible(false);
         page.append(&actions);
+        page.append(&code_row);
 
         let scroll = gtk::ScrolledWindow::builder()
             .child(&page)
@@ -484,8 +592,14 @@ impl Generator {
         let this = Rc::new_cyclic(|me| Generator {
             root: bin.upcast(),
             generate,
+            surprise,
             driver: Cell::new(driver),
+            families,
+            family_chips: RefCell::default(),
+            family: Cell::new(None),
+            family_picked: Cell::new(false),
             characters,
+            characters_plate,
             dials,
             chips,
             keep_chips: RefCell::default(),
@@ -507,6 +621,13 @@ impl Generator {
             amount,
             breed_list,
             breed,
+            morph_list,
+            morph,
+            code_row,
+            code,
+            enter,
+            code_entry,
+            code_error,
             lamps: RefCell::default(),
             character: Cell::new(0),
             macros: Cell::new(Macros::default()),
@@ -521,6 +642,10 @@ impl Generator {
             me: me.clone(),
         });
         this.wire(&page, &vary);
+        let me = this.weak(|me, ()| me.copy_code());
+        copy.connect_clicked(move |_| me(()));
+        let me = this.weak(|me, ()| me.deal_code());
+        code_deal.connect_clicked(move |_| me(()));
         this.build(driver);
         this.set_target(None);
         this.set_connected(false);
@@ -546,11 +671,15 @@ impl Generator {
         self.sounds_head.set_visible(true);
         self.position.set_visible(false);
         self.origin.set_label(&tr("Sounds"));
+        self.code_row.set_visible(false);
         self.characters.remove_all();
         for i in 0..d.characters().len() {
             self.characters.append(&character_tile(d, i));
         }
+        self.build_families(d);
         self.generate.set_sensitive(!d.characters().is_empty());
+        self.surprise.set_sensitive(!d.characters().is_empty());
+        self.enter.set_sensitive(!d.characters().is_empty());
         for (dial, info) in self.dials.iter().zip(d.macro_info()) {
             let title = tr(info.title);
             dial.set_label(&title);
@@ -576,6 +705,147 @@ impl Generator {
         self.select_character(0);
         let target = self.target.borrow_mut().take();
         self.set_target(target);
+    }
+
+    /// The family row: "All", then each family `d` has characters of, as
+    /// chips of which one is on. The family chosen before stays chosen
+    /// when the synth has it.
+    fn build_families(&self, d: &'static dyn Driver) {
+        while let Some(c) = self.families.first_child() {
+            self.families.remove(&c);
+        }
+        let has = |f: Family| d.characters().iter().any(|c| c.family == f);
+        if !self.family_picked.get() {
+            self.family.set(d.characters().first().map(|c| c.family));
+        } else if self.family.get().is_some_and(|f| !has(f)) {
+            self.family.set(None);
+        }
+        let mut chips: Vec<(Option<Family>, gtk::ToggleButton)> = vec![];
+        let all =
+            std::iter::once(None).chain(Family::ALL.into_iter().filter(|f| has(*f)).map(Some));
+        for family in all {
+            let b = gtk::ToggleButton::builder()
+                .label(family.map_or_else(|| tr("All"), |f| tr(f.title())))
+                .css_classes(["chip"])
+                .active(family == self.family.get())
+                .build();
+            // One of the row is on, as radio buttons are.
+            if let Some((_, first)) = chips.first() {
+                b.set_group(Some(first));
+            }
+            let pick = self.weak(move |me, ()| {
+                me.family_picked.set(true);
+                me.set_family(family);
+            });
+            b.connect_toggled(move |b| {
+                if b.is_active() {
+                    pick(());
+                }
+            });
+            self.families.append(&b);
+            chips.push((family, b));
+        }
+        // A synth with one family (or none) needs no row.
+        self.families.set_visible(chips.len() > 2);
+        *self.family_chips.borrow_mut() = chips;
+        self.characters.invalidate_filter();
+    }
+
+    /// Show only `family`'s characters (`None`: all). The chosen character
+    /// stays when it is one of them; else the family's first is chosen.
+    fn set_family(&self, family: Option<Family>) {
+        self.family.set(family);
+        for (f, b) in self.family_chips.borrow().iter() {
+            if *f == family && !b.is_active() {
+                b.set_active(true);
+            }
+        }
+        self.characters.invalidate_filter();
+        let characters = self.driver.get().characters();
+        let shown =
+            |i: usize| family.is_none_or(|f| characters.get(i).is_some_and(|c| c.family == f));
+        if !shown(self.character.get())
+            && let Some(first) = (0..characters.len()).find(|&i| shown(i))
+        {
+            self.select_character(first);
+        }
+        self.characters_plate.snap();
+    }
+
+    /// Surprise: the model picks a character and dials and deals; the
+    /// page shows what it picked.
+    fn surprise_me(&self) {
+        let picked = self.hands.borrow_mut().surprise(self.driver.get());
+        if let Some((character, macros)) = picked {
+            self.show_recipe(character, macros);
+            self.show_hand(true, true);
+        }
+    }
+
+    /// Move the character tiles and the dials to a recipe the model chose
+    /// (a surprise, a code). A character the family row hides shows again.
+    fn show_recipe(&self, character: usize, macros: Macros) {
+        let family = self
+            .driver
+            .get()
+            .characters()
+            .get(character)
+            .map(|c| c.family);
+        if self.family.get().is_some_and(|f| Some(f) != family) {
+            self.set_family(None);
+        }
+        self.select_character(character);
+        self.macros.set(macros);
+        let values = [macros.bright, macros.movement, macros.grit, macros.space];
+        for (dial, v) in self.dials.iter().zip(values) {
+            let v = (v * 100.0).round() as u16;
+            dial.show(v, v);
+        }
+    }
+
+    /// Deal the hand the typed code names, or say in place what is wrong
+    /// with it.
+    fn deal_code(&self) {
+        let dealt = self
+            .hands
+            .borrow_mut()
+            .deal_code(self.driver.get(), &self.code_entry.text());
+        match dealt {
+            Ok((character, macros)) => {
+                self.code_error.set_visible(false);
+                self.code_entry.remove_css_class("error");
+                self.code_entry.set_text("");
+                self.enter.popdown();
+                self.show_recipe(character, macros);
+                self.show_hand(true, true);
+            }
+            Err(why) => {
+                self.code_error.set_label(&why);
+                self.code_error.set_visible(true);
+                self.code_entry.add_css_class("error");
+                self.code_entry.grab_focus();
+            }
+        }
+    }
+
+    /// The selected sound's recipe code to the clipboard.
+    fn copy_code(&self) {
+        if let Some(code) = self.hands.borrow().code() {
+            self.root.clipboard().set_text(&code);
+            self.on_ask.emit(Ask::Copied);
+        }
+    }
+
+    /// Morph the selected sound into the `row`-th of the others.
+    fn morph_selected(&self, row: i32) {
+        let other = usize::try_from(row)
+            .ok()
+            .and_then(|r| self.hands.borrow().others().get(r).copied());
+        let Some(other) = other else { return };
+        let dealt = self.hands.borrow_mut().morph(self.driver.get(), other);
+        if dealt {
+            self.show_hand(true, true);
+        }
     }
 
     /// Run `f` on the page while it is alive.
@@ -614,8 +884,36 @@ impl Generator {
                 set(v);
             });
         }
+        // Only the chosen family's tiles show.
+        let me = self.me.clone();
+        self.characters.set_filter_func(move |child| {
+            let Some(me) = me.upgrade() else { return true };
+            let Some(family) = me.family.get() else {
+                return true;
+            };
+            usize::try_from(child.index())
+                .ok()
+                .and_then(|i| me.driver.get().characters().get(i))
+                .is_none_or(|c| c.family == family)
+        });
         let deal = self.weak(|me, ()| me.deal());
         self.generate.connect_clicked(move |_| deal(()));
+        let surprise = self.weak(|me, ()| me.surprise_me());
+        self.surprise.connect_clicked(move |_| surprise(()));
+        let typed = self.weak(|me, ()| me.deal_code());
+        self.code_entry.connect_activate(move |_| typed(()));
+        // Typing again takes the complaint away.
+        let again = self.weak(|me, ()| {
+            me.code_error.set_visible(false);
+            me.code_entry.remove_css_class("error");
+        });
+        self.code_entry.connect_changed(move |_| again(()));
+        let morph = self.weak(|me, row: i32| me.morph_selected(row));
+        let morph_button = self.morph.clone();
+        self.morph_list.connect_row_activated(move |_, row| {
+            morph_button.popdown();
+            morph(row.index());
+        });
         let picked = self.weak(|me, ()| me.on_sound_selected());
         self.sounds
             .connect_selected_children_changed(move |_| picked(()));
@@ -917,14 +1215,20 @@ impl Generator {
             };
             self.open
                 .set_visible(h.kept.as_ref().is_some_and(|(k, _)| *k == i));
-            self.breed_list.remove_all();
-            for (j, p) in h.programs.iter().enumerate() {
-                if j != i {
-                    let name = self.driver.get().name(p).unwrap_or_default();
-                    let row = gtk::Label::builder().label(&name).xalign(0.0).build();
-                    self.breed_list.append(&row);
+            // The others of the hand, to breed with or morph to.
+            for list in [&self.breed_list, &self.morph_list] {
+                list.remove_all();
+                for (j, p) in h.programs.iter().enumerate() {
+                    if j != i {
+                        let name = self.driver.get().name(p).unwrap_or_default();
+                        let row = gtk::Label::builder().label(&name).xalign(0.0).build();
+                        list.append(&row);
+                    }
                 }
             }
+            let code = h.codes.get(i).cloned().flatten();
+            self.code.set_label(code.as_deref().unwrap_or_default());
+            self.code_row.set_visible(code.is_some());
             h.programs[i].clone()
         };
         self.update_lamps();
@@ -1100,6 +1404,46 @@ mod tests {
                 g.deal();
             }
             assert_eq!(g.hands.borrow().position().1, HISTORY);
+
+            // A dealt sound shows its code; Copy puts it on the clipboard.
+            let code = g.hands.borrow().code().expect("a dealt sound has a code");
+            assert!(g.code_row.is_visible());
+            assert_eq!(g.code.label(), code);
+            g.copy_code();
+            assert!(matches!(asks.borrow().last(), Some(Ask::Copied)));
+
+            // Morph: six steps, a legend naming both ends, no code.
+            g.morph_selected(1);
+            let h = g.hands.borrow().current().unwrap().clone();
+            assert_eq!(h.programs.len(), HAND);
+            assert!(h.origin.starts_with("From"), "{}", h.origin);
+            assert!(!g.code_row.is_visible());
+
+            // A family shows only its characters and takes the choice along.
+            g.set_family(Some(Family::Rhythm));
+            assert_eq!(XD.characters()[g.character.get()].family, Family::Rhythm);
+
+            // A typed code deals its sound first and moves the page to its
+            // recipe, out of the family that hid it.
+            g.code_entry.set_text(&code);
+            g.deal_code();
+            let r = oscyl_app::generator::parse_code(XD, &code).unwrap();
+            assert_eq!(g.character.get(), r.character);
+            assert_eq!(g.family.get(), None);
+            assert_eq!(g.hands.borrow().code(), Some(code));
+            // A bad one says why, in place, and deals nothing.
+            let at = g.hands.borrow().position();
+            g.code_entry.set_text("pad-nonsense");
+            g.deal_code();
+            assert!(g.code_error.get_visible() && !g.code_error.label().is_empty());
+            assert_eq!(g.hands.borrow().position(), at);
+
+            // Surprise deals and shows what it picked.
+            g.surprise_me();
+            let h = g.hands.borrow().current().unwrap().clone();
+            assert_eq!(h.character, g.character.get());
+            let m = g.macros.get();
+            assert_eq!(g.dials[0].value(), (m.bright * 100.0).round() as u16);
         });
     }
 }

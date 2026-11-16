@@ -764,6 +764,7 @@ impl App {
                 let doc = self.doc_place.borrow().clone();
                 self.sidebar.select(&doc);
             }
+            Ask::Copied => self.win.toast(&tr("Recipe code copied")),
             Ask::PickSlot => {
                 self.win
                     .toast(&tr("Select a slot in the program list first."));

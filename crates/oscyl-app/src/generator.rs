@@ -35,8 +35,8 @@ pub struct Hand {
     /// The sound kept from this hand, and where it went (a slot, a library).
     pub kept: Option<(usize, String)>,
     /// Each sound's recipe code, for the ones a recipe alone makes again:
-    /// dealt sounds. Variations, children, morphs and sounds dealt onto a
-    /// base program have none.
+    /// dealt sounds. Variations, children, morphs and sounds that hold
+    /// pages of a base program have none.
     pub codes: Vec<Option<String>>,
 }
 
@@ -172,7 +172,9 @@ pub struct Hands {
 
 /// `n` sounds of `recipe`'s character, dials (each at the nearest of its
 /// 101 steps) and kept pages, each with its recipe code when a recipe
-/// alone makes it again (none with a `base`): the first from seed `first`
+/// names it (none when pages are held from `base`; a base alone lends
+/// only what is the player's, tuning and controllers, which a code does
+/// not carry): the first from seed `first`
 /// when given, the others from 32-bit seeds drawn from `seed`
 /// (`recipe.seed` is not read). What a hand of the page is made of, for
 /// callers without a page too (the command line).
@@ -189,15 +191,20 @@ pub fn deal(
         seed,
         ..recipe.clone()
     };
+    let held = base.is_some() && !recipe(0).keep.is_empty();
     let dealt = hand_seeded(d, recipe(0).character, seed, SEED_MASK, first, n, |seed| {
         d.generate(&recipe(seed), base)
     })?;
     Ok(dealt
         .into_iter()
         .map(|(p, seed)| {
-            let code = seed
-                .filter(|_| base.is_none())
-                .and_then(|seed| code(d, &recipe(seed)));
+            let code = seed.filter(|_| !held).and_then(|seed| {
+                let free = Recipe {
+                    keep: vec![],
+                    ..recipe(seed)
+                };
+                code(d, &free)
+            });
             (p, code)
         })
         .collect())

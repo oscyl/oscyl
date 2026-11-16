@@ -20,8 +20,8 @@
 //!
 //! Limits: ranges are chosen by ear on paper, not on hardware. The
 //! modulation destinations and sources ([`dest`], [`source`]) are numbered
-//! in the order the User's Guide lists them, which no capture here has
-//! confirmed; only the first fifteen destinations are used. The effect
+//! in the order the User's Guide lists them (Appendix B); only the first
+//! sixteen destinations are used. The effect
 //! parameters are drawn over their whole range because the docs give no
 //! meaning for them.
 

@@ -510,6 +510,9 @@ msgstr ""
 msgid "Copy program to a library"
 msgstr ""
 
+msgid "Copy the recipe code"
+msgstr ""
+
 msgid "Copy to Another Library"
 msgstr ""
 
@@ -630,13 +633,22 @@ msgstr ""
 msgid "Dark"
 msgstr ""
 
+msgid "Deal"
+msgstr ""
+
 msgid "Deal six children of this sound and another"
 msgstr ""
 
 msgid "Deal six new sounds (Space)"
 msgstr ""
 
+msgid "Deal six steps from this sound to another"
+msgstr ""
+
 msgid "Deal six variations of this sound"
+msgstr ""
+
+msgid "Deal the sound a recipe code names"
 msgstr ""
 
 msgid "Decay"
@@ -783,6 +795,9 @@ msgstr ""
 msgid "Editor"
 msgstr ""
 
+msgid "Effect"
+msgstr ""
+
 msgid "Effects"
 msgstr ""
 
@@ -814,6 +829,9 @@ msgid "Ensemble"
 msgstr ""
 
 msgid "Ensemble variation: Stereo, Light or Mono."
+msgstr ""
+
+msgid "Enter a Code…"
 msgstr ""
 
 msgid "Envelopes"
@@ -853,6 +871,9 @@ msgid "Factory slot: read-only. Copy it to a library to change it."
 msgstr ""
 
 msgid "Fall time of the EG back to zero."
+msgstr ""
+
+msgid "Family"
 msgstr ""
 
 msgid "Fast"
@@ -1407,6 +1428,12 @@ msgstr ""
 msgid "Mono Sweep"
 msgstr ""
 
+msgid "Morph To…"
+msgstr ""
+
+msgid "Morph to"
+msgstr ""
+
 msgid "Motion Slot 1 On"
 msgstr ""
 
@@ -1793,6 +1820,9 @@ msgstr ""
 msgid "Phaser flavour, from a fast sweep to vowel-like Formant."
 msgstr ""
 
+msgid "Pick a character and dials for me, and deal"
+msgstr ""
+
 msgid "Pick a character, shape it, and press Generate. Every sound plays on the synth as you pick it."
 msgstr ""
 
@@ -1970,6 +2000,12 @@ msgstr ""
 msgid "Recalled snapshot {letter}"
 msgstr ""
 
+msgid "Recipe code"
+msgstr ""
+
+msgid "Recipe code copied"
+msgstr ""
+
 msgid "Redo"
 msgstr ""
 
@@ -2085,6 +2121,9 @@ msgid "Revert {name}"
 msgstr ""
 
 msgid "Revert {parameter}"
+msgstr ""
+
+msgid "Rhythm"
 msgstr ""
 
 msgid "Ring"
@@ -2443,6 +2482,9 @@ msgid "Submarine"
 msgstr ""
 
 msgid "Subtle"
+msgstr ""
+
+msgid "Surprise Me"
 msgstr ""
 
 msgid "Sustain"
