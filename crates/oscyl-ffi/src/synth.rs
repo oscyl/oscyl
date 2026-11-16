@@ -73,6 +73,10 @@ pub struct SlotInfo {
     pub module: String,
     pub slot: u8,
     pub name: Option<String>,
+    /// The parameters its unit declares, each with its range in words;
+    /// empty when it declares none or they are not read yet.
+    #[uniffi(default = [])]
+    pub params: Vec<crate::units::UnitParamInfo>,
 }
 
 /// What the worker reports; mirrors `oscyl_app::synth::Ev`.
@@ -192,6 +196,12 @@ impl From<Ev> for SynthEvent {
                         module: s.module.name().into(),
                         slot: s.slot,
                         name: s.name,
+                        params: crate::units::params_of(
+                            s.info
+                                .as_ref()
+                                .map(oscyl_app::palette::param_words)
+                                .unwrap_or_default(),
+                        ),
                     })
                     .collect(),
             },

@@ -80,6 +80,21 @@ import io.github.oscyl.shared.generated.resources.units_clear_body
 import io.github.oscyl.shared.generated.resources.units_clear_title
 import io.github.oscyl.ui.library.ConfirmDialog
 import io.github.oscyl.core.BackupFile
+import io.github.oscyl.core.ShelfUnitInfo
+import io.github.oscyl.core.UnitParamInfo
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.stateDescription
+import io.github.oscyl.shared.generated.resources.ic_remove
+import io.github.oscyl.shared.generated.resources.units_params_hidden
+import io.github.oscyl.shared.generated.resources.units_params_shown
+import io.github.oscyl.shared.generated.resources.units_shelf
+import io.github.oscyl.shared.generated.resources.units_shelf_add
+import io.github.oscyl.shared.generated.resources.units_shelf_empty
+import io.github.oscyl.shared.generated.resources.units_shelf_load
+import io.github.oscyl.shared.generated.resources.units_shelf_load_named
+import io.github.oscyl.shared.generated.resources.units_shelf_remove_named
 import androidx.compose.runtime.LaunchedEffect
 import org.jetbrains.compose.resources.pluralStringResource
 import io.github.oscyl.shared.generated.resources.synth_read_progress
@@ -182,6 +197,13 @@ interface SynthActions {
 
     /** Put a cleared unit back from its backup. */
     fun putBack(file: BackupFile) {}
+
+    /** Pick a unit file for the synth's shelf. */
+    fun addToShelf(card: SynthCard) {}
+
+    /** Load a unit of the shelf into the first free slot of its section. */
+    fun loadFromShelf(card: SynthCard, unit: ShelfUnitInfo) {}
+    fun removeFromShelf(card: SynthCard, unit: ShelfUnitInfo) {}
 }
 
 /** Does nothing: previews. */
@@ -206,6 +228,7 @@ fun SynthScreen(
     val access by model.access.collectAsStateWithLifecycle()
     val notice by model.notice.collectAsStateWithLifecycle()
     val units by model.units.collectAsStateWithLifecycle()
+    val shelved by model.shelved.collectAsStateWithLifecycle()
     val backups by model.backups.collectAsStateWithLifecycle()
     // Kept composed under the foot, it asks nothing until it is in sight.
     LaunchedEffect(visible) { if (visible) model.refreshBackups() }
@@ -225,6 +248,7 @@ fun SynthScreen(
         onPreferences = onPreferences,
         onGuide = onGuide,
         units = units,
+        shelved = shelved,
         backups = backups,
         actions = actions,
         edited = edited,
@@ -266,6 +290,8 @@ fun SynthScreen(
     onPreferences: () -> Unit = {},
     onGuide: () -> Unit = {},
     units: Map<ULong, List<UnitSlot>> = emptyMap(),
+    /** Each synth model's shelf of unit files, by driver id. */
+    shelved: Map<String, List<ShelfUnitInfo>> = emptyMap(),
     backups: List<BackupFile> = emptyList(),
     actions: SynthActions = NoSynthActions,
     edited: Map<ULong, Int> = emptyMap(),
@@ -319,7 +345,7 @@ fun SynthScreen(
                     shown != null -> {
                         val card = cards.firstOrNull { it.id.toString() == shown }
                         val slots = card?.let { units[it.id] }
-                        if (card != null && slots != null) UnitSlots(card, slots, actions) else page = null
+                        if (card != null && slots != null) UnitSlots(card, slots, shelved[card.driverId].orEmpty(), actions) else page = null
                     }
                     else -> {
                         cards.forEach { card ->
@@ -621,9 +647,51 @@ private fun StatusPanel(
     }
 }
 
-/** A logue synth's user-unit slots by section: each slot's unit or Empty, with Load or Clear. */
+/**
+ * A unit's name on its row. One that declares parameters is a toggle: a tap shows them
+ * under it, each with its range (said as shown or hidden), and another hides them.
+ */
 @Composable
-private fun UnitSlots(card: SynthCard, slots: List<UnitSlot>, actions: SynthActions) {
+private fun UnitName(name: String, caption: String?, params: List<UnitParamInfo>, lead: String? = null, modifier: Modifier = Modifier) {
+    val c = OscylTheme.colors
+    val type = MaterialTheme.typography
+    var open by rememberSaveable(name, lead) { mutableStateOf(false) }
+    val shown = stringResource(if (open) Res.string.units_params_shown else Res.string.units_params_hidden)
+    Column(
+        modifier
+            .then(
+                if (params.isEmpty()) Modifier.semantics(mergeDescendants = true) {}
+                else Modifier
+                    .clip(RoundedCornerShape(OscylTokens.radius))
+                    .toggleable(open, role = Role.Button) { open = it }
+                    .semantics(mergeDescendants = true) { stateDescription = shown },
+            )
+            .heightIn(min = 48.dp)
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            lead?.let { BasicText(it, style = type.bodyMedium.copy(color = c.legend, fontFeatureSettings = "tnum")) }
+            Column {
+                BasicText(name, style = type.bodyMedium.copy(color = c.ink, fontWeight = FontWeight.Medium, textDirection = TextDirection.Content))
+                caption?.let { BasicText(it, style = type.bodySmall.copy(color = c.legend)) }
+                if (open) {
+                    params.forEach { p ->
+                        BasicText("${p.name} · ${p.range}", style = type.bodySmall.copy(color = c.legend, textDirection = TextDirection.Content))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A logue synth's shelf of unit files (Add, then each unit with Load, into the first free
+ * slot of its section, and a way off the shelf), then its user-unit slots by section:
+ * each slot's unit or Empty, with Load or Clear.
+ */
+@Composable
+private fun UnitSlots(card: SynthCard, slots: List<UnitSlot>, shelf: List<ShelfUnitInfo>, actions: SynthActions) {
     val c = OscylTheme.colors
     val type = MaterialTheme.typography
     // Clearing asks first, as on the desktop: it wipes the slot on the synth.
@@ -640,6 +708,27 @@ private fun UnitSlots(card: SynthCard, slots: List<UnitSlot>, actions: SynthActi
         }
     }
     Column(Modifier.padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, itemVerticalAlignment = Alignment.CenterVertically) {
+            Legend(stringResource(Res.string.units_shelf))
+            OutlinedAction(stringResource(Res.string.units_shelf_add), { actions.addToShelf(card) }, Modifier.testTag("shelf-add"))
+        }
+        if (shelf.isEmpty()) {
+            BasicText(stringResource(Res.string.units_shelf_empty), style = type.bodyMedium.copy(color = c.legend))
+        }
+        shelf.forEach { unit ->
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                UnitName(unit.name, unit.section, unit.params, modifier = Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val load = stringResource(Res.string.units_shelf_load_named, unit.name, unit.section)
+                    OutlinedAction(stringResource(Res.string.units_shelf_load), { actions.loadFromShelf(card, unit) }, Modifier.semantics { contentDescription = load })
+                    IconAction(Res.drawable.ic_remove, stringResource(Res.string.units_shelf_remove_named, unit.name), { actions.removeFromShelf(card, unit) })
+                }
+            }
+        }
         // Previews and tests draw sample slots: no call to the core here.
         slots.groupBy { it.module }.forEach { (_, group) ->
             val section = group.first().section
@@ -651,12 +740,16 @@ private fun UnitSlots(card: SynthCard, slots: List<UnitSlot>, actions: SynthActi
                     horizontalArrangement = Arrangement.SpaceBetween,
                     itemVerticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(Modifier.semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        BasicText(number, style = type.bodyMedium.copy(color = c.legend, fontFeatureSettings = "tnum"))
-                        BasicText(
-                            slot.name ?: stringResource(Res.string.units_empty),
-                            style = type.bodyMedium.copy(color = if (slot.name == null) c.legend else c.ink, textDirection = TextDirection.Content),
-                        )
+                    if (slot.name != null && slot.params.isNotEmpty()) {
+                        UnitName(slot.name, null, slot.params, lead = number, modifier = Modifier.weight(1f))
+                    } else {
+                        Row(Modifier.semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            BasicText(number, style = type.bodyMedium.copy(color = c.legend, fontFeatureSettings = "tnum"))
+                            BasicText(
+                                slot.name ?: stringResource(Res.string.units_empty),
+                                style = type.bodyMedium.copy(color = if (slot.name == null) c.legend else c.ink, textDirection = TextDirection.Content),
+                            )
+                        }
                     }
                     if (slot.name == null) {
                         val described = stringResource(Res.string.units_load_named, section, number)
@@ -737,6 +830,7 @@ private fun SynthPreview(
     actions: SynthActions = NoSynthActions,
     edited: Map<ULong, Int> = emptyMap(),
     startPage: String? = null,
+    shelved: Map<String, List<ShelfUnitInfo>> = emptyMap(),
 ) = OscylTheme(mode) {
     // One frame for the shell and the sheet, as in the app: the sheet keeps clear of a side island.
     Box { androidx.compose.runtime.CompositionLocalProvider(io.github.oscyl.ui.shell.LocalShellFrame provides remember { io.github.oscyl.ui.shell.ShellFrame() }) {
@@ -745,15 +839,22 @@ private fun SynthPreview(
         DockedSheet(open = true, onClose = {}, title = stringResource(Res.string.sheet_title)) {
             SynthScreen(
                 cards, access, notice = null, SampleDrivers, onDemo = {}, onDisconnect = {}, onConnect = {}, onAllow = {}, onAbout = {},
-                units = units, backups = backups, actions = actions, edited = edited,
+                units = units, shelved = shelved, backups = backups, actions = actions, edited = edited,
                 live = Live(true, toggle = {}).takeIf { cards.any { it.connected } }, onClose = {}, startPage = startPage,
             )
         }
     } }
 }
 
+private val SampleParams = listOf(UnitParamInfo("Wave A", "1 to 46"), UnitParamInfo("Sub Mix", "0 % to 100 %"))
+
+private val SampleShelf = listOf(
+    ShelfUnitInfo("anthem.mnlgxdunit", "anthem", "osc", "Oscillators", SampleParams),
+    ShelfUnitInfo("shimmer.mnlgxdunit", "shimmer", "revfx", "Reverbs", emptyList()),
+)
+
 private val SampleUnits = listOf(
-    UnitSlot("osc", 0u, "MorphTbl", "Oscillators"), UnitSlot("osc", 1u, "waves", "Oscillators"), UnitSlot("osc", 2u, null, "Oscillators"),
+    UnitSlot("osc", 0u, "MorphTbl", "Oscillators"), UnitSlot("osc", 1u, "waves", "Oscillators", SampleParams), UnitSlot("osc", 2u, null, "Oscillators"),
     UnitSlot("modfx", 0u, "Wobbler", "Modulation effects"), UnitSlot("modfx", 1u, null, "Modulation effects"),
 )
 
@@ -809,7 +910,7 @@ private fun synth_units_a11y() =
 @OscylPreviews
 @Composable
 private fun synth_unitsPage(@PreviewParameter(ThemeModes::class) mode: OscylThemeMode) =
-    SynthPreview(mode, cards = listOf(DemoCard), units = mapOf(1uL to SampleUnits), startPage = "1")
+    SynthPreview(mode, cards = listOf(DemoCard), units = mapOf(1uL to SampleUnits), startPage = "1", shelved = mapOf(DemoCard.driverId to SampleShelf))
 
 @OscylPreviews
 @Composable

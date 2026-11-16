@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.oscyl.core.Document
 import io.github.oscyl.core.DriverInfo
+import io.github.oscyl.core.Shelf
+import io.github.oscyl.core.ShelfUnitInfo
 import io.github.oscyl.core.SlotProgram
+import io.github.oscyl.core.UnitParamInfo
 import io.github.oscyl.core.Synth
 import io.github.oscyl.core.SynthEvent
 import io.github.oscyl.core.SynthListener
@@ -34,6 +37,7 @@ import io.github.oscyl.shared.generated.resources.notice_cannot_read
 import io.github.oscyl.shared.generated.resources.notice_synth_silent
 import io.github.oscyl.shared.generated.resources.notice_unit_lost
 import io.github.oscyl.shared.generated.resources.units_no_empty
+import io.github.oscyl.shared.generated.resources.units_shelf_added
 import io.github.oscyl.shared.generated.resources.units_no_synth
 import io.github.oscyl.ui.library.reason
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +106,14 @@ fun unsyncedKey(card: SynthCard) = "${card.driverId}-${card.id}-$Run"
  * One user-unit slot of a logue synth: its section (`osc`, `modfx`, …) and the
  * section's name for people, its number and its unit, if any.
  */
-data class UnitSlot(val module: String, val slot: UByte, val name: String?, val section: String = module)
+data class UnitSlot(
+    val module: String,
+    val slot: UByte,
+    val name: String?,
+    val section: String = module,
+    /** The parameters its unit declares, each with its range in words. */
+    val params: List<UnitParamInfo> = emptyList(),
+)
 
 /** A write to a synth: under way (how far), stored, or failed with the reason. */
 sealed interface WriteState {
@@ -126,7 +137,74 @@ class SynthModel(
     private val files: Files = NoFiles,
     private val backupsDir: String? = null,
     private val reopen: Reopen = Reopen(),
+    /** Where the shelf of unit files is kept (app-private storage); null: no shelf (previews). */
+    shelfDir: String? = null,
 ) : ViewModel() {
+    private val shelf: Shelf? = shelfDir?.let(::Shelf)
+    private val _shelved = MutableStateFlow<Map<String, List<ShelfUnitInfo>>>(emptyMap())
+
+    /** Each synth model's shelf of unit files, by driver id, once listed. */
+    val shelved: StateFlow<Map<String, List<ShelfUnitInfo>>> = _shelved.asStateFlow()
+
+    /** Read [driverId]'s shelf again (off the main thread: it reads the files). */
+    private fun refreshShelf(driverId: String) {
+        val s = shelf ?: return
+        viewModelScope.launch {
+            val units = try {
+                withContext(Dispatchers.IO) { s.list(driverId) }
+            } catch (e: FfiException) {
+                emptyList()
+            }
+            _shelved.update { it + (driverId to units) }
+        }
+    }
+
+    /** Pick a unit file and keep it on [card]'s synth's shelf; why not, in words, when it is not one of its units. */
+    fun addToShelf(card: SynthCard) {
+        val s = shelf ?: return
+        viewModelScope.launch {
+            val picked = try {
+                files.open(PickFor.Unit)
+            } catch (e: FileUnreadable) {
+                _notice.value = getString(Res.string.notice_cannot_read, e.name)
+                null
+            } ?: return@launch
+            try {
+                val added = withContext(Dispatchers.IO) { s.add(card.driverId, picked.bytes) }
+                _notice.value = getString(Res.string.units_shelf_added, added.name)
+                refreshShelf(card.driverId)
+            } catch (e: FfiException) {
+                _notice.value = e.reason()
+            }
+        }
+    }
+
+    /** Load [unit] of the shelf into the first free slot of its section on [card] (the synth says so when the section is full). */
+    fun loadFromShelf(card: SynthCard, unit: ShelfUnitInfo) {
+        val s = shelf ?: return
+        val id = w(card.id) ?: return
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { synth.loadFromShelf(id, card.driverId, s, unit.file) }
+            } catch (e: FfiException) {
+                _notice.value = e.reason()
+            }
+        }
+    }
+
+    /** Take [unit] off [card]'s synth's shelf. */
+    fun removeFromShelf(card: SynthCard, unit: ShelfUnitInfo) {
+        val s = shelf ?: return
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { s.remove(card.driverId, unit.file) }
+            } catch (e: FfiException) {
+                _notice.value = e.reason()
+            }
+            refreshShelf(card.driverId)
+        }
+    }
+
     /** The app's language changed: the unit sections' names are asked again. */
     fun relocalise() {
         _units.update { all -> all.mapValues { (_, slots) -> slots.map { it.copy(section = unitSection(it.module)) } } }
@@ -287,6 +365,7 @@ class SynthModel(
 
     /** List [card]'s user-unit slots, once, if it has any (asked when its card shows them, as the desktop's units page does). */
     fun listUnits(card: SynthCard) {
+        if (unitExt(card.driverId) != null && card.driverId !in _shelved.value) refreshShelf(card.driverId)
         if (card.id in _units.value || card.id in listing || unitExt(card.driverId) == null) return
         listing += card.id
         w(card.id)?.let(synth::readSlots)
@@ -586,7 +665,7 @@ class SynthModel(
                 _writes.update { it + (id to WriteState.Failed(event.message)) }
             }
             is SynthEvent.Slots -> {
-                _units.update { it + (id to event.slots.map { s -> UnitSlot(s.module, s.slot, s.name, unitSection(s.module)) }) }
+                _units.update { it + (id to event.slots.map { s -> UnitSlot(s.module, s.slot, s.name, unitSection(s.module), s.params) }) }
                 // A cleared slot left a backup.
                 refreshBackups()
             }
@@ -648,6 +727,7 @@ class SynthModel(
         midi.close()
         synth.quit()
         synth.close()
+        shelf?.close()
         events.close()
     }
 

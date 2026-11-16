@@ -40,6 +40,22 @@ pub struct SoundTile {
     pub graph: Option<GraphShape>,
     /// Where it was kept (a slot, a library), when it was.
     pub kept: Option<String>,
+    /// The user units it relies on, by name ("waves"); empty for most.
+    #[uniffi(default = [])]
+    pub units: Vec<String>,
+}
+
+/// One of the synth's user units, as Generate's "My units" shows it.
+#[derive(Debug, Clone, PartialEq, uniffi::Record)]
+pub struct UnitChip {
+    /// Its section's short name (`osc`, `modfx`, `delfx`, `revfx`).
+    pub module: String,
+    pub slot: u8,
+    pub name: String,
+    /// Its section, for people ("Oscillators").
+    pub section: String,
+    /// Generate may use it (on until the player excludes it).
+    pub on: bool,
 }
 
 /// What a surprise or a recipe code dealt, for the page to show.
@@ -80,6 +96,12 @@ pub struct Generator {
 }
 
 impl Generator {
+    /// The hands deal with the units that are on.
+    fn use_units(&self) {
+        let palette = oscyl_app::palette::shared().palette(self.driver);
+        self.lock().set_palette(palette);
+    }
+
     fn lock(&self) -> std::sync::MutexGuard<'_, Hands> {
         self.hands.lock().unwrap_or_else(|e| e.into_inner())
     }
@@ -120,6 +142,38 @@ impl Generator {
             .collect()
     }
 
+    /// The user units the synth held when last listed (remembered between
+    /// runs), each on unless excluded: Generate's "My units". Empty when
+    /// it holds none.
+    pub fn units(&self) -> Vec<UnitChip> {
+        oscyl_app::palette::shared()
+            .units(self.driver)
+            .into_iter()
+            .map(|e| UnitChip {
+                module: e.unit.kind.name.into(),
+                slot: e.unit.slot,
+                name: e.unit.name,
+                section: e.section,
+                on: e.on,
+            })
+            .collect()
+    }
+
+    /// Let Generate use the unit in `slot` of section `module`, or not,
+    /// for the session.
+    pub fn set_unit_on(&self, module: String, slot: u8, on: bool) {
+        oscyl_app::palette::shared().set_on(self.driver, &module, slot, on);
+    }
+
+    /// Once a session, what to tell the player who keeps the selected
+    /// sound when it relies on a user unit its target may lack: a slot of
+    /// the synth (`on_synth`) that does not hold it, or a library. None
+    /// when there is nothing to say.
+    pub fn keep_warning(&self, on_synth: bool) -> Option<String> {
+        let (p, _) = self.lock().selected()?;
+        oscyl_app::palette::shared().keep_warning(self.driver, &p, on_synth)
+    }
+
     /// The editor's pages, whose fields can be kept from a base program.
     pub fn pages(&self) -> Vec<String> {
         self.driver
@@ -152,6 +206,7 @@ impl Generator {
         } else {
             vec![]
         };
+        self.use_units();
         self.lock().deal(
             self.driver,
             character as usize,
@@ -181,6 +236,7 @@ impl Generator {
     /// A random character and dials, dealt; what it chose. None when the
     /// synth deals nothing. Blocks.
     pub fn surprise(&self) -> Option<Dealt> {
+        self.use_units();
         self.lock().surprise(self.driver).map(Dealt::of)
     }
 
@@ -269,6 +325,7 @@ impl Generator {
                         .as_ref()
                         .filter(|(k, _)| *k == i)
                         .map(|(_, s)| s.clone()),
+                    units: h.units.get(i).cloned().unwrap_or_default(),
                 })
                 .collect(),
             selected: u32::try_from(h.selected).unwrap_or(0),

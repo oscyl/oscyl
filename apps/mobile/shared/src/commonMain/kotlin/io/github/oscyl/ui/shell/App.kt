@@ -111,6 +111,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.oscyl.ui.editor.EditorDestination
 import io.github.oscyl.ui.editor.EditorModel
 import io.github.oscyl.ui.library.LibraryModel
+import io.github.oscyl.core.ShelfUnitInfo
+import io.github.oscyl.core.keepPalettes
 import io.github.oscyl.core.setLocale
 import io.github.oscyl.platform.GatedHaptics
 import io.github.oscyl.ui.parts.LocalOscylMotion
@@ -168,7 +170,10 @@ fun App(platform: Platform) {
             val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
             val axis = with(LocalDensity.current) { 30.dp.roundToPx() } * if (rtl) -1 else 1
             // The one synth worker, in the activity's retained scope: it outlives rotation.
-            val synth = viewModel { SynthModel(platform.midi(), files = platform.files, backupsDir = platform.backupsDir) }
+            // Beside the preferences: each synth's units as Generate remembers them, and the shelf of unit files.
+            val data = platform.settingsPath?.substringBeforeLast('/', "")?.takeIf { it.isNotEmpty() }
+            remember(data) { data?.let { keepPalettes("$it/palettes.json") } }
+            val synth = viewModel { SynthModel(platform.midi(), files = platform.files, backupsDir = platform.backupsDir, shelfDir = data?.let { "$it/units" }) }
             // Demo mode: its synth connects once per run.
             LaunchedEffect(synth) {
                 val demo = preferences.prefs.value.demo
@@ -534,6 +539,9 @@ private class AppSynthActions(val synth: SynthModel, val library: LibraryModel, 
     override fun openBackup(file: BackupFile) = library.openBackup(file)
     override fun shareBackup(file: BackupFile) = library.shareBackup(file)
     override fun putBack(file: BackupFile) = synth.putBack(file)
+    override fun addToShelf(card: SynthCard) = synth.addToShelf(card)
+    override fun loadFromShelf(card: SynthCard, unit: ShelfUnitInfo) = synth.loadFromShelf(card, unit)
+    override fun removeFromShelf(card: SynthCard, unit: ShelfUnitInfo) = synth.removeFromShelf(card, unit)
 }
 
 /** Where a run starts for [role]: the Library, or the editor for sounds and performances. */

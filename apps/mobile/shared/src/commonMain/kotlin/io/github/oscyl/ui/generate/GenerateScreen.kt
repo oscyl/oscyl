@@ -30,6 +30,11 @@ import io.github.oscyl.shared.generated.resources.gen_family_pad
 import io.github.oscyl.shared.generated.resources.gen_family_rhythm
 import io.github.oscyl.shared.generated.resources.gen_morph
 import io.github.oscyl.shared.generated.resources.gen_surprise
+import io.github.oscyl.shared.generated.resources.gen_unit_ok
+import io.github.oscyl.shared.generated.resources.gen_unit_warning
+import io.github.oscyl.shared.generated.resources.gen_units
+import io.github.oscyl.shared.generated.resources.gen_with
+import io.github.oscyl.core.UnitChip
 import io.github.oscyl.shared.generated.resources.ic_dice
 import io.github.oscyl.shared.generated.resources.ic_share
 import io.github.oscyl.ui.library.LocalPanelLeave
@@ -244,6 +249,13 @@ fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier 
                 )
                 OutlinedAction(stringResource(Res.string.gen_code_enter), { actions.enterCode(true) }, Modifier.testTag("generate-enter-code"), enabled = can)
             }
+            // The synth's own oscillators and effects, as sources: each on until left out.
+            if (ui.units.isNotEmpty()) {
+                Legend(stringResource(Res.string.gen_units))
+                FlowRow(Modifier.testTag("generate-units"), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ui.units.forEachIndexed { i, unit -> Chip(unit.name, unit.on, described = "${unit.name}, ${unit.section}") { actions.unitOn(i, it) } }
+                }
+            }
             if (ui.slot != null && ui.pages.isNotEmpty()) {
                 Legend(stringResource(Res.string.gen_keep_stages, ui.slot))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -307,6 +319,22 @@ fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier 
             kept?.placeRelative(deal.width + gap, 0)
         }
     }
+    }
+    ui.unitWarning?.let { warning ->
+        MenuPanel(stringResource(Res.string.gen_unit_warning), onDismiss = actions::dismissUnitWarning) {
+            BasicText(
+                warning,
+                Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.bodyMedium.copy(color = OscylTheme.colors.ink, textDirection = TextDirection.Content),
+            )
+            FlowRow(
+                Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            ) {
+                val leave = LocalPanelLeave.current
+                OutlinedAction(stringResource(Res.string.gen_unit_ok), { leave(actions::dismissUnitWarning) })
+            }
+        }
     }
     if (ui.entering) CodeDialog(ui.codeError, ui.busy, onDismiss = { actions.enterCode(false) }, onDeal = actions::dealCode)
     val hand = ui.hand
@@ -490,7 +518,7 @@ private fun Choice(text: String, on: Boolean, description: String? = null, onCli
  * on the plate when held (the same width either way: nothing moves as it toggles).
  */
 @Composable
-private fun Chip(text: String, on: Boolean, onChange: (Boolean) -> Unit) {
+private fun Chip(text: String, on: Boolean, described: String? = null, onChange: (Boolean) -> Unit) {
     val c = OscylTheme.colors
     val haptics = LocalOscylHaptics.current
     val shape = RoundedCornerShape(OscylTokens.radius)
@@ -500,6 +528,7 @@ private fun Chip(text: String, on: Boolean, onChange: (Boolean) -> Unit) {
             .heightIn(min = 48.dp)
             .then(if (on) Modifier.liftedPlate(c, shape) else Modifier.border(OscylTokens.ruleWidth, c.ruleStrong, shape))
             .toggleable(on, interaction, indication = null, role = Role.Checkbox) { haptics.tick(); onChange(it) }
+            .then(if (described != null) Modifier.semantics { contentDescription = described } else Modifier)
             .touchStates(interaction, shape, c.press)
             .padding(start = 10.dp, end = 12.dp),
         contentAlignment = Alignment.Center,
@@ -580,7 +609,9 @@ private fun Tile(sound: SoundTile, picked: Boolean, modifier: Modifier, onPick: 
         val ink = if (picked) c.onPlate else c.ink
         sound.graph?.let { MiniGraph(it, ink, Modifier.fillMaxWidth().height(40.dp)) }
         BasicText(sound.name, style = type.bodyMedium.copy(color = ink, fontWeight = FontWeight.SemiBold), maxLines = 2, overflow = TextOverflow.Ellipsis)
-        val caption = listOfNotNull(sound.category, kept).joinToString(" · ")
+        // The user units it relies on: "Pad · with waves".
+        val with = sound.units.takeIf { it.isNotEmpty() }?.let { stringResource(Res.string.gen_with, it.joinToString(", ")) }
+        val caption = listOfNotNull(sound.category, with, kept).joinToString(" · ")
         if (caption.isNotEmpty()) BasicText(caption, style = type.bodySmall.copy(color = if (picked) c.plateLegend else c.legend))
     }
 }
@@ -673,6 +704,7 @@ val SampleGenerate = GenerateUi(
     character = 2,
     family = "lead",
     code = "lead-nn6agh34s69jr",
+    units = listOf(UnitChip("osc", 1u, "waves", "Oscillators", true), UnitChip("revfx", 0u, "shimmer", "Reverbs", false)),
     macros = listOf("Bright", "Movement", "Grit", "Ambience").map { MacroInfo(it, "") },
     values = listOf(60, 35, 20, 70),
     pages = listOf("Voice", "Oscillators", "Filter", "Envelopes", "Effects"),
@@ -680,7 +712,7 @@ val SampleGenerate = GenerateUi(
     slot = "004",
     hand = HandState(
         listOf("Glass Lead 12", "Neon Lead 4", "Hollow Lead 87", "Sharp Lead 3", "Soft Lead 41", "Wide Lead 9").mapIndexed { i, n ->
-            SoundTile(n, "Lead", wave(1f + i), if (i == 1) "004" else null)
+            SoundTile(n, "Lead", wave(1f + i), if (i == 1) "004" else null, if (i == 2) listOf("waves") else emptyList())
         },
         selected = 1u,
         origin = "Lead",

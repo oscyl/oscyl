@@ -9,6 +9,7 @@ import io.github.oscyl.core.Generator
 import io.github.oscyl.core.HandState
 import io.github.oscyl.core.MacroInfo
 import io.github.oscyl.core.SynthRef
+import io.github.oscyl.core.UnitChip
 import io.github.oscyl.core.auditionTarget
 import io.github.oscyl.core.drivers
 import io.github.oscyl.platform.Files
@@ -54,6 +55,10 @@ data class GenerateUi(
     val entering: Boolean = false,
     /** What is wrong with the code typed last, in the core's words. */
     val codeError: String? = null,
+    /** The user units the synth holds ("My units"), each on unless the player left it out. */
+    val units: List<UnitChip> = emptyList(),
+    /** Said once: a kept sound needs its user unit where it goes. */
+    val unitWarning: String? = null,
 )
 
 /** The families [characters] come in, in the core's order. */
@@ -69,6 +74,8 @@ interface GenerateActions {
     fun shareCode() {}
     fun enterCode(open: Boolean) {}
     fun dealCode(code: String) {}
+    fun unitOn(i: Int, on: Boolean) {}
+    fun dismissUnitWarning() {}
     fun value(i: Int, v: Int) {}
     fun keepPage(page: Int, on: Boolean) {}
     fun deal() {}
@@ -117,6 +124,8 @@ class GenerateModel(
                 _ui.update { it.copy(slot = open?.let { o -> o.document.slotLabel(o.index.toUInt()) }) }
             }
         }
+        // A synth listed its slots: "My units" follows (the core keeps each synth's units).
+        viewModelScope.launch { synth.units.collect { refreshUnits() } }
     }
 
     /** Generate for [id]'s synth from now on, with its own hands (each synth its own seed). */
@@ -133,6 +142,7 @@ class GenerateModel(
             macros = g.macros(),
             pages = g.pages(),
             slot = _ui.value.slot,
+            units = g.units(),
         )
         show(play = false)
     }
@@ -143,6 +153,20 @@ class GenerateModel(
         _ui.update { it.copy(characters = g.characters(), macros = g.macros(), pages = g.pages()) }
         show(play = false)
     }
+
+    private fun refreshUnits() {
+        val g = generator ?: return
+        _ui.update { it.copy(units = g.units()) }
+    }
+
+    override fun unitOn(i: Int, on: Boolean) {
+        val g = generator ?: return
+        val unit = _ui.value.units.getOrNull(i) ?: return
+        g.setUnitOn(unit.module, unit.slot, on)
+        refreshUnits()
+    }
+
+    override fun dismissUnitWarning() = _ui.update { it.copy(unitWarning = null) }
 
     /** Run [work] on the generator off the main thread, then show the hand. */
     private fun dealt(play: Boolean = true, work: (Generator) -> Boolean) {
@@ -255,6 +279,9 @@ class GenerateModel(
         if (_ui.value.busy) return
         val g = generator ?: return
         val p = g.selectedProgram() ?: return
+        // Over a slot of a synth, or over a program of a library (which any synth may play).
+        val onSynth = library.open.value?.synthId != null
+        g.keepWarning(onSynth)?.let { w -> _ui.update { it.copy(unitWarning = w) } }
         val slot = library.keepOverOpen(p) ?: return
         g.markKept(slot)
         show(play = false)
@@ -265,6 +292,7 @@ class GenerateModel(
         val g = generator ?: return
         val p = g.selectedProgram() ?: return
         val id = driver ?: return
+        g.keepWarning(false)?.let { w -> _ui.update { it.copy(unitWarning = w) } }
         viewModelScope.launch {
             val name = library.keepInLibrary(id, p) ?: return@launch
             g.markKept(name)

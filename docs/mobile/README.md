@@ -311,6 +311,16 @@ Library logic lives in `oscyl-app`; the bindings only carry it across.
   deals six steps between two sounds; `code()` is the picked sound's
   recipe code (none for a variation, a child or a morph step).
   `Files.shareText` offers the code to another app.
+- `keepPalettes(path)` says where each synth's user units are remembered
+  (beside the preferences); the worker fills them in from every slot
+  listing. `Generator.units()` are Generate's "My units" (`setUnitOn`
+  leaves one out for the session); a `SoundTile` names the `units` it
+  uses; `keepWarning(onSynth)` is said once when such a sound is kept.
+  `Shelf(dir)` keeps unit files (`list`, `add`, `remove`), and
+  `Synth.loadFromShelf` puts one into its section's first free slot.
+  A `SlotInfo` and a `ShelfUnitInfo` carry the unit's `params`, each
+  with its range in words. In the editor a known unit's Param 1 to 6
+  arrive already named and ranged (`FieldState`).
 - `Document.put(index, data)` puts a program over a slot or at the end
   of a library (refused when read-only or full).
 - `Settings.onboarded`/`role` keep the welcome's answer; `role` picks the

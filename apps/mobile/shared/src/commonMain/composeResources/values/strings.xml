@@ -315,6 +315,23 @@
     <string name="gen_code_enter">Enter a code…</string>
     <string name="gen_code_title">Enter a code</string>
     <string name="gen_code_deal">Deal</string>
+    <!-- Generate: the user oscillators and effects the synth holds; each can be left out. -->
+    <string name="gen_units">My units</string>
+    <!-- On a sound's tile: the user units it uses; the argument is their names. -->
+    <string name="gen_with">with %1$s</string>
+    <string name="gen_unit_warning">This sound uses a user unit</string>
+    <string name="gen_unit_ok">OK</string>
+    <!-- The shelf: unit files Oscyl keeps, ready to load into a free slot. -->
+    <string name="units_shelf">Shelf</string>
+    <string name="units_shelf_add">Add…</string>
+    <string name="units_shelf_empty">Nothing on the shelf yet. Add a unit file to keep it here.</string>
+    <string name="units_shelf_load">Load</string>
+    <string name="units_shelf_load_named">Load %1$s into the first free slot of %2$s</string>
+    <string name="units_shelf_remove_named">Take %1$s off the shelf</string>
+    <string name="units_shelf_added">“%1$s” is on the shelf</string>
+    <!-- Said of a unit's row: its parameters are shown, or not. -->
+    <string name="units_params_shown">Parameters shown</string>
+    <string name="units_params_hidden">Parameters hidden</string>
     <!-- First run: what the person mainly does arranges where Oscyl starts. -->
     <string name="onb_question">What do you mainly do?</string>
     <string name="onb_design">Design sounds</string>
