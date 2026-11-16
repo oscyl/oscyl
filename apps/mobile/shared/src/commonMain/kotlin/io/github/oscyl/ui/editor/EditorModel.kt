@@ -279,6 +279,39 @@ class EditorModel(
                 .collect { (open, cards) -> show(open, cards) }
         }
         viewModelScope.launch { synth.selected.collect { (card, slot) -> follow(card, slot) } }
+        viewModelScope.launch { synth.knobs.collect { (card, controls) -> followKnobs(card, controls) } }
+    }
+
+    /** Each synth's decoder of what its panel's knobs send (null: its driver has none). */
+    private val decoders = mutableMapOf<ULong, io.github.oscyl.core.PanelDecoder?>()
+
+    /** The field the synth's panel turned last. */
+    private var panelField: UInt? = null
+
+    /**
+     * Live on and a program of synth [card] open: the knobs turned on its panel move the
+     * open program's values, as edits not sent back (the synth has them). One undo step
+     * per control turned. Otherwise its decoder starts afresh next time.
+     */
+    private fun followKnobs(card: ULong, controls: List<io.github.oscyl.core.ControlChange>) {
+        val open = opened
+        val e = editor
+        if (!live || open == null || e == null || open.synthId != card || !e.loaded()) {
+            decoders.remove(card)?.close()
+            return
+        }
+        val decoder = decoders.getOrPut(card) { io.github.oscyl.core.panelDecoder(open.document.driverId()) } ?: return
+        var changed = false
+        for (c in controls) {
+            val change = decoder.control(c.cc, c.value, e) ?: continue
+            if (panelField != null && panelField != change.field) e.seal()
+            panelField = change.field
+            changed = edit(turning = change.field, send = false) { it.set(change.field, change.raw) } || changed
+        }
+        if (changed) {
+            library.editorChanged()
+            refreshHead()
+        }
     }
 
     /** The row the synth's panel just picked, opened by following it. */
@@ -385,7 +418,7 @@ class EditorModel(
      * Run an edit; true when it took. The core refuses a factory slot and a slot not
      * read yet: nothing changes, and the note under the title says why.
      */
-    private fun edit(turning: UInt? = null, following: Boolean = turning != null, change: (ProgramEditor) -> Audition?): Boolean {
+    private fun edit(turning: UInt? = null, following: Boolean = turning != null, send: Boolean = true, change: (ProgramEditor) -> Audition?): Boolean {
         val e = editor ?: return false
         // Another control, or another kind of edit: what was written for the last knob is void.
         if (turning == null || turning != turned) formats.clear()
@@ -396,7 +429,7 @@ class EditorModel(
             return false
         }
         panel?.update(e, following)
-        played?.let(::play)
+        if (send) played?.let(::play)
         // Within one gesture the head (undo, the Save count) changes with its first step only.
         if (!midGesture) refreshHead()
         midGesture = true

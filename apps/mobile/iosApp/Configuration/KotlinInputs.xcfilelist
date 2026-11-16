@@ -284,6 +284,7 @@ $(SRCROOT)/../../../crates/oscyl-midi/src/device.rs
 $(SRCROOT)/../../../crates/oscyl-midi/src/hotplug.rs
 $(SRCROOT)/../../../crates/oscyl-midi/src/lib.rs
 $(SRCROOT)/../../../crates/oscyl-midi/src/logue.rs
+$(SRCROOT)/../../../crates/oscyl-midi/src/parse.rs
 $(SRCROOT)/../../../crates/oscyl-midi/src/push.rs
 $(SRCROOT)/../../../crates/oscyl-midi/tests/devices.rs
 $(SRCROOT)/../../../crates/oscyl-midi/tests/hardware.rs

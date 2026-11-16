@@ -123,6 +123,9 @@ pub enum Ev {
     Error(Option<DeviceId>, String),
     /// The synth's own panel picked program `n` (it plays it now).
     Selected(DeviceId, u16),
+    /// Control Changes the synth's panel sent (knobs turned), in order:
+    /// for the driver's [`oscyl_driver::PanelListener`].
+    Panel(DeviceId, Vec<(u8, u8)>),
 }
 
 #[derive(Debug, Clone)]
@@ -379,6 +382,12 @@ impl Worker {
             while let Some(n) = self.devices[k].device.poll_selected() {
                 let id = self.devices[k].id;
                 self.emit(Ev::Selected(id, n));
+            }
+            let controls: Vec<_> =
+                std::iter::from_fn(|| self.devices[k].device.poll_control()).collect();
+            if !controls.is_empty() {
+                let id = self.devices[k].id;
+                self.emit(Ev::Panel(id, controls));
             }
             match pumped {
                 Ok(t) => {
@@ -1565,6 +1574,32 @@ mod tests {
             next(&rx, |e| matches!(e, Ev::Selected(..))),
             Ev::Selected(i, 205) if i == id
         ));
+    }
+
+    /// The synth's knobs reach the app as their Control Changes, in order.
+    #[test]
+    fn knobs_turned_on_the_synth_are_reported() {
+        let xd = driver("korg-minilogue-xd");
+        let (link, sender, _back) = push_xd();
+        let (handle, rx) = spawn();
+        handle.send(Cmd::OpenLink {
+            driver: xd,
+            link: Box::new(link),
+            port: "usb xd".into(),
+        });
+        let id = match next(&rx, |e| matches!(e, Ev::Connected { .. })) {
+            Ev::Connected { id, .. } => id,
+            _ => unreachable!(),
+        };
+        sender.push(&[0xB0, 0x3F, 0x05, 0xB0, 0x2B, 0x55]);
+        let mut got = Vec::new();
+        while got.len() < 2 {
+            if let Ev::Panel(i, ccs) = next(&rx, |e| matches!(e, Ev::Panel(..))) {
+                assert_eq!(i, id);
+                got.extend(ccs);
+            }
+        }
+        assert_eq!(got, [(0x3F, 0x05), (0x2B, 0x55)]);
     }
 
     /// A second link on a port already open fails instead of vanishing

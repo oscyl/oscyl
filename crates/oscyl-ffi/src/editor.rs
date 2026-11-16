@@ -887,9 +887,50 @@ impl ProgramEditor {
     }
 }
 
+/// Decodes the knobs a synth's panel turns (its Control Changes) into the
+/// open program's fields: one per synth, as it keeps state between them.
+#[derive(uniffi::Object)]
+pub struct PanelDecoder(std::sync::Mutex<Box<dyn oscyl_driver::PanelListener>>);
+
+/// `driver_id`'s panel decoder; `None` when the driver does not say.
+#[uniffi::export]
+pub fn panel_decoder(driver_id: String) -> Option<Arc<PanelDecoder>> {
+    let l = crate::synth::driver(&driver_id).ok()?.panel_listener()?;
+    Some(Arc::new(PanelDecoder(std::sync::Mutex::new(l))))
+}
+
+#[uniffi::export]
+impl PanelDecoder {
+    /// One Control Change from the panel: the field it sets in `editor`'s
+    /// program and the value, once complete.
+    pub fn control(&self, cc: u8, value: u8, editor: Arc<ProgramEditor>) -> Option<FieldChange> {
+        let program = editor.program();
+        let mut l = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        let (field, raw) = l.control(cc, value, &program)?;
+        Some(FieldChange {
+            field: u32::try_from(field).ok()?,
+            raw: u32::from(raw),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The xd's panel decoder names the field its knob set in the open
+    /// program; a driver that does not say has none.
+    #[test]
+    fn panel_decoder_names_the_field() {
+        let doc = demo("korg-minilogue-xd");
+        let e = doc.clone().editor(0);
+        let d = panel_decoder("korg-minilogue-xd".into()).unwrap();
+        assert!(d.control(63, 5, e.clone()).is_none());
+        let change = d.control(43, 85, e.clone()).unwrap();
+        assert_eq!(change.raw, 685);
+        assert_eq!(e.field(change.field).label, "Cutoff");
+        assert!(panel_decoder("sequential-prophet-rev2".into()).is_none());
+    }
 
     fn demo(id: &str) -> Arc<Document> {
         let d = crate::synth::driver(id).unwrap();

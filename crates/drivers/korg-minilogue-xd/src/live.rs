@@ -143,6 +143,119 @@ pub fn messages(field: Field, p: &Program) -> Option<Vec<Cc>> {
     }
 }
 
+/// What the synth's panel sends (its transmitted Control Changes, MIDI
+/// Implementation 1-1; "MIDI Tx CC" On), decoded to the field it sets and
+/// its value. Fields are found through [`messages`], so what the panel
+/// sends and what the app sends can never disagree. Keeps the CC 63 lower
+/// bits and the NRPN selection between messages.
+#[derive(Debug, Default)]
+pub struct Listener {
+    lsb: Option<u8>,
+    nrpn_msb: Option<u8>,
+    nrpn: Option<u8>,
+}
+
+/// How a field's live messages name it: its own CC, or an NRPN.
+#[derive(Debug, PartialEq, Clone, Copy)]
+enum Key {
+    Cc(u8),
+    Nrpn(u8),
+}
+
+fn key(msgs: &[Cc]) -> Option<Key> {
+    match msgs {
+        [(99, 0), (98, n), ..] => Some(Key::Nrpn(*n)),
+        [.., (cc, _)] => Some(Key::Cc(*cc)),
+        [] => None,
+    }
+}
+
+/// The value byte of a field's live messages (not the NRPN selection).
+fn value_byte(msgs: &[Cc]) -> Option<u8> {
+    msgs.iter()
+        .rev()
+        .find(|&&(cc, _)| !matches!(cc, 98 | 99 | LSB))
+        .map(|&(_, v)| v)
+}
+
+impl Listener {
+    /// One Control Change from the panel: the field it sets in `p` and
+    /// its value, once complete.
+    pub fn control(&mut self, cc: u8, v: u8, p: &Program) -> Option<(Field, u16)> {
+        match cc {
+            LSB => {
+                self.lsb = Some(v);
+                return None;
+            }
+            99 => {
+                self.nrpn_msb = Some(v);
+                self.nrpn = None;
+                return None;
+            }
+            98 => {
+                self.nrpn = (self.nrpn_msb == Some(0) && v != 127).then_some(v);
+                return None;
+            }
+            _ => {}
+        }
+        let lsb = self.lsb.take();
+        let (wanted, field) = match cc {
+            6 => (Key::Nrpn(self.nrpn?), None),
+            // The multi engine's shape knobs set the engine in use's shape.
+            54 | 104 => (Key::Cc(cc), multi_shape(cc == 104, p.get(Field::MultiType))),
+            // Voice mode depth, sent again without the display.
+            59 => (Key::Cc(27), None),
+            _ => (Key::Cc(cc), None),
+        };
+        let f = field.or_else(|| {
+            Field::ALL
+                .iter()
+                .copied()
+                .find(|&f| messages(f, p).as_deref().and_then(key) == Some(wanted))
+        })?;
+        Some((f, decode(f, p, lsb, v)?))
+    }
+}
+
+/// The shape (or shift shape) field of multi engine `engine`.
+fn multi_shape(shift: bool, engine: u16) -> Option<Field> {
+    use Field::*;
+    Some(match (shift, engine) {
+        (false, 0) => ShapeNoise,
+        (false, 1) => ShapeVpm,
+        (false, 2) => ShapeUser,
+        (true, 0) => ShiftShapeNoise,
+        (true, 1) => ShiftShapeVpm,
+        (true, 2) => ShiftShapeUser,
+        _ => return None,
+    })
+}
+
+/// Field `f`'s value from its value byte `m` (and CC 63's lower bits):
+/// for a wide value the bits, else the value whose byte is nearest (a
+/// switch's choice, an offset level).
+fn decode(f: Field, p: &Program, lsb: Option<u8>, m: u8) -> Option<u16> {
+    let s = f.spec();
+    let sent = |v: u16| {
+        let mut q = p.clone();
+        q.set(f, v).ok()?;
+        messages(f, &q)
+    };
+    let wide = sent(s.min)?.iter().any(|&(cc, _)| cc == LSB);
+    if wide {
+        let m = u16::from(m);
+        // Without its lower bits, 7 bits spread over the whole range.
+        let low = lsb.map_or(m >> 4, |l| u16::from(l & 7));
+        return Some(((m << 3) | low).clamp(s.min, s.max));
+    }
+    (s.min..=s.max).min_by_key(|&v| {
+        sent(v)
+            .as_deref()
+            .and_then(value_byte)
+            .map_or(u8::MAX, |b| b.abs_diff(m))
+    })
+}
+
 /// A 10-bit value: the lower 3 bits on CC 63, then the upper 7.
 fn ten_bit(cc: u8, v: u16) -> Vec<Cc> {
     vec![(LSB, (v & 0x7) as u8), (cc, (v >> 3) as u8)]
@@ -176,6 +289,103 @@ fn nrpn_wide(lsb: u8, v: u16) -> Vec<Cc> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// What the panel sends, decoded in order against `p`.
+    fn heard(p: &Program, ccs: &[Cc]) -> Vec<(Field, u16)> {
+        let mut l = Listener::default();
+        ccs.iter()
+            .filter_map(|&(cc, v)| l.control(cc, v, p))
+            .collect()
+    }
+
+    /// A knob's 10 bits: the lower 3 on CC 63 first, else the 7 alone
+    /// spread over the range.
+    #[test]
+    fn panel_knobs_decode_with_and_without_lsb() {
+        let p = Program::init();
+        assert_eq!(heard(&p, &[(63, 5), (43, 85)]), [(Field::Cutoff, 685)]);
+        assert_eq!(heard(&p, &[(43, 127)]), [(Field::Cutoff, 1023)]);
+        assert_eq!(heard(&p, &[(43, 0)]), [(Field::Cutoff, 0)]);
+        assert_eq!(heard(&p, &[(5, 40)]), [(Field::Portamento, 40)]);
+    }
+
+    /// Switches send fixed values; each picks its nearest choice.
+    #[test]
+    fn panel_switches_pick_their_choice() {
+        let p = Program::init();
+        let min = |f: Field| f.spec().min;
+        assert_eq!(
+            heard(&p, &[(50, 64)]),
+            [(Field::Vco1Wave, min(Field::Vco1Wave) + 1)]
+        );
+        assert_eq!(
+            heard(&p, &[(88, 84)]),
+            [(Field::ModFxType, min(Field::ModFxType) + 3)]
+        );
+        assert_eq!(
+            heard(&p, &[(48, 127)]),
+            [(Field::Vco1Octave, min(Field::Vco1Octave) + 3)]
+        );
+    }
+
+    /// The multi engine's shape knobs set the shape of the engine in use.
+    #[test]
+    fn panel_multi_shape_follows_the_engine() {
+        let p = with(Field::MultiType, 1);
+        assert_eq!(heard(&p, &[(63, 1), (54, 64)]), [(Field::ShapeVpm, 513)]);
+        assert_eq!(heard(&p, &[(104, 0)]), [(Field::ShiftShapeVpm, 0)]);
+    }
+
+    /// NRPN parameters: selected on CC 99/98, the value on CC 6 (with CC 63
+    /// first for wider ones); the null selection ends it.
+    #[test]
+    fn panel_nrpn_parameters_decode() {
+        let p = Program::init();
+        assert_eq!(
+            heard(&p, &[(99, 0), (98, 0x38), (6, 1), (99, 127), (98, 127)]),
+            [(Field::CutoffVelocity, 1)]
+        );
+        assert_eq!(
+            heard(&p, &[(99, 0), (98, 0x3F), (6, 108)]),
+            [(Field::ProgramLevel, 120)]
+        );
+        assert!(heard(&p, &[(99, 127), (98, 127), (6, 5)]).is_empty());
+    }
+
+    /// Performance controls (joystick, hold) and unknown controls set nothing.
+    #[test]
+    fn panel_performance_controls_set_nothing() {
+        let p = Program::init();
+        assert!(heard(&p, &[(1, 64), (2, 3), (64, 127), (118, 9)]).is_empty());
+    }
+
+    /// Whatever the app sends for a field, decoded, gives the field back
+    /// at a value that sends the same (a few ranges end past what 10 bits
+    /// carry: Delay Dry/Wet's 1024 is sent as 1023).
+    #[test]
+    fn every_live_field_round_trips() {
+        let p = Program::init();
+        for &f in Field::ALL {
+            let s = f.spec();
+            for v in [s.min, s.max, s.min + (s.max - s.min) / 3] {
+                let mut q = p.clone();
+                if q.set(f, v).is_err() {
+                    continue;
+                }
+                let Some(sent) = messages(f, &q) else {
+                    continue;
+                };
+                let got = heard(&q, &sent);
+                let &(g, w) = got
+                    .last()
+                    .unwrap_or_else(|| panic!("{f:?} = {v}: {sent:?}"));
+                assert_eq!(g, f, "{f:?} = {v}: {sent:?}");
+                let mut r = q.clone();
+                r.set(f, w).unwrap();
+                assert_eq!(messages(f, &r), Some(sent), "{f:?} = {v} came back as {w}");
+            }
+        }
+    }
 
     fn with(field: Field, v: u16) -> Program {
         let mut p = Program::init();

@@ -314,3 +314,31 @@ fn a_new_toast_replaces_the_one_showing() {
         assert!(gone.get());
     });
 }
+
+/// Live on: a knob turned on the synth moves the app's value (an edit,
+/// not sent back to the synth); Live off, nothing moves.
+#[test]
+fn live_follows_the_synths_knobs() {
+    with_app(|app| {
+        app.on_synth(connected(1, PORT_A));
+        read_all(&app, 1);
+        app.show_program(3);
+        let cutoff_now = || {
+            app.with_synth(|s| xd().get(s.doc.work(3).unwrap(), cutoff()).unwrap())
+                .unwrap()
+        };
+        let before = cutoff_now();
+        app.on_synth(Ev::Panel(1, vec![(63, 5), (43, 85)]));
+        assert_eq!(cutoff_now(), before, "live is off");
+        app.audition.set(true);
+        app.auditions_sent.set(0);
+        app.on_synth(Ev::Panel(1, vec![(63, 5), (43, 85)]));
+        assert_eq!(cutoff_now(), 685);
+        assert_eq!(app.with_synth(|s| s.doc.is_edited(3)), Some(true));
+        // Its lower bits and its value in two batches still pair up.
+        app.on_synth(Ev::Panel(1, vec![(63, 1)]));
+        app.on_synth(Ev::Panel(1, vec![(43, 10)]));
+        assert_eq!(cutoff_now(), 81);
+        assert_eq!(app.auditions_sent.get(), 0);
+    });
+}

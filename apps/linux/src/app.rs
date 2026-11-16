@@ -44,8 +44,12 @@ pub struct App {
     /// Connecting, before the first synth answers.
     pub(crate) connecting: Cell<bool>,
     pub(crate) audition: Cell<bool>,
-    /// Following the synth's panel: what is selected is not sent.
+    /// Following the synth's panel: what is selected or changed is not
+    /// sent back.
     following: Cell<bool>,
+    /// Per synth, the decoder of what its panel's knobs send.
+    panel_listeners:
+        RefCell<std::collections::HashMap<DeviceId, Box<dyn oscyl_driver::PanelListener>>>,
     /// Tests: how many auditions went to a synth.
     #[cfg(test)]
     pub(crate) auditions_sent: Cell<usize>,
@@ -165,6 +169,7 @@ impl App {
             connecting: Cell::new(false),
             audition: Cell::new(false),
             following: Cell::new(false),
+            panel_listeners: RefCell::default(),
             #[cfg(test)]
             auditions_sent: Cell::new(0),
             compare_key: Cell::new(false),
@@ -595,6 +600,43 @@ impl App {
         }
     }
 
+    /// Live on, the synth's programs shown: the knobs turned on synth
+    /// `id` (its Control Changes `ccs`) move the open program's values, as
+    /// edits not sent back. Otherwise its decoder starts afresh next time.
+    pub(crate) fn follow_panel(&self, id: DeviceId, ccs: &[(u8, u8)]) {
+        let follows = self.audition.get()
+            && self.active.get() == Some(id)
+            && *self.place.borrow() == Place::Synth
+            && *self.doc_place.borrow() == Place::Synth
+            && self.current.get().is_some_and(|i| self.is_loaded(i));
+        if !follows {
+            self.panel_listeners.borrow_mut().remove(&id);
+            return;
+        }
+        let driver = self.doc_driver();
+        for &(cc, v) in ccs {
+            let Some((_, program, _)) = self.current_pair() else {
+                return;
+            };
+            let change = {
+                let mut listeners = self.panel_listeners.borrow_mut();
+                let listener = match listeners.entry(id) {
+                    std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
+                    std::collections::hash_map::Entry::Vacant(e) => match driver.panel_listener() {
+                        Some(l) => e.insert(l),
+                        None => return,
+                    },
+                };
+                listener.control(cc, v, &program)
+            };
+            if let Some((field, value)) = change {
+                self.following.set(true);
+                self.edit(field, value);
+                self.following.set(false);
+            }
+        }
+    }
+
     /// Show the program `delta` rows away in the list as searched and
     /// filtered; at either end, stay and say so with the bell.
     pub(crate) fn step_program(&self, delta: isize) {
@@ -765,6 +807,10 @@ impl App {
             self.refresh_sidebar();
         }
         self.update_actions();
+        // A change the synth's own panel made is already on the synth.
+        if self.following.get() {
+            return;
+        }
         // Live: a parameter the synth takes as a Control Change goes out as
         // one, so held notes keep sounding; anything else reloads the
         // whole program in the edit buffer.
@@ -773,6 +819,8 @@ impl App {
             oscyl_app::editor::audition_of(d, &p, field),
         ) {
             (Some(id), oscyl_app::editor::Audition::Live(msgs)) if self.audition.get() => {
+                #[cfg(test)]
+                self.auditions_sent.set(self.auditions_sent.get() + 1);
                 self.synth.send(Cmd::Live(id, msgs));
                 self.blink();
             }

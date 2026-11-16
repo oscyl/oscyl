@@ -10,6 +10,7 @@ pub mod sysex;
 
 pub use contract::{
     Bank, Capabilities, Driver, DriverError, DriverSession, FieldInfo, FileFormat, Info,
-    LibProgram, LibraryData, NameRules, SessionEvent, SessionOp, Simulator, UnitKind,
+    LibProgram, LibraryData, NameRules, PanelListener, SessionEvent, SessionOp, Simulator,
+    UnitKind,
 };
 pub use curation::*;

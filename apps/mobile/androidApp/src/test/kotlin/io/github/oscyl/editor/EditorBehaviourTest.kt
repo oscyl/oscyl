@@ -641,6 +641,38 @@ class EditorBehaviourTest {
         compose.runOnIdle { assertEquals(3, library.open.value?.index) }
     }
 
+    /** Live on: a knob turned on the synth moves the open program's value here, sending nothing back. */
+    @Test
+    fun liveFollowsTheSynthsKnobs() {
+        val midi = FakeMidi(USB_XD)
+        val (_, mark) = openOnUsbXd(midi, at = 3, live = true)
+        // The filter on screen: its dials are kept current.
+        tab("Filter").performClick()
+        compose.waitUntil(TIMEOUT_MS) { compose.onAllNodes(hasContentDescription("Cutoff")).fetchSemanticsNodes().isNotEmpty() }
+        val f = cutoff()
+        midi.panel(byteArrayOf(0xB0.toByte(), 63, 5, 0xB0.toByte(), 43, 85))
+        await { editor.panel!!.field(f)!!.raw == 685u }
+        assertTrue(editor.panel!!.field(f)!!.edited)
+        // Its lower bits and its value apart still pair up.
+        midi.panel(byteArrayOf(0xB0.toByte(), 63, 1))
+        midi.panel(byteArrayOf(0xB0.toByte(), 43, 10))
+        await { editor.panel!!.field(f)!!.raw == 81u }
+        compose.runOnIdle { assertTrue(midi.sent.drop(mark).none { (it[0].toInt() and 0xF0) == 0xB0 || isDump(it) }) }
+    }
+
+    /** Live off: the synth's knobs leave the app's values alone. */
+    @Test
+    fun withoutLiveTheKnobsLeaveTheAppAlone() {
+        val midi = FakeMidi(USB_XD)
+        val (card, _) = openOnUsbXd(midi, at = 3, live = false)
+        val f = cutoff()
+        val before = editor.panel!!.field(f)!!.raw
+        midi.panel(byteArrayOf(0xB0.toByte(), 63, 5, 0xB0.toByte(), 43, 85))
+        compose.runOnIdle { synth.listUnits(card) }
+        await { card.id in synth.units.value }
+        compose.runOnIdle { assertEquals(before, editor.panel!!.field(f)!!.raw) }
+    }
+
     private companion object {
         const val TIMEOUT_MS = 10_000L
         const val XD = "korg-minilogue-xd"

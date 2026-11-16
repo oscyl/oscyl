@@ -248,6 +248,17 @@ fn program_stage(bytes: &[u8], page: usize) -> Option<(Program, Stage)> {
 }
 
 /// Both a program and a field index, or `None`.
+/// The panel's Control Changes, decoded against the program it plays.
+struct Panel(crate::live::Listener);
+
+impl oscyl_driver::PanelListener for Panel {
+    fn control(&mut self, cc: u8, value: u8, program: &[u8]) -> Option<(usize, u16)> {
+        let p = Program::from_bytes(program).ok()?;
+        let (f, v) = self.0.control(cc, value, &p)?;
+        Some((Field::ALL.iter().position(|g| *g == f)?, v))
+    }
+}
+
 fn program_field(bytes: &[u8], i: usize) -> Option<(Program, Field)> {
     Some((Program::from_bytes(bytes).ok()?, field(i).ok()?))
 }
@@ -668,6 +679,10 @@ impl Driver for MinilogueXd {
         }
     }
 
+    fn panel_listener(&self) -> Option<Box<dyn oscyl_driver::PanelListener>> {
+        Some(Box::new(Panel(crate::live::Listener::default())))
+    }
+
     /// Bank Select MSB 0 and LSB 0-4 pick the hundred, the Program Change
     /// 0-99 the program in it (MIDI Implementation, notes *1-1).
     fn program_slot(&self, bank_msb: u8, bank_lsb: u8, program: u8) -> Option<u16> {
@@ -682,6 +697,14 @@ mod tests {
 
     /// The panel's bank (LSB 0-4) and program change (0-99) name a slot;
     /// anything outside the 500 does not.
+    #[test]
+    fn panel_listener_names_contract_fields() {
+        let mut l = DRIVER.panel_listener().unwrap();
+        let p = DRIVER.init_program();
+        assert_eq!(l.control(63, 5, &p), None);
+        assert_eq!(l.control(43, 85, &p), Some((idx(Field::Cutoff), 685)));
+    }
+
     #[test]
     fn program_slot_from_the_panel() {
         let d = &DRIVER;

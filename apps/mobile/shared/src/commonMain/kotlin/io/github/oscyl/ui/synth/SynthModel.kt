@@ -173,6 +173,11 @@ class SynthModel(
     /** A synth's own panel picked a program (card id, slot): it plays it now. */
     val selected: SharedFlow<Pair<ULong, UShort>> = _selected.asSharedFlow()
 
+    private val _knobs = MutableSharedFlow<Pair<ULong, List<io.github.oscyl.core.ControlChange>>>(extraBufferCapacity = 256)
+
+    /** Knobs turned on a synth's panel (card id, its Control Changes in order), for its panel decoder. */
+    val knobs: SharedFlow<Pair<ULong, List<io.github.oscyl.core.ControlChange>>> = _knobs.asSharedFlow()
+
     /** The backups Oscyl took, newest first. */
     val backups: StateFlow<List<BackupFile>> = _backups.asStateFlow()
 
@@ -477,6 +482,7 @@ class SynthModel(
         is SynthEvent.Slots -> event.id
         is SynthEvent.Current -> event.id
         is SynthEvent.Selected -> event.id
+        is SynthEvent.Panel -> event.id
         else -> null
     }
 
@@ -562,6 +568,7 @@ class SynthModel(
                 }
             }
             is SynthEvent.Selected -> _selected.tryEmit(id to event.slot)
+            is SynthEvent.Panel -> _knobs.emit(id to event.controls)
             is SynthEvent.WriteProgress -> _writes.update { it + (id to WriteState.Writing(event.done.toInt(), event.total.toInt())) }
             is SynthEvent.Written -> {
                 // What was written becomes each slot's saved version; an edit made

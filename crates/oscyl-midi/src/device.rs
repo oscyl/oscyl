@@ -266,6 +266,12 @@ impl Device {
         self.panel.selected.pop_front()
     }
 
+    /// The next Control Change the synth's panel sent (a knob turned),
+    /// for a [`oscyl_driver::PanelListener`].
+    pub fn poll_control(&mut self) -> Option<(u8, u8)> {
+        self.panel.controls.pop_front()
+    }
+
     /// `msg` from the synth: a SysEx message, returned for a session, or
     /// a channel message for [`Panel::input`].
     fn input(&mut self, msg: Vec<u8>) -> Option<Vec<u8>> {
@@ -578,12 +584,14 @@ struct Panel {
     bank: (u8, u8),
     /// Program slots it picked, oldest first.
     selected: VecDeque<u16>,
+    /// Its other Control Changes (knobs turned), oldest first.
+    controls: VecDeque<(u8, u8)>,
 }
 
 impl Panel {
     /// A SysEx message is returned, for a session. A Bank Select or
-    /// Program Change on the synth's `channel` is noted; anything else
-    /// (notes, knobs) is dropped.
+    /// Program Change on the synth's `channel` is noted, and its other
+    /// Control Changes kept; anything else (notes) is dropped.
     fn input(&mut self, driver: &dyn Driver, channel: u8, msg: Vec<u8>) -> Option<Vec<u8>> {
         if msg.first() == Some(&0xF0) {
             return Some(msg);
@@ -594,6 +602,13 @@ impl Panel {
         match (msg[0] & 0xF0, msg.get(1), msg.get(2)) {
             (0xB0, Some(0), Some(&v)) => self.bank.0 = v,
             (0xB0, Some(32), Some(&v)) => self.bank.1 = v,
+            (0xB0, Some(&cc), Some(&v)) => {
+                // Unread (a tool that never asks), the oldest go.
+                if self.controls.len() >= 1024 {
+                    self.controls.pop_front();
+                }
+                self.controls.push_back((cc, v));
+            }
             (0xC0, Some(&p), _) => {
                 let (msb, lsb) = self.bank;
                 self.selected.extend(driver.program_slot(msb, lsb, p));
@@ -803,6 +818,19 @@ mod tests {
         assert_eq!(d.poll_selected(), Some(205));
         assert_eq!(d.poll_selected(), Some(209));
         assert_eq!(d.poll_selected(), None);
+    }
+
+    /// The panel's knobs come through as their Control Changes, in order;
+    /// bank selects, notes and other channels do not.
+    #[test]
+    fn the_panels_knobs_come_through() {
+        let (mut d, input) = xd();
+        input.push(&[0xB0, 0x3F, 0x05, 0xB0, 0x2B, 0x55, 0xB0, 0x00, 0x00]);
+        input.push(&[0x90, 0x40, 0x7F, 0xB1, 0x2B, 0x01]);
+        d.pump(&mut |_| {}).unwrap();
+        assert_eq!(d.poll_control(), Some((0x3F, 0x05)));
+        assert_eq!(d.poll_control(), Some((0x2B, 0x55)));
+        assert_eq!(d.poll_control(), None);
     }
 
     /// A program picked on the panel while a read runs neither breaks the

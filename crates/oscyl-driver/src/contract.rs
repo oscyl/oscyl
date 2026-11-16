@@ -98,6 +98,15 @@ pub struct FileFormat {
 }
 
 /// One synth model. Object-safe, so apps can hold several at once.
+/// Decodes the Control Changes a synth's panel sends: one per synth, as it
+/// keeps state between messages (a 10-bit value's lower bits, an NRPN
+/// selection).
+pub trait PanelListener: Send {
+    /// One Control Change on the synth's channel: the field it sets in
+    /// `program` (the program the synth plays) and the value, once complete.
+    fn control(&mut self, cc: u8, value: u8, program: &[u8]) -> Option<(usize, u16)>;
+}
+
 pub trait Driver: Send + Sync {
     fn info(&self) -> &'static Info;
     fn capabilities(&self) -> &'static Capabilities;
@@ -310,6 +319,11 @@ pub trait Driver: Send + Sync {
     /// it sent last (CC 0 and CC 32) and a Program Change: apps follow it.
     /// `None` when out of range or the driver does not say.
     fn program_slot(&self, _bank_msb: u8, _bank_lsb: u8, _program: u8) -> Option<u16> {
+        None
+    }
+    /// A decoder for what the synth's panel sends as its knobs turn: apps
+    /// follow it. `None` when the driver does not say.
+    fn panel_listener(&self) -> Option<Box<dyn PanelListener>> {
         None
     }
     /// What to check on the synth when it does not answer the device

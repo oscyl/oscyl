@@ -352,6 +352,7 @@ impl App {
                 self.refresh_generator();
                 self.update_actions();
             }
+            Ev::Panel(id, ccs) => self.follow_panel(id, &ccs),
             // Live on and its programs shown: the app follows the synth's panel.
             Ev::Selected(id, n) => {
                 let follows = self.audition.get()

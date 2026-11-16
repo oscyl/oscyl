@@ -137,6 +137,19 @@ pub enum SynthEvent {
         id: u64,
         slot: u16,
     },
+    /// Control Changes the synth's panel sent (knobs turned), in order:
+    /// for a `PanelDecoder`.
+    Panel {
+        id: u64,
+        controls: Vec<ControlChange>,
+    },
+}
+
+/// One Control Change.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ControlChange {
+    pub cc: u8,
+    pub value: u8,
 }
 
 impl From<Ev> for SynthEvent {
@@ -185,6 +198,13 @@ impl From<Ev> for SynthEvent {
             Ev::Error(id, message) => SynthEvent::Error { id, message },
             Ev::Current(id, data) => SynthEvent::Current { id, data },
             Ev::Selected(id, slot) => SynthEvent::Selected { id, slot },
+            Ev::Panel(id, ccs) => SynthEvent::Panel {
+                id,
+                controls: ccs
+                    .into_iter()
+                    .map(|(cc, value)| ControlChange { cc, value })
+                    .collect(),
+            },
         }
     }
 }
