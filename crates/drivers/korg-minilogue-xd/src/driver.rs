@@ -704,8 +704,10 @@ impl Driver for MinilogueXd {
     }
 
     /// The synth engine's USB port; "MIDI OUT"/"MIDI IN" are the DIN jacks.
+    /// Android names neither, so there it is the second port, "MIDI 2"
+    /// (see the mobile app's `midiPortName`); checked on a Pixel 7 Pro.
     fn port_hint(&self) -> &'static [&'static str] {
-        &["minilogue xd _ SOUND"]
+        &["minilogue xd _ SOUND", "minilogue xd _ MIDI 2"]
     }
 
     fn recognize(&self, reply: &[u8]) -> bool {
@@ -787,7 +789,10 @@ mod tests {
 
     #[test]
     fn identity_hooks() {
-        assert_eq!(DRIVER.port_hint(), ["minilogue xd _ SOUND"]);
+        assert_eq!(
+            DRIVER.port_hint(),
+            ["minilogue xd _ SOUND", "minilogue xd _ MIDI 2"]
+        );
         let replies = DRIVER
             .simulator()
             .handle(&oscyl_driver::sysex::DEVICE_INQUIRY);

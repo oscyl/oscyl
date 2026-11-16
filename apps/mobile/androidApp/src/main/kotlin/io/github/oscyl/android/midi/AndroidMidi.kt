@@ -78,12 +78,14 @@ class AndroidMidi(context: Context) : MidiPlatform {
             ?: info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
             ?: info.id.toString()
         val takes = info.ports.filter { it.type == MidiDeviceInfo.PortInfo.TYPE_INPUT }
-        val pairs = info.ports.filter { it.type == MidiDeviceInfo.PortInfo.TYPE_OUTPUT }.mapNotNull { sends ->
+        val outputs = info.ports.filter { it.type == MidiDeviceInfo.PortInfo.TYPE_OUTPUT }
+        val pairs = outputs.mapNotNull { sends ->
             val input = takes.firstOrNull { sends.name.isNotBlank() && it.name == sends.name }
                 ?: takes.firstOrNull { it.portNumber == sends.portNumber }
                 ?: return@mapNotNull null
             val port = MidiPortInfo(
-                name = midiPortName(product, sends.name),
+                // Several ports, none named (USB MIDI on Android): told apart by number.
+                name = midiPortName(product, sends.name, sends.portNumber.takeIf { outputs.size > 1 }),
                 id = "${info.id}/${input.portNumber}/${sends.portNumber}",
             )
             Log.d(TAG, "device ${info.id}: product='$product' port ${sends.portNumber} '${sends.name}' -> '${port.name}'")

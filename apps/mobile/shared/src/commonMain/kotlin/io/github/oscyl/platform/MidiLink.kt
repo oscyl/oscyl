@@ -15,10 +15,15 @@ import org.jetbrains.compose.resources.getString
 /**
  * A synth's port as the platforms name it, as ALSA does on the desktop (what the
  * drivers' port hints were written against): `<product> _ <port>` ("minilogue xd _
- * SOUND"), or the product alone when the port has no name of its own.
+ * SOUND"), or the product alone when the port has no name of its own. A device with
+ * several unnamed ports (Android names none) gives each its [number] as ALSA does an
+ * unnamed jack: the second is `<product> _ MIDI 2`.
  */
-fun midiPortName(product: String, port: String): String =
-    if (port.isBlank() || port == product) product else "$product _ $port"
+fun midiPortName(product: String, port: String, number: Int? = null): String = when {
+    port.isBlank() && number != null -> "$product _ MIDI ${number + 1}"
+    port.isBlank() || port == product -> product
+    else -> "$product _ $port"
+}
 
 /**
  * One opened port pair as Rust's [MidiOut], on any platform: [write] sends bytes

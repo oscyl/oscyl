@@ -331,9 +331,10 @@ impl Driver for Prologue {
 
     /// The synth engine's USB port, named like the xd's "minilogue xd _
     /// SOUND" on Linux (the Librarian manual names the ports KBD/KNOB and
-    /// SOUND; unverified on a prologue, probe P1).
+    /// SOUND; unverified on a prologue, probe P1). On Android, which names
+    /// no port, the second one, as on the xd.
     fn port_hint(&self) -> &'static [&'static str] {
-        &["prologue _ SOUND"]
+        &["prologue _ SOUND", "prologue _ MIDI 2"]
     }
 
     fn recognize(&self, reply: &[u8]) -> bool {

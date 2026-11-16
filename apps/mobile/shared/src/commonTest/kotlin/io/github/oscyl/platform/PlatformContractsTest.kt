@@ -11,6 +11,9 @@ class PlatformContractsTest {
         assertEquals("minilogue xd _ SOUND", midiPortName("minilogue xd", "SOUND"))
         assertEquals("prologue", midiPortName("prologue", ""))
         assertEquals("prologue", midiPortName("prologue", "prologue"))
+        // Android names no port: the xd's synth port is its second.
+        assertEquals("minilogue xd _ MIDI 2", midiPortName("minilogue xd", "", number = 1))
+        assertEquals("minilogue xd _ SOUND", midiPortName("minilogue xd", "SOUND", number = 1))
     }
 
     @Test
