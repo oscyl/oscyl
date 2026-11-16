@@ -184,6 +184,93 @@ pub fn new_library_driver(connected: Vec<String>, shown: Option<String>) -> Stri
         .unwrap_or_else(|| oscyl_midi::DRIVERS[0].info().id.to_string())
 }
 
+/// A parameter a unit declares: its name and its range in words
+/// ("0 % to 100 %", "1 to 46").
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct UnitParamInfo {
+    pub name: String,
+    pub range: String,
+}
+
+/// A unit's declared parameters, for a page.
+pub(crate) fn params_of(words: Vec<(String, String)>) -> Vec<UnitParamInfo> {
+    words
+        .into_iter()
+        .map(|(name, range)| UnitParamInfo { name, range })
+        .collect()
+}
+
+/// A unit on the shelf.
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct ShelfUnitInfo {
+    /// Its file on the shelf: what `remove` and `Synth.load_from_shelf` take.
+    pub file: String,
+    pub name: String,
+    /// Its section's short name (`osc`, `modfx`, `delfx`, `revfx`).
+    pub module: String,
+    /// Its section, for people ("Oscillators").
+    pub section: String,
+    pub params: Vec<UnitParamInfo>,
+}
+
+/// The shelf: unit files kept in the app's data, one tap away from a
+/// synth's first free slot (`oscyl_app::shelf`).
+#[derive(uniffi::Object)]
+pub struct Shelf(pub(crate) oscyl_app::shelf::Shelf);
+
+fn shelved(u: oscyl_app::shelf::ShelfUnit) -> ShelfUnitInfo {
+    ShelfUnitInfo {
+        params: params_of(oscyl_app::palette::param_words(&u.info)),
+        file: u.file,
+        name: u.info.name,
+        module: u.info.module.name().into(),
+        section: u.section,
+    }
+}
+
+#[uniffi::export]
+impl Shelf {
+    /// The shelf under the folder `dir` (`<app data>/units`).
+    #[uniffi::constructor]
+    pub fn new(dir: String) -> Arc<Shelf> {
+        Arc::new(Shelf(oscyl_app::shelf::Shelf::at(std::path::Path::new(
+            &dir,
+        ))))
+    }
+
+    /// `driver_id`'s shelf, by section then name. Blocks (reads files).
+    pub fn list(&self, driver_id: String) -> Result<Vec<ShelfUnitInfo>, FfiError> {
+        let d = driver(&driver_id)?;
+        Ok(self.0.list(d).into_iter().map(shelved).collect())
+    }
+
+    /// Put unit file `bytes` on `driver_id`'s shelf; refused, in words,
+    /// when it is not a unit for this synth. Blocks.
+    pub fn add(&self, driver_id: String, bytes: Vec<u8>) -> Result<ShelfUnitInfo, FfiError> {
+        let d = driver(&driver_id)?;
+        self.0
+            .add(d, &bytes)
+            .map(shelved)
+            .map_err(|reason| FfiError::Refused { reason })
+    }
+
+    /// Take `file` off `driver_id`'s shelf.
+    pub fn remove(&self, driver_id: String, file: String) -> Result<(), FfiError> {
+        let d = driver(&driver_id)?;
+        self.0
+            .remove(d, &file)
+            .map_err(|reason| FfiError::Refused { reason })
+    }
+}
+
+/// Keep each synth's units (Generate's palette) in the file `path` from
+/// now on, so Generate deals with the last known units while the synth
+/// is away. Once, at start.
+#[uniffi::export]
+pub fn keep_palettes(path: String) {
+    oscyl_app::palette::init(std::path::Path::new(&path));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -197,6 +284,20 @@ mod tests {
         assert_eq!(unit_ext("sequential-prophet-rev2".into()), None);
         assert!(read_unit("korg-minilogue-xd".into(), "osc".into(), vec![1, 2]).is_err());
         assert_eq!(unit_section("osc".into()), "Oscillators");
+        // The shelf refuses what is not a unit, and lists nothing then.
+        let dir = std::env::temp_dir().join(format!("oscyl-ffi-shelf-{}", std::process::id()));
+        let shelf = Shelf::new(dir.to_string_lossy().into_owned());
+        assert!(matches!(
+            shelf.add("korg-minilogue-xd".into(), vec![1, 2]),
+            Err(FfiError::Refused { .. })
+        ));
+        assert_eq!(shelf.list("korg-minilogue-xd".into()).unwrap(), vec![]);
+        assert!(
+            shelf
+                .remove("korg-minilogue-xd".into(), "x.mnlgxdunit".into())
+                .is_err()
+        );
+        assert!(shelf.list("nope".into()).is_err());
         let xd = "korg-minilogue-xd".to_string();
         let rev2 = "sequential-prophet-rev2".to_string();
         assert_eq!(

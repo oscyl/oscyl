@@ -33,8 +33,9 @@ pub use synth::{
     SynthListener,
 };
 pub use units::{
-    BackupFile, UnitFile, backups, forget_unsynced, keep_unsynced, new_library_driver, read_file,
-    read_unit, unit_backup_path, unit_ext, unit_section, unsynced,
+    BackupFile, Shelf, ShelfUnitInfo, UnitFile, UnitParamInfo, backups, forget_unsynced,
+    keep_palettes, keep_unsynced, new_library_driver, read_file, read_unit, unit_backup_path,
+    unit_ext, unit_section, unsynced,
 };
 
 uniffi::setup_scaffolding!();

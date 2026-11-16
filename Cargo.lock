@@ -1285,6 +1285,7 @@ dependencies = [
  "oscyl-minilogue-xd",
  "serde",
  "serde_json",
+ "zip",
 ]
 
 [[package]]

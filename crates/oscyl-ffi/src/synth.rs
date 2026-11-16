@@ -409,6 +409,28 @@ impl Synth {
         Ok(())
     }
 
+    /// Load `file` of the shelf into the first free slot of its section on
+    /// synth `id` (an `Error` event follows when the section is full); the
+    /// slots are listed again after. The unit's name. Blocks (reads it).
+    pub fn load_from_shelf(
+        &self,
+        id: u64,
+        driver_id: String,
+        shelf: Arc<crate::units::Shelf>,
+        file: String,
+    ) -> Result<String, FfiError> {
+        let unit = shelf
+            .0
+            .unit(driver(&driver_id)?, &file)
+            .map_err(|reason| FfiError::Refused { reason })?;
+        self.handle.send(Cmd::LoadUnit {
+            id,
+            module: unit.module,
+            data: unit.data,
+        });
+        Ok(unit.name)
+    }
+
     /// Save the slot's unit to the file `backup`, then clear the slot (never
     /// without the backup); the slots are listed again after.
     pub fn clear_slot(

@@ -13,6 +13,7 @@ pub mod panel;
 pub mod program_menu;
 pub mod review;
 pub mod settings;
+pub mod shelf;
 pub mod slots;
 pub mod state;
 pub mod synth;

@@ -75,6 +75,13 @@ pub enum Cmd {
         slot: u8,
         data: Vec<u8>,
     },
+    /// Load a unit (TABLE 7 slot data) into the first free slot of its
+    /// section, then re-list slots; an error when the section is full.
+    LoadUnit {
+        id: DeviceId,
+        module: Module,
+        data: Vec<u8>,
+    },
     /// Save the slot's unit to `backup`, clear the slot, then re-list.
     ClearSlot {
         id: DeviceId,
@@ -264,6 +271,8 @@ enum UnitJob {
     Backup(Module, u8, PathBuf, Option<Vec<u8>>),
     /// Read a slot's unit to learn its parameters.
     Info(Option<UnitInfo>),
+    /// List the slots to find the section's first free one for the unit.
+    Place(Module, Vec<u8>, Vec<(Module, u8, bool)>),
 }
 
 /// How long a port stays closed between attempts to reach a synth that
@@ -577,6 +586,7 @@ impl Worker {
             | Cmd::Write(id, _)
             | Cmd::ReadSlots(id)
             | Cmd::UploadUnit { id, .. }
+            | Cmd::LoadUnit { id, .. }
             | Cmd::ClearSlot { id, .. } => *id,
             _ => unreachable!("handled by the worker"),
         };
@@ -626,6 +636,9 @@ impl Worker {
                     UnitJob::Change,
                 );
                 self.unit(k, UnitOp::ReadSlots, UnitJob::List(vec![]));
+            }
+            Cmd::LoadUnit { module, data, .. } => {
+                self.unit(k, UnitOp::ReadSlots, UnitJob::Place(module, data, vec![]))
             }
             Cmd::ClearSlot {
                 module,
@@ -718,6 +731,14 @@ impl Worker {
                     .as_deref()
                     .and_then(|h| UnitInfo::from_header(h).ok()),
             }),
+            (
+                UnitEvent::Slot {
+                    module,
+                    slot,
+                    header,
+                },
+                Some(UnitJob::Place(_, _, seen)),
+            ) => seen.push((module, slot, header.is_none())),
             (UnitEvent::SlotData { data, .. }, Some(UnitJob::Info(info))) => {
                 // TABLE 7: size, checksum, then the blob, whose start is the header.
                 *info = data
@@ -729,6 +750,28 @@ impl Worker {
             }
             (UnitEvent::Done, _) => match self.devices[k].units.pop_front() {
                 Some(UnitJob::List(slots)) => self.listed(k, slots, true),
+                Some(UnitJob::Place(module, data, seen)) => {
+                    let free = seen
+                        .iter()
+                        .filter(|(m, _, free)| *m == module && *free)
+                        .map(|(_, slot, _)| *slot)
+                        .min();
+                    match free {
+                        Some(slot) => {
+                            self.unit(
+                                k,
+                                UnitOp::UploadUnit { module, slot, data },
+                                UnitJob::Change,
+                            );
+                            self.unit(k, UnitOp::ReadSlots, UnitJob::List(vec![]));
+                        }
+                        None => self.emit(Ev::Error(
+                            Some(id),
+                            tr("Every slot of {section} is full. Clear one first.")
+                                .replace("{section}", &crate::units::module_title(module)),
+                        )),
+                    }
+                }
                 Some(UnitJob::Info(info)) => {
                     self.known_units.extend(info.filter(|i| i.params.is_some()));
                     // The last one read: the slots again, parameters and all.
@@ -1931,6 +1974,32 @@ mod tests {
                 .iter()
                 .any(|u| (u.kind.name, u.slot) == (kind, used.slot))
         );
+        // A unit from the shelf goes into its section's first free slot.
+        let unit = crate::shelf::tests::unit_file("minilogue-xd", "osc", "shelved");
+        let read = oscyl_logue::unit::Unit::read(
+            &oscyl_midi::logue::platform(xd).unwrap(),
+            std::io::Cursor::new(unit),
+        )
+        .unwrap();
+        let first_free = slots
+            .iter()
+            .filter(|x| x.module == Module::Osc)
+            .find(|x| x.name.is_none() || (x.module, x.slot) == (used.module, used.slot))
+            .map(|x| x.slot);
+        handle.send(Cmd::LoadUnit {
+            id,
+            module: Module::Osc,
+            data: read.slot_data(),
+        });
+        let loaded = loop {
+            let Ev::Slots(_, s) = next(&rx, |e| matches!(e, Ev::Slots(..))) else {
+                unreachable!()
+            };
+            if let Some(x) = s.into_iter().find(|x| x.name.as_deref() == Some("shelved")) {
+                break x;
+            }
+        };
+        assert_eq!(Some(loaded.slot), first_free);
         let saved = std::fs::read(&backup).expect("backup written");
         assert!(saved.len() > 8);
         let _ = std::fs::remove_file(backup);

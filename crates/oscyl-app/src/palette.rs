@@ -314,6 +314,18 @@ pub fn param_range(p: &UnitParam) -> String {
         .replace("{to}", &hi)
 }
 
+/// A unit's parameters for people, in order: each one's name and range
+/// ([`param_range`]). Empty when it declares none or they are not known.
+pub fn param_words(info: &UnitInfo) -> Vec<(String, String)> {
+    let any = UnitKind { name: "", slots: 0 };
+    palette_unit(any, 0, info)
+        .params
+        .unwrap_or_default()
+        .iter()
+        .map(|p| (p.name.clone(), param_range(p)))
+        .collect()
+}
+
 static SHARED: OnceLock<Mutex<Store>> = OnceLock::new();
 
 /// Keep the app's palettes at `path` from now on (once, at start; later
