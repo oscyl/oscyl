@@ -57,7 +57,7 @@ row "$out/tour.webp" "$tmp"/{1,2,3,4,5}.png
 
 # The hero: the Linux app beside the phone.
 round "$out/linux-editor-dark.png" "$tmp/desk.png" 1200 750 14
-round "$out/android-phone-editor.png" "$tmp/phone.png" 334 750 26
+round "$(golden editor.EditorScreenKt.editor dark)" "$tmp/phone.png" 334 750 26
 row "$out/hero.webp" "$tmp/desk.png" "$tmp/phone.png"
 
 # The social preview (Settings → Social preview): 1280x640 PNG.
