@@ -24,6 +24,7 @@ mkdir -p "$tmp/config" "$tmp/data"
 desktop() {
     XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data \
         "$gtk" --demo "$1" --theme "$2" --size 1600x1000 --screenshot "$tmp/shot.png" >/dev/null 2>&1
+    cp "$tmp/shot.png" "$tmp/full-$(basename "$3")"
     magick "$tmp/shot.png" -filter Lanczos -resize 1200x750 -strip "$3"
 }
 
@@ -64,11 +65,63 @@ phone editor.EditorScreenKt.editor "$out/phone-editor.png"
 phone generate.GenerateScreenKt.generate "$out/phone-generate.png"
 phone play.PlayScreenKt.play "$out/phone-perform.png"
 
-# The hero: the desktop editor beside the phone editor, on the ground colour.
-round "$out/desktop-editor.png" "$tmp/desk.png" 1200 750 14
-round "$(golden editor.EditorScreenKt.editor dark)" "$tmp/phone.png" 338 750 26
-magick -background "$bg" "$tmp/desk.png" "$tmp/phone.png" +smush 30 \
-    -bordercolor "$bg" -border 40x36 -strip "$out/hero.png"
+# window <in> <out> <width> <height> <rim>: a desktop window, 11 px corners.
+window() {
+    local w=$3 h=$4
+    magick "$1" -filter Lanczos -resize "${w}x${h}!" \
+        \( -size "${w}x${h}" xc:none -fill white -draw "roundrectangle 0,0 $((w - 1)),$((h - 1)) 11,11" \) \
+        -alpha set -compose DstIn -composite \
+        \( -size "${w}x${h}" xc:none -fill none -stroke "$5" -strokewidth 1.5 \
+           -draw "roundrectangle 0.5,0.5 $((w - 1)),$((h - 1)) 11,11" \) \
+        -compose Over -composite "$2"
+}
+
+# device <golden> <out> <screen width> <screen height>: a phone screen in a
+# plain black body (12 px bezel, 48 px corners). The screen is the golden as is.
+device() {
+    local w=$3 h=$4 b=12 r=48
+    local fw=$((w + 2 * b)) fh=$((h + 2 * b))
+    magick "$1" -filter Lanczos -resize "${w}x${h}!" \
+        \( -size "${w}x${h}" xc:none -fill white -draw "roundrectangle 0,0 $((w - 1)),$((h - 1)) $((r - b)),$((r - b))" \) \
+        -alpha set -compose DstIn -composite "$tmp/screen.png"
+    magick -size "${fw}x${fh}" xc:none -fill '#0b0b0c' -draw "roundrectangle 0,0 $((fw - 1)),$((fh - 1)) $r,$r" \
+        "$tmp/screen.png" -geometry "+$b+$b" -compose Over -composite \
+        \( -size "${fw}x${fh}" xc:none -fill none -stroke '#55565a' -strokewidth 2 \
+           -draw "roundrectangle 1,1 $((fw - 2)),$((fh - 2)) $r,$r" \) \
+        -compose Over -composite "$2"
+}
+
+# place <canvas> <part> <x> <y> <opacity %>: lays a part on the canvas at x,y
+# with a soft shadow 20 px under it (blur 28).
+place() {
+    magick "$2" \( +clone -background black -shadow "${5}x28+0+20" \) +swap \
+        -background none -layers merge +repage "$tmp/lifted.png"
+    magick "$1" "$tmp/lifted.png" -geometry "+$(($3 - 56))+$(($4 - 36))" -composite "$1"
+}
+
+# The hero, in each theme: the desktop editor with the phone editor in front,
+# both at the Filter stage with the same edit (cutoff 618, was 431).
+for theme in dark light; do
+    if [ "$theme" = dark ]; then ground='#161718' rim='#4a4b4c' shade=55 suffix=''
+    else ground='#d6d4ce' rim='#bdbbb5' shade=22 suffix='-light'; fi
+    window "$tmp/full-desktop-editor$suffix.png" "$tmp/win.png" 1280 800 "$rim"
+    device "$(golden editor.EditorScreenKt.editor_filter "$theme")" "$tmp/phone.png" 376 836
+    magick -size 1780x1036 "xc:$ground" "$tmp/hero.png"
+    place "$tmp/hero.png" "$tmp/win.png" 64 56 "$shade"
+    place "$tmp/hero.png" "$tmp/phone.png" 1316 112 "$shade"
+    magick "$tmp/hero.png" -depth 8 -strip "$out/hero$suffix.png"
+
+    # The phone tour: library, editor, Generate and Perform.
+    magick -size 1780x940 "xc:$ground" "$tmp/tour.png"
+    x=50
+    for screen in library.LibraryScreenKt.library_programs editor.EditorScreenKt.editor \
+        generate.GenerateScreenKt.generate play.PlayScreenKt.play; do
+        device "$(golden "$screen" "$theme")" "$tmp/phone.png" 360 800
+        place "$tmp/tour.png" "$tmp/phone.png" "$x" 48 "$shade"
+        x=$((x + 384 + 48))
+    done
+    magick "$tmp/tour.png" -depth 8 -strip "$out/tour$suffix.png"
+done
 
 # The social preview (Settings → Social preview): 1280x640 PNG.
 round "$(golden editor.EditorScreenKt.editor dark)" "$tmp/a.png" 250 556 22
@@ -78,8 +131,9 @@ magick -size 1280x640 "xc:$bg" -font "$font" -gravity northwest \
     -fill "$ink" -pointsize 104 -annotate +64+170 Oscyl \
     -pointsize 31 -annotate +68+308 "Librarian and sound editor" \
     -annotate +68+350 "for hardware synths" \
-    -fill "$legend" -pointsize 22 -annotate +68+424 "Linux · Android · iOS · CLI" \
-    -annotate +68+456 "Open source, one Rust core" \
+    -fill "$legend" -pointsize 22 -annotate +68+424 "Linux · Windows · macOS" \
+    -annotate +68+456 "Android · iOS · command line" \
+    -annotate +68+500 "Open source, one Rust core" \
     "$tmp/a.png" -geometry +500+110 -composite \
     "$tmp/b.png" -geometry +766+42 -composite \
     "$tmp/c.png" -geometry +1032+110 -composite \

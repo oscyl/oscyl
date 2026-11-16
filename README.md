@@ -5,7 +5,8 @@
 # Oscyl
 
 **The open-source librarian and sound editor for hardware synths.**<br>
-Read, edit, back up and sync your synth's programs on Linux, Android, iOS and the command line.
+For the KORG minilogue xd, prologue and Sequential Prophet Rev2, on Linux,<br>
+Windows, macOS, Android, iOS and the command line.
 
 [![CI](https://github.com/oscyl/oscyl/actions/workflows/ci.yml/badge.svg)](https://github.com/oscyl/oscyl/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/oscyl/oscyl/badge)](https://scorecard.dev/viewer/?uri=github.com/oscyl/oscyl)
@@ -17,7 +18,10 @@ Read, edit, back up and sync your synth's programs on Linux, Android, iOS and th
 [Try it](#try-it-without-a-synth) ·
 [Contribute](#contributing)
 
-<img src="docs/images/hero.png" width="900" alt="Oscyl on Linux and on an Android phone, editing a program's filter: the graph, the dials and the saved value beside the edited one">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/images/hero-light.png">
+  <img src="docs/images/hero.png" width="900" alt="Oscyl on the desktop with an Android phone in front, both editing a program's filter: the graph, the dials and the saved value beside the edited one">
+</picture>
 
 </div>
 
