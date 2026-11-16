@@ -25,6 +25,8 @@ mod sidebar;
 use oscyl_app::slots;
 use oscyl_app::state;
 use oscyl_app::synth;
+#[cfg(test)]
+mod scenarios;
 mod synth_events;
 mod units;
 mod widgets;

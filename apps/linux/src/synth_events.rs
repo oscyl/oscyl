@@ -187,6 +187,16 @@ impl App {
         true
     }
 
+    /// Show the Synth page. Selecting its row again emits nothing, so a
+    /// page already chosen (showing "No synth connected") is shown afresh.
+    pub(crate) fn show_synth_page(&self) {
+        if *self.place.borrow() == Place::Synth {
+            self.go(Place::Synth);
+        } else {
+            self.sidebar.select(&Place::Synth);
+        }
+    }
+
     /// Synth `id` connected: when an offline entry of its model is
     /// waiting, it becomes that entry again (programs and edits kept) and
     /// is read afresh. False when there is none.
@@ -286,7 +296,7 @@ impl App {
                     self.refresh_status();
                     self.refresh_generator();
                     self.update_actions();
-                    self.sidebar.select(&Place::Synth);
+                    self.show_synth_page();
                 } else {
                     self.refresh_status();
                     self.update_actions();
