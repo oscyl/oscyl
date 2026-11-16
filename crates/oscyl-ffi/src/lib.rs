@@ -25,7 +25,7 @@ pub use editor::{
     ReviewChange, ReviewProgram, SectionInfo, StageGraph, StageState, SyncPlan, SynthRef,
     audition_target, write_backup,
 };
-pub use generator::{CharacterInfo, Generator, HandState, MacroInfo, SoundTile};
+pub use generator::{CharacterInfo, Dealt, Generator, HandState, MacroInfo, SoundTile};
 pub use library::{Libraries, NodeKind, OutlineLine, Trashed};
 pub use settings::{PlayLayout, Role, Settings, Theme, set_locale};
 pub use synth::{

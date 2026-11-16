@@ -852,9 +852,9 @@ mod tests {
 
     /// The quality gate. The Rev2 has no program level the generator
     /// sets: its cap is the resonance and the effect mix. A hand's sounds
-    /// differ in at least 16 fields (the closest pair in any hand differs in 22): two draws of one recipe share its
-    /// fixed choices but not a dozen of its dials, and a clone or a
-    /// near-clone fails.
+    /// differ in at least 16 fields (the closest pair in any hand differs
+    /// in 22): two draws of one recipe share its fixed choices but not a
+    /// dozen of its dials, and a clone or a near-clone fails.
     #[test]
     fn quality_gate() {
         let get = |p: &[u8], n: &str| DRIVER.get(p, idx(n)).unwrap();

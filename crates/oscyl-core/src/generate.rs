@@ -16,6 +16,9 @@ impl Rng {
     }
 }
 
+/// A dealt program, and the seed that makes it again when one does.
+pub type Dealt = (Vec<u8>, Option<u64>);
+
 /// Deal `n` programs that differ in at least one field and carry
 /// different names. `make` is called with a fresh seed derived from
 /// `seed` until each program differs from those before it; a maker that
@@ -26,21 +29,59 @@ pub fn hand(
     character: usize,
     seed: u64,
     n: usize,
-    mut make: impl FnMut(u64) -> Result<Vec<u8>, DriverError>,
+    make: impl FnMut(u64) -> Result<Vec<u8>, DriverError>,
 ) -> Result<Vec<Vec<u8>>, DriverError> {
+    let dealt = deal(d, character, seed, (u64::MAX, None, false), n, make)?;
+    Ok(dealt.into_iter().map(|(p, _)| p).collect())
+}
+
+/// [`hand`], telling for each program the seed `make` made it from, so a
+/// caller can make it again. For that, a program whose own name
+/// ([`Driver::generated_name`] of its seed) is taken is made from another
+/// seed, not renamed; `None` for the rare one that had to be renamed or
+/// nudged apart all the same. Seeds are cut to `mask` (short seeds make
+/// short recipe codes); the first program is made from `first` when given.
+pub fn hand_seeded(
+    d: &dyn Driver,
+    character: usize,
+    seed: u64,
+    mask: u64,
+    first: Option<u64>,
+    n: usize,
+    make: impl FnMut(u64) -> Result<Vec<u8>, DriverError>,
+) -> Result<Vec<Dealt>, DriverError> {
+    deal(d, character, seed, (mask, first, true), n, make)
+}
+
+/// Both hands: `(mask, first, own_names)`, the last for [`hand_seeded`]'s
+/// rule on names.
+fn deal(
+    d: &dyn Driver,
+    character: usize,
+    seed: u64,
+    (mask, first, own_names): (u64, Option<u64>, bool),
+    n: usize,
+    mut make: impl FnMut(u64) -> Result<Vec<u8>, DriverError>,
+) -> Result<Vec<Dealt>, DriverError> {
     let fields = d.fields().len();
-    let differs = |out: &[Vec<u8>], p: &[u8]| {
+    let differs = |out: &[Dealt], p: &[u8]| {
         out.iter()
-            .all(|q| (0..fields).any(|i| d.get(q, i) != d.get(p, i)))
+            .all(|(q, _)| (0..fields).any(|i| d.get(q, i) != d.get(p, i)))
     };
     let mut r = Rng(seed);
-    let mut out: Vec<Vec<u8>> = Vec::with_capacity(n);
+    let mut out: Vec<Dealt> = Vec::with_capacity(n);
     while out.len() < n {
-        let mut s = r.next_u64();
+        let mut s = r.next_u64() & mask;
+        if let (true, Some(first)) = (out.is_empty(), first) {
+            s = first;
+        }
         let mut p = make(s)?;
         let mut tries = 0;
-        while !differs(&out, &p) {
-            s = r.next_u64();
+        let taken =
+            |out: &[Dealt], name: &str| out.iter().any(|(q, _)| d.name(q).is_ok_and(|m| m == name));
+        let own = |s: u64| d.generated_name(character, s);
+        while !differs(&out, &p) || (own_names && tries < 8 && taken(&out, &own(s))) {
+            s = r.next_u64() & mask;
             p = if tries < 8 {
                 make(s)?
             } else {
@@ -48,16 +89,15 @@ pub fn hand(
             };
             tries += 1;
         }
-        let taken = |name: &str| out.iter().any(|q| d.name(q).is_ok_and(|m| m == name));
         let name = (0..64)
-            .map(|k| d.generated_name(character, s.wrapping_add(k)))
-            .find(|name| !taken(name))
+            .map(|k| own(s.wrapping_add(k)))
+            .find(|name| !taken(&out, name))
             .unwrap_or_else(|| {
                 let title = d.characters().get(character).map_or("Sound", |c| c.title);
                 format!("{title} {}", out.len() + 1)
             });
         d.set_name(&mut p, &name)?;
-        out.push(p);
+        out.push((p, (tries <= 8 && name == own(s)).then_some(s)));
     }
     Ok(out)
 }

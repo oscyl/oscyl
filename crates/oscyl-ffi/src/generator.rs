@@ -42,6 +42,24 @@ pub struct SoundTile {
     pub kept: Option<String>,
 }
 
+/// What a surprise or a recipe code dealt, for the page to show.
+#[derive(Debug, Clone, PartialEq, uniffi::Record)]
+pub struct Dealt {
+    /// Index into [`Generator::characters`].
+    pub character: u32,
+    /// Bright, movement, grit, space, each 0..1.
+    pub macros: Vec<f32>,
+}
+
+impl Dealt {
+    fn of((character, m): (usize, Macros)) -> Dealt {
+        Dealt {
+            character: u32::try_from(character).unwrap_or(0),
+            macros: vec![m.bright, m.movement, m.grit, m.space],
+        }
+    }
+}
+
 /// The hand shown.
 #[derive(Debug, Clone, PartialEq, uniffi::Record)]
 pub struct HandState {
@@ -152,6 +170,36 @@ impl Generator {
     /// Six children of the selected sound and sound `other`. Blocks.
     pub fn breed(&self, other: u32) -> bool {
         self.lock().breed(self.driver, other as usize)
+    }
+
+    /// Six steps from the selected sound to sound `other`, neither end
+    /// among them. Blocks.
+    pub fn morph(&self, other: u32) -> bool {
+        self.lock().morph(self.driver, other as usize)
+    }
+
+    /// A random character and dials, dealt; what it chose. None when the
+    /// synth deals nothing. Blocks.
+    pub fn surprise(&self) -> Option<Dealt> {
+        self.lock().surprise(self.driver).map(Dealt::of)
+    }
+
+    /// The selected sound's recipe code, to share ("pad-4f2a…"); none
+    /// for a variation, a child, a morph step or a sound dealt onto a base
+    /// program.
+    pub fn code(&self) -> Option<String> {
+        self.lock().code()
+    }
+
+    /// The hand a recipe code names: its sound first, then five more of
+    /// the same character and dials; what the code chose. Refused, saying
+    /// why, when the code is mistyped or names a character this synth
+    /// lacks. Blocks.
+    pub fn deal_code(&self, code: String) -> Result<Dealt, FfiError> {
+        self.lock()
+            .deal_code(self.driver, &code)
+            .map(Dealt::of)
+            .map_err(|reason| FfiError::Refused { reason })
     }
 
     /// Back (-1) or Forward (+1); false at either end.
@@ -297,6 +345,10 @@ mod tests {
         let p = a.selected_program().unwrap();
         assert_eq!(doc.put(None, p.clone()).unwrap(), 0);
         assert_eq!(doc.put(Some(0), p).unwrap(), 0);
+        assert!(a.characters().iter().all(|c| matches!(
+            &*c.family,
+            "keys" | "bass" | "lead" | "pad" | "rhythm" | "effect"
+        )));
         let rev2 = Generator::new("sequential-prophet-rev2".into(), 1).unwrap();
         if rev2.characters().is_empty() {
             assert!(
@@ -304,5 +356,44 @@ mod tests {
                 "no characters, no hand"
             );
         }
+    }
+
+    #[test]
+    fn codes_surprises_and_morphs() {
+        let a = Generator::new("korg-minilogue-xd".into(), 7).unwrap();
+        assert_eq!(a.code(), None, "nothing dealt yet");
+        assert!(a.deal(3, vec![0.1, 0.9, 0.5, 0.25], vec![], None));
+        a.select(2);
+        let (code, sound) = (a.code().unwrap(), a.selected_program().unwrap());
+        assert!(code.starts_with("riser-"), "{code}");
+        // The code deals the same sound first, on another page too.
+        let b = Generator::new("korg-minilogue-xd".into(), 1234).unwrap();
+        let dealt = b.deal_code(code.to_uppercase()).unwrap();
+        assert_eq!(dealt.character, 3);
+        assert_eq!(dealt.macros, vec![0.1, 0.9, 0.5, 0.25]);
+        assert_eq!(b.selected_program(), Some(sound));
+        assert_eq!(b.code(), Some(code));
+        assert!(matches!(
+            b.deal_code("riser-oops".into()),
+            Err(FfiError::Refused { .. })
+        ));
+        // A surprise says what it dealt; the same seed surprises alike.
+        let c = Generator::new("korg-minilogue-xd".into(), 1234).unwrap();
+        let s = b.surprise().unwrap();
+        assert!(c.deal_code("riser-oops".into()).is_err());
+        assert!((s.character as usize) < b.characters().len());
+        assert!(s.macros.len() == 4 && s.macros.iter().all(|m| (0.0..=1.0).contains(m)));
+        assert_eq!(b.hand(8).unwrap().count, 2);
+        // Morph: six steps, each its own name, none with a code.
+        assert!(!b.morph(0), "not with itself");
+        assert!(b.morph(4));
+        let h = b.hand(8).unwrap();
+        assert_eq!((h.sounds.len(), h.count), (6, 3));
+        assert!(h.origin.starts_with("From"));
+        assert_eq!(b.code(), None);
+        // A base program's sounds have no code.
+        let base = a.selected_program();
+        assert!(a.deal(0, vec![0.5; 4], vec![0], base));
+        assert_eq!(a.code(), None);
     }
 }
