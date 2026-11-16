@@ -14,6 +14,7 @@ use oscyl_midi::{DRIVERS, Device};
 // contract does not model; they run through `Device::run_units` on
 // every logue synth (minilogue xd, prologue).
 use oscyl_app::shelf::Shelf;
+use oscyl_logue::engine;
 use oscyl_logue::unit::{ParamKind, Unit, UnitInfo, palette_unit};
 use oscyl_midi::logue::{Module, UnitEvent as Event, UnitOp as Op, platform, unit_name};
 
@@ -152,6 +153,25 @@ enum UnitsCmd {
     Shelf {
         #[command(subcommand)]
         cmd: ShelfCmd,
+    },
+    /// Make a new oscillator with Oscyl's engine and show it. Needs no
+    /// synth, except to --load it.
+    Make {
+        /// What it is built around [default: any, by the seed].
+        #[arg(long, value_parser = clap::builder::PossibleValuesParser::new(
+            ["wavetable", "fm", "fold", "formant", "noise", "hybrid"]))]
+        family: Option<String>,
+        /// The seed: the same seed and family make the same oscillator.
+        /// Random when left out.
+        #[arg(long)]
+        seed: Option<u64>,
+        /// Keep it: put it on the shelf and load it into the first free
+        /// oscillator slot.
+        #[arg(long)]
+        load: bool,
+        /// Write it as a unit file.
+        #[arg(long)]
+        out: Option<PathBuf>,
     },
 }
 
@@ -292,6 +312,22 @@ fn prepare(
                 (Job::Upload { unit, slot, force }, Some(logue))
             }
             UnitsCmd::Info { .. } => unreachable!("handled before connecting"),
+            UnitsCmd::Make {
+                family, seed, out, ..
+            } => {
+                let patch = make(family.as_deref(), seed, out.as_deref(), logue)?;
+                let shelf = Shelf::at(&data_dir()?.join("units"));
+                let unit = oscyl_app::oscillators::keep(&shelf, logue, &patch)
+                    .map_err(|e| anyhow::anyhow!(e))?;
+                (
+                    Job::Load {
+                        module: unit.module,
+                        name: unit.name,
+                        data: unit.data,
+                    },
+                    Some(logue),
+                )
+            }
             UnitsCmd::Shelf { cmd } => {
                 let ShelfCmd::Load { name } = cmd else {
                     unreachable!("handled before connecting")
@@ -349,6 +385,18 @@ fn main() -> Result<()> {
         Cmd::Units {
             cmd: UnitsCmd::Shelf { cmd },
         } if !matches!(cmd, ShelfCmd::Load { .. }) => return shelf(cmd, chosen),
+        Cmd::Units {
+            cmd:
+                UnitsCmd::Make {
+                    family,
+                    seed,
+                    load: false,
+                    out,
+                },
+        } => {
+            let d = chosen.unwrap_or_else(first_logue);
+            return make(family.as_deref(), seed, out.as_deref(), d).map(|_| ());
+        }
         cmd => cmd,
     };
     let (job, from_file) = prepare(cmd, chosen)?;
@@ -407,6 +455,46 @@ fn unit_info(path: &Path, chosen: Option<&'static dyn Driver>) -> Result<()> {
         .with_context(|| format!("cannot read {}", path.display()))?;
     print_unit(&unit.info());
     Ok(())
+}
+
+/// The first registered synth with user units.
+fn first_logue() -> &'static dyn Driver {
+    DRIVERS
+        .iter()
+        .copied()
+        .find(|d| !d.capabilities().units.is_empty())
+        .unwrap_or(DRIVERS[0])
+}
+
+/// `oscyl units make`: an oscillator of `family` (any, by the seed) for
+/// `d`, shown, and written to `out` when given.
+fn make(
+    family: Option<&str>,
+    seed: Option<u64>,
+    out: Option<&Path>,
+    d: &'static dyn Driver,
+) -> Result<engine::Patch> {
+    let p = platform(d)
+        .filter(engine::supports)
+        .with_context(|| format!("the {} cannot play Oscyl's oscillators", d.info().model))?;
+    let seed = match seed {
+        Some(s) => s,
+        None => u64::from(SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()),
+    };
+    let family = match family {
+        Some(id) => engine::Family::from_id(id).context("no such family")?,
+        None => engine::Family::ALL[(seed % engine::Family::ALL.len() as u64) as usize],
+    };
+    let patch = engine::generate(family, seed);
+    let unit = engine::build(&p, &patch)?;
+    print_unit(&unit.info());
+    println!("  {} oscillator, seed {seed}", family.id());
+    if let Some(out) = out {
+        std::fs::write(out, engine::file(&p, &patch)?)
+            .with_context(|| format!("cannot write {}", out.display()))?;
+        eprintln!("wrote {}", out.display());
+    }
+    Ok(patch)
 }
 
 /// The file of the shelf unit called `name` (its name, or its file's).
