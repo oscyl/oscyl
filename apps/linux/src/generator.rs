@@ -159,6 +159,7 @@ fn legend(text: &str) -> gtk::Label {
 fn check_chip(text: &str) -> gtk::ToggleButton {
     let mark = gtk::Image::from_icon_name("object-select-symbolic");
     mark.add_css_class("check");
+    mark.set_valign(gtk::Align::Center);
     mark.set_accessible_role(gtk::AccessibleRole::Presentation);
     let row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     row.append(&mark);
