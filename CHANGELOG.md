@@ -29,6 +29,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   real synth; testers are welcome.
 
 ### Fixed
+- On Linux, a unit bigger than about 4 KB now reaches the synth: the ALSA
+  sequencer dropped it, so the upload timed out. Oscyl writes to the
+  synth's rawmidi device instead.
 - The Rev2's generated modulation goes to the destinations its manual
   lists.
 
