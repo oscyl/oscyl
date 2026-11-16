@@ -306,11 +306,18 @@ popover > contents {
   box-shadow: 0 0 0 1px var(--oscyl-rule), 0 4px 12px var(--oscyl-shadow);
 }
 popover > arrow { background: var(--oscyl-raised); border-color: var(--oscyl-rule); }
+/* A notice floats as the phone's does: raised enamel with a crisp rim,
+ * lifted by a close and a soft shadow (none on AMOLED, where the rim is
+ * the lift), ink text, its action outlined. */
 toast {
-  border-radius: var(--oscyl-radius);
-  background: var(--oscyl-plate);
-  color: var(--oscyl-on-plate);
+  border-radius: var(--oscyl-radius-panel);
+  background: var(--oscyl-raised);
+  color: var(--oscyl-ink);
+  box-shadow: 0 0 0 1px var(--oscyl-rule-strong),
+              0 1px 3px var(--oscyl-shadow),
+              0 10px 28px var(--oscyl-shadow);
 }
+toast button.text-button { box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong); }
 dialog.floating sheet, floating-sheet > sheet {
   border-radius: 6px;
 }

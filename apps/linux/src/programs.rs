@@ -1394,8 +1394,9 @@ fn row_box(child: &gtk::Widget) -> Option<gtk::Widget> {
 fn row_widget() -> gtk::Box {
     let row = gtk::Box::new(gtk::Orientation::Horizontal, 10);
     row.add_css_class("program-row");
-    // The edit mark: an action-colour dot at the row's end (the accessible
-    // label says "edited", so colour is never the only cue).
+    // The edit mark: an action-colour dot after the name, before the
+    // picture, as on the phone (the accessible label says "edited", so
+    // colour is never the only cue).
     let tick = gtk::Box::new(gtk::Orientation::Vertical, 0);
     tick.add_css_class("edit-tick");
     tick.set_valign(gtk::Align::Center);
@@ -1417,7 +1418,8 @@ fn row_widget() -> gtk::Box {
     sub.add_css_class("dim-label");
     text.append(&name);
     text.append(&sub);
-    // The program's first picture, small, in one column before the dot.
+    // The program's first picture, small, last in the row, so pictures
+    // stand in one column whatever comes before.
     let picture = Graph::new();
     picture.set_compact();
     picture.set_min_width_em(3.6);
@@ -1429,8 +1431,8 @@ fn row_widget() -> gtk::Box {
     picture.set_accessible_role(gtk::AccessibleRole::Presentation);
     row.append(&slot);
     row.append(&text);
-    row.append(&picture);
     row.append(&tick);
+    row.append(&picture);
     row
 }
 
@@ -1456,11 +1458,11 @@ fn bind_row(child: &gtk::Widget, d: &RowData, subtitle: &str) {
         .and_downcast::<gtk::Label>()
         .expect("slot");
     let text = slot.next_sibling().expect("text");
-    let picture = text
+    let tick = text.next_sibling().expect("tick");
+    let picture = tick
         .next_sibling()
         .and_downcast::<Graph>()
         .expect("picture");
-    let tick = picture.next_sibling().expect("tick");
     let name = text
         .first_child()
         .and_downcast::<gtk::Label>()

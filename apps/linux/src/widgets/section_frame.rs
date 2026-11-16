@@ -73,7 +73,7 @@ mod imp {
                 let (cmin, cnat, _, _) = content.measure(o, for_size);
                 // A legend too long for the frame ends in an ellipsis, so
                 // only its natural width asks for room.
-                let lnat = self.legend().map_or(0, |l| natural(l));
+                let lnat = self.legend().map_or(0, natural);
                 let room = (2.0 * INSET) as i32;
                 (cmin, cnat.max(lnat + room), -1, -1)
             } else {
@@ -112,7 +112,9 @@ mod imp {
 
         fn snapshot(&self, s: &gtk::Snapshot) {
             let obj = self.obj();
-            let Some(sw) = self.swatches.get() else { return };
+            let Some(sw) = self.swatches.get() else {
+                return;
+            };
             let (w, h) = (obj.width() as f32, obj.height() as f32);
             let top = self.top() as f32;
             let frame = graphene::Rect::new(0.0, top, w, (h - top).max(0.0));
@@ -174,7 +176,9 @@ mod imp {
         /// The legend's size in a frame `width` wide: its natural width,
         /// short of the insets at both ends.
         pub(super) fn legend_size(&self, width: i32) -> (i32, i32) {
-            let Some(l) = self.legend() else { return (0, 0) };
+            let Some(l) = self.legend() else {
+                return (0, 0);
+            };
             let nat = natural(l);
             let lw = nat.min(width - (2.0 * INSET) as i32).max(0);
             // Ellipsized only when it must be: GTK ellipsizes a tracked
@@ -192,14 +196,18 @@ mod imp {
 
         /// The frame's top rule: through the middle of the legend.
         pub(super) fn top(&self) -> i32 {
-            self.legend().map_or(0, |l| l.measure(gtk::Orientation::Vertical, -1).1 / 2)
+            self.legend()
+                .map_or(0, |l| l.measure(gtk::Orientation::Vertical, -1).1 / 2)
         }
     }
 }
 
 /// `l`'s width unellipsized.
 fn natural(l: &gtk::Label) -> i32 {
-    l.layout().pixel_size().0.max(l.measure(gtk::Orientation::Horizontal, -1).1)
+    l.layout()
+        .pixel_size()
+        .0
+        .max(l.measure(gtk::Orientation::Horizontal, -1).1)
 }
 
 glib::wrapper! {

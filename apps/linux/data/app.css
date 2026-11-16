@@ -108,3 +108,13 @@ plated > scrolledwindow .navigation-sidebar > row:selected:hover { background: n
 button.nameplate { padding: 10px; border-radius: var(--oscyl-radius-panel); }
 button.nameplate .nameplate-panel { color: var(--oscyl-ink); }
 button.nameplate .nameplate-model { font-weight: 600; }
+
+/* Groups of a page named by a legend (the units page's Shelf and its
+ * sections), as the phone's: small, uppercase, tracked, in the legend. */
+preferencesgroup.legend-group > box > box.header > box.labels > label.heading {
+  font-size: 0.846em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oscyl-legend);
+}

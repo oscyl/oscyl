@@ -322,6 +322,14 @@ impl crate::app::App {
                         o.set_show_sidebar(true);
                     }
                 });
+            } else if part == "toast" {
+                // A notice with its action, as an edit's Undo shows it.
+                self.win.show_toast(
+                    adw::Toast::builder()
+                        .title(tr("Removed “{program}”").replace("{program}", "Glass Choir"))
+                        .button_label(tr("Undo"))
+                        .build(),
+                );
             } else if part == "units" {
                 self.sidebar.select(&Place::Units);
                 self.demo_units();

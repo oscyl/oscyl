@@ -90,6 +90,7 @@ pub fn show(
     let kept = adw::PreferencesGroup::builder()
         .title(tr("Shelf"))
         .description(tr("Unit files Oscyl keeps for this synth. Load puts one into the first free slot of its section."))
+        .css_classes(["legend-group"])
         .build();
     let add = gtk::Button::builder()
         .label(tr("Add…"))
@@ -149,6 +150,7 @@ pub fn show(
         let group = adw::PreferencesGroup::builder()
             .title(module_title(module))
             .description(format!("{used} / {}", module.slots()))
+            .css_classes(["legend-group"])
             .build();
         for s in slots.iter().filter(|s| s.module == module) {
             let number = format!("{:02}", s.slot + 1);

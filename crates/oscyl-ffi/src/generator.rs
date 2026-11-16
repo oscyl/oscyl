@@ -322,26 +322,13 @@ impl Generator {
             .get(h.character)
             .and_then(|c| c.signature_page)
             .unwrap_or(0);
-        let pictures = |page: usize| -> Vec<Option<GraphShape>> {
-            h.programs
-                .iter()
-                .map(|p| {
-                    oscyl_app::editor::graph(self.driver, p, page, points as usize)
-                        .as_ref()
-                        .map(crate::editor::shape)
-                })
-                .collect()
-        };
-        let own = pictures(signature);
-        let mut best = (spread(&own), own);
-        for page in (0..self.driver.curation().pages.len()).filter(|p| *p != signature) {
-            let candidate = pictures(page);
-            let score = spread(&candidate);
-            if score > best.0 {
-                best = (score, candidate);
-            }
-        }
-        let mut graphs = best.1.into_iter();
+        let page =
+            oscyl_app::editor::telling_page(self.driver, &h.programs, signature, points as usize);
+        let mut graphs = h.programs.iter().map(|p| {
+            oscyl_app::editor::graph(self.driver, p, page, points as usize)
+                .as_ref()
+                .map(crate::editor::shape)
+        });
         let (at, count) = hands.position();
         Some(HandState {
             sounds: h
@@ -368,37 +355,6 @@ impl Generator {
     }
 }
 
-/// How much the pictures differ: the summed squared distance of their points
-/// from the mean picture. Zero when one is missing or they are not drawn
-/// alike (marks of other lengths), so such a page never wins.
-fn spread(pictures: &[Option<GraphShape>]) -> f64 {
-    let flat: Option<Vec<Vec<f32>>> = pictures
-        .iter()
-        .map(|g| {
-            g.as_ref().map(|g| {
-                g.marks
-                    .iter()
-                    .flat_map(|m| m.points.iter().copied())
-                    .collect()
-            })
-        })
-        .collect();
-    let Some(flat) = flat else { return 0.0 };
-    let len = flat.first().map_or(0, Vec::len);
-    if flat.len() < 2 || len == 0 || flat.iter().any(|f| f.len() != len) {
-        return 0.0;
-    }
-    let n = flat.len() as f64;
-    (0..len)
-        .map(|i| {
-            let mean = flat.iter().map(|f| f64::from(f[i])).sum::<f64>() / n;
-            flat.iter()
-                .map(|f| (f64::from(f[i]) - mean).powi(2))
-                .sum::<f64>()
-        })
-        .sum()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -416,7 +372,10 @@ mod tests {
         assert!(h.sounds[0].graph.is_some());
         // The tiles' pictures tell the sounds apart.
         let pictures: Vec<_> = h.sounds.iter().map(|s| s.graph.clone()).collect();
-        assert!(spread(&pictures) > 0.0, "the pictures differ");
+        assert!(
+            pictures.windows(2).any(|w| w[0] != w[1]),
+            "the pictures differ"
+        );
         a.select(3);
         assert!(a.vary(1));
         assert!(a.breed(1));

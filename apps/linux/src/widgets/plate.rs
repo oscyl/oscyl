@@ -210,9 +210,10 @@ mod imp {
     impl ObjectImpl for SegmentTrack {
         fn constructed(&self) {
             self.parent_constructed();
-            let _ = self
-                .swatches
-                .set(Swatches::new(&*self.obj(), &["plate", "act", "shadow", "tick", "ink"]));
+            let _ = self.swatches.set(Swatches::new(
+                &*self.obj(),
+                &["plate", "act", "shadow", "tick", "ink"],
+            ));
         }
 
         fn dispose(&self) {
@@ -260,7 +261,10 @@ mod imp {
                     if self.saved.get() == Some(i) {
                         continue;
                     }
-                    let Some(b) = self.obj().toggle(i).and_then(|t| t.compute_bounds(&*self.obj()))
+                    let Some(b) = self
+                        .obj()
+                        .toggle(i)
+                        .and_then(|t| t.compute_bounds(&*self.obj()))
                     else {
                         continue;
                     };

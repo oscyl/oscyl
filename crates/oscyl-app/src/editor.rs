@@ -315,6 +315,64 @@ pub fn graph(d: &dyn Driver, p: &[u8], page: usize, points: usize) -> Option<Gra
     d.graphs(p, page, points).into_iter().next()
 }
 
+/// The page whose pictures tell `programs` apart most (a dealt hand's
+/// tiles each show this one page), `signature` (the character's own) when
+/// none differs more. Pictures are about `points` long. Both apps draw a
+/// hand's tiles with it.
+pub fn telling_page<P: AsRef<[u8]>>(
+    d: &dyn Driver,
+    programs: &[P],
+    signature: usize,
+    points: usize,
+) -> usize {
+    let score = |page: usize| {
+        let pictures: Vec<Option<Picture>> = programs
+            .iter()
+            .map(|p| graph(d, p.as_ref(), page, points).as_ref().map(picture))
+            .collect();
+        spread(&pictures)
+    };
+    let mut best = (score(signature), signature);
+    for page in (0..d.curation().pages.len()).filter(|p| *p != signature) {
+        let s = score(page);
+        if s > best.0 {
+            best = (s, page);
+        }
+    }
+    best.1
+}
+
+/// How much the pictures differ: the summed squared distance of their
+/// points from the mean picture. Zero when one is missing or they are not
+/// drawn alike (marks of other lengths), so such a page never wins.
+pub fn spread(pictures: &[Option<Picture>]) -> f64 {
+    let flat: Option<Vec<Vec<f32>>> = pictures
+        .iter()
+        .map(|g| {
+            g.as_ref().map(|g| {
+                g.marks
+                    .iter()
+                    .flat_map(|m| m.points.iter().flat_map(|&(x, y)| [x, y]))
+                    .collect()
+            })
+        })
+        .collect();
+    let Some(flat) = flat else { return 0.0 };
+    let len = flat.first().map_or(0, Vec::len);
+    if flat.len() < 2 || len == 0 || flat.iter().any(|f| f.len() != len) {
+        return 0.0;
+    }
+    let n = flat.len() as f64;
+    (0..len)
+        .map(|i| {
+            let mean = flat.iter().map(|f| f64::from(f[i])).sum::<f64>() / n;
+            flat.iter()
+                .map(|f| (f64::from(f[i]) - mean).powi(2))
+                .sum::<f64>()
+        })
+        .sum()
+}
+
 /// What handle `h` moves, with its values: "Cutoff 618 · Resonance 255".
 pub fn handle_value(d: &dyn Driver, p: &[u8], h: &Handle) -> String {
     [h.x, h.y]

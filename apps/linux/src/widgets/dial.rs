@@ -116,6 +116,9 @@ mod imp {
         pub(super) value: Cell<u16>,
         pub(super) original: Cell<u16>,
         pub(super) large: Cell<bool>,
+        /// A program value: it keeps room for its "was" line. A setting
+        /// (Generate's macros) is never edited and keeps none.
+        pub(super) revertible: Cell<bool>,
         /// (fine, coarse); coarse 0 means "derive from the range".
         pub(super) steps: Cell<(u16, u16)>,
         pub(super) formatter: RefCell<Option<Formatter>>,
@@ -147,6 +150,7 @@ mod imp {
                 value: Cell::new(0),
                 original: Cell::new(0),
                 large: Cell::new(false),
+                revertible: Cell::new(true),
                 steps: Cell::new((1, 0)),
                 formatter: RefCell::default(),
                 parser: RefCell::default(),
@@ -224,7 +228,7 @@ mod imp {
                 _ => {
                     // Every dial reserves a large ring's height, so labels
                     // share one line across a row of mixed sizes.
-                    let h = ((LARGE_RING_EM + FIVE_EM) * em + text_block(em)).ceil() as i32;
+                    let h = ((LARGE_RING_EM + FIVE_EM) * em + obj.text_block(em)).ceil() as i32;
                     (h, h, -1, -1)
                 }
             }
@@ -374,6 +378,26 @@ impl Dial {
         tr("was {value}").replace("{value}", &self.format(self.imp().original.get()))
     }
 
+    /// The "was" line's room under the disc, in px.
+    fn was_room(&self, em: f32) -> f32 {
+        if self.imp().revertible.get() {
+            WAS_EM * em
+        } else {
+            0.0
+        }
+    }
+
+    fn text_block(&self, em: f32) -> f32 {
+        text_block(em, self.was_room(em))
+    }
+
+    /// Never edited, keeping no room for a "was" line (a setting, not a
+    /// program value).
+    pub fn set_revertible(&self, revertible: bool) {
+        self.imp().revertible.set(revertible);
+        self.queue_resize();
+    }
+
     fn is_edited(&self) -> bool {
         self.imp().value.get() != self.imp().original.get()
     }
@@ -420,12 +444,17 @@ impl Dial {
         let em = em(self);
         let h = self.height() as f32;
         let slot = ((LARGE_RING_EM + FIVE_EM) * em)
-            .min(h - text_block(em))
+            .min(h - self.text_block(em))
             .max(em);
         let line = layout(self, "0", 1.1, pango::Weight::Semibold)
             .pixel_size()
             .1 as f32;
-        graphene::Rect::new(0.0, value_y(slot, em), self.width() as f32, line)
+        graphene::Rect::new(
+            0.0,
+            value_y(slot, em, self.was_room(em)),
+            self.width() as f32,
+            line,
+        )
     }
 
     /// Whether a value can be typed (every value it shows is a number).
@@ -591,8 +620,8 @@ impl Dial {
 }
 
 /// Height of the "was" line, value and label under the disc, in px.
-fn text_block(em: f32) -> f32 {
-    WAS_TOP_EM * em + WAS_EM * em + 1.45 * em + 1.3 * em
+fn text_block(em: f32, room: f32) -> f32 {
+    WAS_TOP_EM * em + room + 1.45 * em + 1.3 * em
 }
 
 /// The "was" line's gap under the scale's slot, and the room it always
@@ -601,8 +630,8 @@ const WAS_TOP_EM: f32 = 0.1;
 const WAS_EM: f32 = 1.2;
 
 /// Where the value line starts: under the "was" line's room.
-fn value_y(slot: f32, em: f32) -> f32 {
-    slot + (WAS_TOP_EM + WAS_EM) * em
+fn value_y(slot: f32, em: f32, room: f32) -> f32 {
+    slot + WAS_TOP_EM * em + room
 }
 
 fn install_controllers(dial: &Dial) {
@@ -761,7 +790,7 @@ fn draw(dial: &Dial, s: &gtk::Snapshot) {
     let em = em(dial);
     // The scale sits centred in a large dial's slot; text goes below it.
     let slot = ((LARGE_RING_EM + FIVE_EM) * em)
-        .min(h - text_block(em))
+        .min(h - dial.text_block(em))
         .max(em);
     // The scale's "5" sits above it: the ring centres in the room below.
     let five = layout(dial, "5", 0.6, pango::Weight::Medium);
@@ -946,7 +975,7 @@ fn draw(dial: &Dial, s: &gtk::Snapshot) {
         imp.caption_at.set(None);
     }
 
-    let mut y = value_y(slot, em);
+    let mut y = value_y(slot, em, dial.was_room(em));
     // While the index glides, the value rolls with it.
     let rolling = if imp.glide.get().is_some() {
         let f = imp.shown.get();

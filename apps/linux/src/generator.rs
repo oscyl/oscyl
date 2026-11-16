@@ -153,6 +153,43 @@ fn legend(text: &str) -> gtk::Label {
     l
 }
 
+/// A choice that can be held with others (a stage, a unit): a checkbox
+/// chip, an empty box before its word, the lifted plate with a check when
+/// held (the same width either way), as on the phone.
+fn check_chip(text: &str) -> gtk::ToggleButton {
+    let mark = gtk::Image::from_icon_name("object-select-symbolic");
+    mark.add_css_class("check");
+    mark.set_accessible_role(gtk::AccessibleRole::Presentation);
+    let row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    row.append(&mark);
+    row.append(&gtk::Label::new(Some(text)));
+    gtk::ToggleButton::builder()
+        .child(&row)
+        .css_classes(["check-chip"])
+        .build()
+}
+
+/// A family in its row, as on the phone: its word alone in the legend
+/// colour; the chosen one in ink at 600 over an ink index line. Both
+/// weights keep their room, so choosing moves nothing.
+fn family_tab(text: &str) -> gtk::ToggleButton {
+    let room = gtk::Label::builder()
+        .label(text)
+        .css_classes(["family-room"])
+        .accessible_role(gtk::AccessibleRole::Presentation)
+        .build();
+    room.set_opacity(0.0);
+    let word = gtk::Label::new(Some(text));
+    let over = gtk::Overlay::builder().child(&room).build();
+    over.add_overlay(&word);
+    let b = gtk::ToggleButton::builder()
+        .child(&over)
+        .css_classes(["flat", "family-tab"])
+        .build();
+    b.update_property(&[gtk::accessible::Property::Label(text)]);
+    b
+}
+
 fn mini_graph() -> Graph {
     let g = Graph::new();
     g.add_css_class("mini");
@@ -200,17 +237,24 @@ fn character_tile(d: &dyn Driver, i: usize) -> gtk::FlowBoxChild {
     child
 }
 
-/// A dealt sound's tile: name, a lamp while it plays, its category (and
-/// where it was kept), and the six stages drawn small.
+/// A dealt sound's tile, as on the phone: the hand's telling `page` drawn
+/// (the one page whose pictures tell the hand apart), its name with a lamp
+/// while it plays, then its category, the user units it relies on and
+/// where it was kept ("Lead · with waves · kept in 004").
 fn sound_tile(
     d: &dyn Driver,
     p: &[u8],
+    page: usize,
     kept: Option<&str>,
     units: &[String],
 ) -> (gtk::FlowBoxChild, gtk::Widget) {
     let name = d.name(p).unwrap_or_default();
     let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
     body.add_css_class("gen-tile");
+    let picture = mini_graph();
+    picture.set_data(graph_of(d, p, page), None);
+    picture.set_accessible_role(gtk::AccessibleRole::Presentation);
+    body.append(&picture);
     let head = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     let title = gtk::Label::builder()
         .label(&name)
@@ -227,47 +271,24 @@ fn sound_tile(
         .build();
     head.append(&title);
     head.append(&lamp);
-    let category = d.category(p).map(category_name).unwrap_or_default();
-    let caption = match kept {
-        Some(slot) => tr("{category} · kept in slot {slot}")
-            .replace("{category}", &category)
-            .replace("{slot}", slot),
-        None => category,
-    };
-    // The user units it relies on: "Pad · with waves".
-    let caption = if units.is_empty() {
-        caption
-    } else {
-        let with = tr("with {units}").replace("{units}", &units.join(", "));
-        if caption.is_empty() {
-            with
-        } else {
-            format!("{caption} · {with}")
-        }
-    };
+    // The user units it relies on and where it was kept, after its
+    // category, in sentence case.
+    let with =
+        (!units.is_empty()).then(|| tr("with {units}").replace("{units}", &units.join(", ")));
+    let kept = kept.map(|slot| tr("kept in {slot}").replace("{slot}", slot));
+    let caption = [d.category(p).map(category_name), with, kept]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
+        .join(" · ");
     let legend = gtk::Label::builder()
         .label(&caption)
         .xalign(0.0)
         .ellipsize(pango::EllipsizeMode::End)
-        .css_classes(["tile-legend"])
+        .css_classes(["tile-caption"])
         .build();
-    let band = gtk::Box::builder()
-        .homogeneous(true)
-        .spacing(4)
-        .css_classes(["gen-band"])
-        .build();
-    // The band keeps the width six pages take, however many there are.
-    let pages = d.curation().pages.len();
-    for page in 0..pages {
-        let g = mini_graph();
-        g.set_min_width_em(12.0 / pages.max(6) as f32);
-        g.set_data(graph_of(d, p, page), None);
-        g.set_accessible_role(gtk::AccessibleRole::Presentation);
-        band.append(&g);
-    }
     body.append(&head);
     body.append(&legend);
-    body.append(&band);
     let child = gtk::FlowBoxChild::builder().child(&body).build();
     child.update_property(&[gtk::accessible::Property::Label(
         &tr("{name}, {category}")
@@ -277,23 +298,11 @@ fn sound_tile(
     (child, lamp.upcast())
 }
 
-/// A new oscillator's tile: its name, its family, one cycle of its wave
-/// and its parameters' names.
+/// A new oscillator's tile, as on the phone: one cycle of its wave, its
+/// name, then its family and its parameters' names.
 fn oscillator_tile(p: &Patch) -> gtk::FlowBoxChild {
     let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
     body.add_css_class("gen-tile");
-    let title = gtk::Label::builder()
-        .label(&p.name)
-        .xalign(0.0)
-        .ellipsize(pango::EllipsizeMode::End)
-        .css_classes(["tile-title"])
-        .build();
-    let family = family_title(p.family);
-    let legend = gtk::Label::builder()
-        .label(&family)
-        .xalign(0.0)
-        .css_classes(["tile-legend"])
-        .build();
     let wave = mini_graph();
     wave.set_min_width_em(12.0);
     wave.set_data(
@@ -301,18 +310,27 @@ fn oscillator_tile(p: &Patch) -> gtk::FlowBoxChild {
         None,
     );
     wave.set_accessible_role(gtk::AccessibleRole::Presentation);
-    let params = p.params.join(" · ");
+    let title = gtk::Label::builder()
+        .label(&p.name)
+        .xalign(0.0)
+        .ellipsize(pango::EllipsizeMode::End)
+        .css_classes(["tile-title"])
+        .build();
+    let family = family_title(p.family);
+    let caption = std::iter::once(family.as_str())
+        .chain(p.params.iter().map(String::as_str))
+        .collect::<Vec<_>>()
+        .join(" · ");
     let hint = gtk::Label::builder()
-        .label(&params)
+        .label(&caption)
         .xalign(0.0)
         .wrap(true)
         .lines(2)
         .ellipsize(pango::EllipsizeMode::End)
-        .css_classes(["tile-hint"])
+        .css_classes(["tile-caption"])
         .build();
-    body.append(&title);
-    body.append(&legend);
     body.append(&wave);
+    body.append(&title);
     body.append(&hint);
     let child = gtk::FlowBoxChild::builder().child(&body).build();
     child.update_property(&[
@@ -422,6 +440,7 @@ impl Generator {
             d.set_range(0, 100);
             d.set_formatter(|v| format!("{v} %"));
             d.set_step_hint(5, 25);
+            d.set_revertible(false);
             d.show(50, 50);
             dial_pairs[dials.len() / 2].append(&d);
             dials.push(d);
@@ -445,7 +464,12 @@ impl Generator {
             .css_classes(["dim-label", "caption"])
             .build();
         let surprise = gtk::Button::builder()
-            .label(tr("Surprise Me"))
+            .child(
+                &adw::ButtonContent::builder()
+                    .icon_name("oscyl-dice-symbolic")
+                    .label(tr("Surprise Me"))
+                    .build(),
+            )
             .tooltip_text(tr("Pick a character and dials for me, and deal"))
             .build();
         // A code typed or pasted deals its sound again.
@@ -476,7 +500,7 @@ impl Generator {
             .label(tr("Enter a Code…"))
             .tooltip_text(tr("Deal the sound a recipe code names"))
             .popover(&gtk::Popover::builder().child(&code_box).build())
-            .css_classes(["flat"])
+            .css_classes(["outlined"])
             .build();
         go.append(&generate);
         go.append(&surprise);
@@ -903,10 +927,7 @@ impl Generator {
         }
         let mut chips = Vec::new();
         for (i, page) in d.curation().pages.iter().enumerate() {
-            let b = gtk::ToggleButton::builder()
-                .label(tr(page.title))
-                .css_classes(["chip"])
-                .build();
+            let b = check_chip(&tr(page.title));
             b.update_property(&[gtk::accessible::Property::Label(
                 &tr("Hold {stage}").replace("{stage}", &tr(page.title)),
             )]);
@@ -929,12 +950,9 @@ impl Generator {
         }
         let entries = oscyl_app::palette::shared().units(d);
         for e in &entries {
-            let b = gtk::ToggleButton::builder()
-                .label(&e.unit.name)
-                .css_classes(["chip"])
-                .active(e.on)
-                .tooltip_text(format!("{} {}", e.section, e.unit.slot + 1))
-                .build();
+            let b = check_chip(&e.unit.name);
+            b.set_active(e.on);
+            b.set_tooltip_text(Some(&format!("{} {}", e.section, e.unit.slot + 1)));
             b.update_property(&[gtk::accessible::Property::Label(
                 &tr("Use {name} ({section})")
                     .replace("{name}", &e.unit.name)
@@ -1015,11 +1033,8 @@ impl Generator {
         let all =
             std::iter::once(None).chain(Family::ALL.into_iter().filter(|f| has(*f)).map(Some));
         for family in all {
-            let b = gtk::ToggleButton::builder()
-                .label(family.map_or_else(|| tr("All"), |f| tr(f.title())))
-                .css_classes(["chip"])
-                .active(family == self.family.get())
-                .build();
+            let b = family_tab(&family.map_or_else(|| tr("All"), |f| tr(f.title())));
+            b.set_active(family == self.family.get());
             // One of the row is on, as radio buttons are.
             if let Some((_, first)) = chips.first() {
                 b.set_group(Some(first));
@@ -1549,6 +1564,13 @@ impl Generator {
         self.rebuilding.set(true);
         self.sounds.remove_all();
         let mut lamps = Vec::with_capacity(h.programs.len());
+        let d = self.driver.get();
+        let signature = d
+            .characters()
+            .get(h.character)
+            .and_then(|c| c.signature_page)
+            .unwrap_or(0);
+        let page = oscyl_app::editor::telling_page(d, &h.programs, signature, 128);
         for (i, p) in h.programs.iter().enumerate() {
             let kept = h
                 .kept
@@ -1556,7 +1578,7 @@ impl Generator {
                 .filter(|(k, _)| *k == i)
                 .map(|(_, s)| s.as_str());
             let units = h.units.get(i).map_or(&[][..], Vec::as_slice);
-            let (child, lamp) = sound_tile(self.driver.get(), p, kept, units);
+            let (child, lamp) = sound_tile(d, p, page, kept, units);
             if dealt {
                 child.add_css_class("deal");
                 child.add_css_class(&format!("deal-{i}"));

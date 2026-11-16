@@ -3436,8 +3436,8 @@ msgstr "{a} o {b} voci"
 msgid "{before} to {after}"
 msgstr "da {before} a {after}"
 
-msgid "{category} · kept in slot {slot}"
-msgstr "{category} · tenuto nello slot {slot}"
+msgid "kept in {slot}"
+msgstr "conservato in {slot}"
 
 msgid "{first}, {second} and {count} more"
 msgstr "{first}, {second} e altri {count}"

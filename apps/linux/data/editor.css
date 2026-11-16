@@ -220,15 +220,58 @@ flowboxchild:selected .gen-tile .tile-title { color: var(--oscyl-on-plate); }
 .gen-tile graph.mini { margin: 0.25em 0 0.35em; color: currentColor; }
 flowboxchild:selected .gen-tile graph.mini { color: var(--oscyl-on-plate); }
 .gen-tile .tile-hint { font-size: 0.846em; }
-.gen-tile .tile-legend {
-  font-size: 0.846em;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-top: 0.1em;
+/* A sound's or an oscillator's caption: sentence case, small, in the
+ * legend (the plate's legend when picked), as on the phone. */
+.gen-tile .tile-caption { font-size: 0.846em; margin-top: 0.15em; }
+/* A sound's one picture leads its tile. */
+.gen-tile > graph.mini:first-child { min-height: 2.6em; margin: 0.1em 0 0.45em; color: var(--oscyl-ink); }
+flowboxchild:selected .gen-tile > graph.mini:first-child { color: var(--oscyl-on-plate); }
+
+/* A choice held with others (a stage, a unit): a checkbox chip. Empty, a
+ * 12 px box in rule-strong before its word; held, the lifted plate with a
+ * check in its place (the same width either way). */
+button.check-chip { padding: 4px 12px 4px 10px; font-weight: 500; }
+button.check-chip .check {
+  -gtk-icon-size: 12px;
+  margin: 2px;
+  border-radius: 2px;
+  color: transparent;
+  box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong);
 }
-.gen-tile .gen-band { margin-top: 0.35em; }
-.gen-tile .gen-band graph.mini { margin: 0; }
+button.check-chip:checked,
+button.check-chip:checked:hover {
+  background-color: var(--oscyl-plate);
+  background-image: linear-gradient(to bottom,
+    color-mix(in srgb, white 6%, transparent),
+    color-mix(in srgb, black 5%, transparent));
+  color: var(--oscyl-on-plate);
+  box-shadow: 0 1px 3px var(--oscyl-shadow);
+}
+button.check-chip:checked .check {
+  -gtk-icon-size: 16px;
+  margin: 0;
+  color: var(--oscyl-on-plate);
+  box-shadow: none;
+}
+
+/* A family in its row: the word alone in the legend; the chosen one in
+ * ink at 600 over a 2 px ink index line. The unseen 600 copy keeps the
+ * room, so choosing moves nothing. */
+button.family-tab {
+  padding: 4px 12px 8px;
+  color: var(--oscyl-legend);
+  font-weight: 500;
+  background: none;
+  box-shadow: none;
+}
+button.family-tab .family-room,
+button.family-tab:checked { font-weight: 600; }
+button.family-tab:hover { color: var(--oscyl-ink); background: var(--oscyl-hover); }
+button.family-tab:checked {
+  color: var(--oscyl-ink);
+  background: none;
+  box-shadow: inset 0 -2px 0 -0px var(--oscyl-ink);
+}
 .gen-empty { padding: 2.4em 1em; }
 .generator .gen-dials { padding: 0.7em 1em 0; }
 .gen-go .gen-generate { min-height: 2.6em; padding: 0 1.8em; font-weight: 600; }
