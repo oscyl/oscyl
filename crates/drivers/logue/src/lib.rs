@@ -3,6 +3,7 @@
 //! model, the constants that differ ([`Model`]).
 
 mod error;
+pub mod engine;
 pub mod kinds;
 pub mod lag;
 pub mod library;

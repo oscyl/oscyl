@@ -1332,6 +1332,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "oscyl-engine-host"
+version = "0.4.0"
+dependencies = [
+ "cc",
+ "oscyl-logue",
+]
+
+[[package]]
 name = "oscyl-ffi"
 version = "0.4.0"
 dependencies = [
