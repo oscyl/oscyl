@@ -317,6 +317,8 @@ toast {
               0 1px 3px var(--oscyl-shadow),
               0 10px 28px var(--oscyl-shadow);
 }
+/* 12 px above the review bar (48 px) while it shows. */
+toastoverlay.over-review > toast { margin-bottom: 60px; }
 toast button.text-button { box-shadow: inset 0 0 0 1px var(--oscyl-rule-strong); }
 dialog.floating sheet, floating-sheet > sheet {
   border-radius: 6px;

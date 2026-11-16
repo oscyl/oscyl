@@ -714,6 +714,15 @@ impl Editor {
         self.on_roll.connect(f);
     }
 
+    /// Call `f` with whether the review bar is on screen (shown on the
+    /// page in view), as it comes and goes.
+    pub fn connect_review_shown(&self, f: impl Fn(bool) + 'static) {
+        let f = Rc::new(f);
+        let g = f.clone();
+        self.review.root.connect_map(move |_| g(true));
+        self.review.root.connect_unmap(move |_| f(false));
+    }
+
     /// `None` reverts the whole program.
     pub fn connect_revert(&self, f: impl Fn(Option<usize>) + 'static) {
         self.on_revert.connect(f);

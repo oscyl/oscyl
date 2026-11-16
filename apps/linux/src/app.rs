@@ -329,6 +329,15 @@ impl App {
         }));
         self.editor
             .connect_roll(self.weak(|me, page: usize| me.roll_stage(page)));
+        // A notice stands clear of the review bar while the bar shows, as
+        // the phone's stands above its island.
+        self.editor.connect_review_shown(self.weak(|me, shown: bool| {
+            if shown {
+                me.win.toasts.add_css_class("over-review");
+            } else {
+                me.win.toasts.remove_css_class("over-review");
+            }
+        }));
         self.editor.connect_revert(self.weak(|me, field| {
             let Some(i) = me.current.get() else { return };
             me.with_doc(|d| match field {
