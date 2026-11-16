@@ -273,11 +273,12 @@ impl App {
             });
         let update = self.weak(|me, ()| me.update_actions());
         let update = std::rc::Rc::new(update);
-        {
-            let update = update.clone();
-            self.win.narrow.connect_apply(move |_| update(()));
+        for bp in [&self.win.narrow, &self.win.phone] {
+            let u = update.clone();
+            bp.connect_apply(move |_| u(()));
+            let u = update.clone();
+            bp.connect_unapply(move |_| u(()));
         }
-        self.win.narrow.connect_unapply(move |_| update(()));
         self.sidebar
             .connect_place(self.weak(|me, place| me.go(place)));
         self.sidebar

@@ -16,6 +16,8 @@ const BP_LIST: &str = "max-width: 1100sp";
 const BP_TIGHT: &str = "max-width: 960sp";
 /// Turn the sources sidebar into an overlay below this width.
 const BP_SIDEBAR: &str = "max-width: 720sp";
+/// Phone width: as narrow, and the header keeps only its close control.
+const BP_PHONE: &str = "max-width: 480sp";
 
 /// The header's primary action (Sync or Save): the count of edited
 /// programs behind the red edit tick, the label and, when clean, a check;
@@ -60,6 +62,9 @@ pub struct OscylWindow {
     pub list_title: adw::WindowTitle,
     /// Applies below `BP_SIDEBAR` (phones).
     pub narrow: adw::Breakpoint,
+    /// Phone width; it repeats every `narrow` setter ([`Self::when_narrow`]),
+    /// since only one breakpoint applies at a time.
+    pub phone: adw::Breakpoint,
     /// Whether `narrow` applies now.
     pub is_narrow: Rc<std::cell::Cell<bool>>,
     /// Between the list's and the sidebar's collapse: a tight header.
@@ -136,6 +141,12 @@ impl OscylWindow {
         collapse_all.add_setter(&inner, "collapsed", Some(&true.to_value()));
         collapse_all.add_setter(&outer, "collapsed", Some(&true.to_value()));
         window.add_breakpoint(collapse_all.clone());
+        let phone = adw::Breakpoint::new(
+            adw::BreakpointCondition::parse(BP_PHONE).expect("valid breakpoint"),
+        );
+        phone.add_setter(&inner, "collapsed", Some(&true.to_value()));
+        phone.add_setter(&outer, "collapsed", Some(&true.to_value()));
+        window.add_breakpoint(phone.clone());
         let list_title = adw::WindowTitle::new("", "");
         list_page
             .bind_property("title", &list_title, "title")
@@ -144,10 +155,12 @@ impl OscylWindow {
 
         let is_narrow: Rc<std::cell::Cell<bool>> = Rc::default();
         {
-            let n = is_narrow.clone();
-            collapse_all.connect_apply(move |_| n.set(true));
-            let n = is_narrow.clone();
-            collapse_all.connect_unapply(move |_| n.set(false));
+            for bp in [&collapse_all, &phone] {
+                let n = is_narrow.clone();
+                bp.connect_apply(move |_| n.set(true));
+                let n = is_narrow.clone();
+                bp.connect_unapply(move |_| n.set(false));
+            }
         }
         Rc::new(OscylWindow {
             window,
@@ -157,6 +170,7 @@ impl OscylWindow {
             list_page,
             list_title,
             narrow: collapse_all,
+            phone,
             is_narrow,
             tight,
             editor_page,
@@ -167,16 +181,28 @@ impl OscylWindow {
         })
     }
 
-    /// Once the window is phone-width (one pane at a time), `header`
-    /// keeps only the close control, on the side the desktop puts it:
-    /// minimize and maximize mean nothing on a phone, and the bar needs
-    /// their room.
+    /// `object`'s `property` while the window is narrow (one pane at a
+    /// time), phone width included.
+    pub fn when_narrow(
+        &self,
+        object: &impl IsA<gtk::glib::Object>,
+        property: &str,
+        value: &gtk::glib::Value,
+    ) {
+        self.narrow.add_setter(object, property, Some(value));
+        self.phone.add_setter(object, property, Some(value));
+    }
+
+    /// At phone width `header` keeps only the close control, on the side
+    /// the desktop puts it: minimize and maximize mean nothing on a phone,
+    /// and the bar needs their room. A narrow desktop window (half a
+    /// screen) keeps them.
     fn phone_controls(&self, header: &adw::HeaderBar) {
         // ponytail: read once; a layout changed while running applies on the next start.
         let layout = gtk::Settings::default()
             .and_then(|s| s.gtk_decoration_layout())
             .map_or_else(|| ":close".to_owned(), |l| l.to_string());
-        self.narrow.add_setter(
+        self.phone.add_setter(
             header,
             "decoration-layout",
             Some(&phone_layout(&layout).to_value()),
@@ -303,8 +329,7 @@ impl OscylWindow {
             (history.upcast_ref(), false),
             (more.upcast_ref(), true),
         ] {
-            self.narrow
-                .add_setter(w, "visible", Some(&narrow.to_value()));
+            self.when_narrow(w, "visible", &narrow.to_value());
         }
         let button = gtk::Button::builder().action_name("win.primary").build();
         // The memory card, the synth's own storage: to save, to sync, or
@@ -365,8 +390,7 @@ impl OscylWindow {
         // lose their words.
         for l in [&live_label, &compare_label] {
             self.tight.add_setter(l, "visible", Some(&false.to_value()));
-            self.narrow
-                .add_setter(l, "visible", Some(&false.to_value()));
+            self.when_narrow(l, "visible", &false.to_value());
         }
         // While held, a line along the foot says how far toward the edit
         // the blend stands (empty: the saved program).
