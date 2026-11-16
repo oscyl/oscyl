@@ -305,6 +305,29 @@ fn a_palette_oscillator_is_used_within_its_parameters() {
             "User Param 3 Type",
         ];
         assert_eq!(types.map(|t| get(&p, t)), [2, 0, 1]);
+        // Over a base that lacks the unit, with a page kept, the types are
+        // still the unit's.
+        let base = DRIVER
+            .generate(&recipe(pad, seed, &Palette::default()), None)
+            .unwrap();
+        let filter = DRIVER
+            .curation()
+            .pages
+            .iter()
+            .position(|pg| pg.title == "Filter")
+            .unwrap();
+        let kept = DRIVER
+            .generate(
+                &Recipe {
+                    keep: vec![filter],
+                    ..recipe(pad, seed, &palette)
+                },
+                Some(&base),
+            )
+            .unwrap();
+        if get(&kept, "Multi Type") == 2 {
+            assert_eq!(types.map(|t| get(&kept, t)), [2, 0, 1], "seed {seed}");
+        }
         // Wind is noise alone: it leaves an oscillator be.
         let w = DRIVER
             .generate(&recipe(wind, seed, &palette), None)

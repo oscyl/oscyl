@@ -633,13 +633,11 @@ impl Driver for MinilogueXd {
                     copy_field(&mut out, base, f);
                 }
             }
-            // The base's fixed fields came back; a user oscillator the
-            // recipe chose still needs its own parameter types.
-            if r.keep.is_empty() {
-                let mut p = program(&out)?;
-                generate::note_param_types(&mut p, &r.units);
-                out = bytes(p);
-            }
+            // The base's fixed fields came back, kept pages or not; the
+            // user oscillator selected still needs its own parameter types.
+            let mut p = program(&out)?;
+            generate::note_param_types(&mut p, &r.units);
+            out = bytes(p);
         }
         Ok(out)
     }
