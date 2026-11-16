@@ -148,6 +148,7 @@ import io.github.oscyl.shared.generated.resources.synth_empty_title
 import io.github.oscyl.shared.generated.resources.synth_state_access
 import io.github.oscyl.shared.generated.resources.synth_state_connected
 import io.github.oscyl.shared.generated.resources.synth_state_disconnected
+import io.github.oscyl.shared.generated.resources.synth_state_unplugged
 import io.github.oscyl.shared.generated.resources.synth_state_firmware
 import io.github.oscyl.shared.generated.resources.synth_state_simulated
 import io.github.oscyl.theme.OscylTheme
@@ -424,6 +425,7 @@ private fun SynthPlate(
     val shape = RoundedCornerShape(OscylTokens.radiusPanel)
     val line = when {
         card.simulated -> stringResource(Res.string.synth_state_simulated)
+        !card.plugged -> stringResource(Res.string.synth_state_unplugged)
         !card.connected -> stringResource(Res.string.synth_state_disconnected)
         card.firmware != null -> stringResource(Res.string.synth_state_firmware, card.firmware)
         else -> stringResource(Res.string.synth_state_connected)
@@ -472,7 +474,7 @@ private fun SynthPlate(
         }
         if (card.connected) {
             jobs()
-        } else {
+        } else if (card.plugged) {
             val named = stringResource(Res.string.synth_action_connect_named, card.model)
             OutlinedAction(stringResource(Res.string.synth_action_connect), onConnect, Modifier.semantics { contentDescription = named }, leading = { Glyph(Res.drawable.ic_connect) })
         }

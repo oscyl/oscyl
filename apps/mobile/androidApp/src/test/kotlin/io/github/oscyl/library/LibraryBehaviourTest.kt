@@ -300,6 +300,26 @@ class LibraryBehaviourTest {
         assertEquals("Kept", saved(kept.id)[2])
     }
 
+    /** A USB synth unplugged stays listed with its programs and edits, and no library is made of them. */
+    @Test
+    fun anUnpluggedUsbSynthStaysListedWithItsEdits() {
+        val port = io.github.oscyl.platform.MidiPortInfo(name = "minilogue xd _ SOUND", id = "7")
+        val midi = io.github.oscyl.synth.FakeMidi(port)
+        val synth = ViewModelProvider.create(store, viewModelFactory { initializer { SynthModel(midi) } })[SynthModel::class]
+        val model = show(synth)
+        awaitIdle { model.ui.value.synths.size == 1 }
+        val card = model.ui.value.synths.single()
+        model.select(synthSource(card.id))
+        awaitIdle { model.ui.value.programs?.rows?.getOrNull(2)?.loaded == true }
+        model.renameProgram(2, "Kept")
+        midi.unplug(port)
+        awaitIdle { model.ui.value.synths.singleOrNull()?.connected == false }
+        assertEquals(card.id, model.ui.value.synths.single().id)
+        assertEquals(synthSource(card.id), model.ui.value.programs?.source)
+        assertEquals("Kept", names(model)[2])
+        assertTrue(model.ui.value.lines.none { it.name.endsWith("(disconnected)") })
+    }
+
     @Test
     fun factorySlotsRefuseEdits() {
         val synth = ViewModelProvider.create(store, viewModelFactory { initializer { SynthModel(NoMidi) } })[SynthModel::class]

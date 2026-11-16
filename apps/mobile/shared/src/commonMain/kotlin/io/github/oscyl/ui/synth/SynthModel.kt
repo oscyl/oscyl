@@ -50,16 +50,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /**
- * One synth on the Synth screen. A USB synth the person disconnected stays, not
- * [connected], while its cable is in, so it can be connected again.
+ * One synth on the Synth screen. A USB synth that went away (disconnected, unplugged,
+ * switched off) stays, not [connected], with its programs and edits, and takes its
+ * card back when it connects again.
  */
 data class SynthCard(
-    /** The worker's id while connected. */
+    /** Its id for the app: the worker's id when it first connected, kept across reconnects. */
     val id: ULong,
     val model: String,
     val firmware: String?,
@@ -71,6 +76,8 @@ data class SynthCard(
     val read: ReadProgress? = null,
     /** The worker's driver id. */
     val driverId: String = "",
+    /** Its cable is in (false once unplugged; it can come back). */
+    val plugged: Boolean = true,
 )
 
 /**
@@ -200,6 +207,18 @@ class SynthModel(
         }
     })
 
+    /** Each card's worker id while it is connected (the worker's ids change each connection). */
+    private val links = mutableMapOf<ULong, ULong>()
+
+    /** The card of worker id [worker]. */
+    private fun cardOf(worker: ULong): ULong? = links.entries.firstOrNull { it.value == worker }?.key
+
+    /** Card [card]'s worker id, while connected. */
+    private fun w(card: ULong): ULong? = links[card]
+
+    /** Cards the person disconnected: never reopened on their own. */
+    private val asked = mutableSetOf<ULong>()
+
     /** Plugged ports by their link name; the driver for those a driver recognised. */
     private val plugged = mutableMapOf<String, MidiPortInfo>()
     private val driverOf = mutableMapOf<String, String>()
@@ -238,26 +257,35 @@ class SynthModel(
         synth.openDemo(driverId)
     }
 
-    fun disconnect(card: SynthCard) = synth.disconnect(card.id)
+    fun disconnect(card: SynthCard) {
+        asked += card.id
+        w(card.id)?.let(synth::disconnect)
+    }
 
     /** List [card]'s user-unit slots, once, if it has any (asked when its card shows them, as the desktop's units page does). */
     fun listUnits(card: SynthCard) {
         if (card.id in _units.value || card.id in listing || unitExt(card.driverId) == null) return
         listing += card.id
-        synth.readSlots(card.id)
+        w(card.id)?.let(synth::readSlots)
     }
 
     /** Synths whose slots were asked for. */
     private val listing = mutableSetOf<ULong>()
 
     /** Read every program of [card] again. */
-    fun readAll(card: SynthCard) = synth.readAll(card.id)
+    fun readAll(card: SynthCard) {
+        w(card.id)?.let(synth::readAll)
+    }
 
     /** Stop reading [card]; the programs not read yet show as such. */
-    fun cancelRead(card: SynthCard) = synth.cancelRead(card.id)
+    fun cancelRead(card: SynthCard) {
+        w(card.id)?.let(synth::cancelRead)
+    }
 
     /** Read the program [card] is playing; it is kept as a new library and shown. */
-    fun readCurrent(card: SynthCard) = synth.readCurrent(card.id)
+    fun readCurrent(card: SynthCard) {
+        w(card.id)?.let(synth::readCurrent)
+    }
 
     /** Pick a unit file and load it into [slot] of [module] on [card]; why not, in words, when it can't be. */
     fun loadUnit(card: SynthCard, module: String, slot: UByte) {
@@ -270,7 +298,7 @@ class SynthModel(
             } ?: return@launch
             try {
                 val unit = withContext(Dispatchers.IO) { readUnit(card.driverId, module, picked.bytes) }
-                synth.uploadUnit(card.id, module, slot, unit.data)
+                w(card.id)?.let { synth.uploadUnit(it, module, slot, unit.data) }
             } catch (e: FfiException) {
                 _notice.value = e.reason()
             }
@@ -299,7 +327,7 @@ class SynthModel(
                 }
                 try {
                     val unit = readUnit(card.driverId, module, bytes)
-                    synth.uploadUnit(card.id, module, slot.slot, unit.data)
+                    w(card.id)?.let { synth.uploadUnit(it, module, slot.slot, unit.data) }
                 } catch (e: FfiException) {
                     _notice.value = e.reason()
                 }
@@ -313,14 +341,16 @@ class SynthModel(
     fun clearUnit(card: SynthCard, module: String, slot: UByte, name: String) {
         val dir = backupsDir ?: return
         try {
-            synth.clearSlot(card.id, module, slot, unitBackupPath(dir, name))
+            w(card.id)?.let { synth.clearSlot(it, module, slot, unitBackupPath(dir, name)) }
         } catch (e: FfiException) {
             _notice.value = e.reason()
         }
     }
 
     /** Play [program] on synth [id] from its edit buffer, without storing it. */
-    fun audition(id: ULong, program: ByteArray) = synth.audition(id, program)
+    fun audition(id: ULong, program: ByteArray) {
+        w(id)?.let { synth.audition(it, program) }
+    }
 
     /** The programs of each write under way, to hand back as saved once the synth stores them. */
     private val writing = mutableMapOf<ULong, List<SlotProgram>>()
@@ -336,23 +366,27 @@ class SynthModel(
      */
     fun write(id: ULong, programs: List<SlotProgram>) {
         // The synth went (during the backup, say): the write ends at once, as failed.
-        if (id !in documents) {
+        val worker = w(id)
+        if (id !in documents || worker == null) {
             _writes.update { it + (id to WriteState.Failed("")) }
             return
         }
         writing[id] = programs
         _writes.update { it + (id to WriteState.Writing(0, programs.size)) }
-        synth.write(id, programs)
+        synth.write(worker, programs)
     }
 
     /** Send live parameter changes to synth [id], one MIDI message each, in order. */
-    fun live(id: ULong, messages: List<ByteArray>) = synth.live(id, messages)
+    fun live(id: ULong, messages: List<ByteArray>) {
+        w(id)?.let { synth.live(it, messages) }
+    }
 
     /** Ask for USB access to [port] again. */
     fun allow(port: MidiPortInfo) = connect(linkName(port))
 
     /** Connect a USB synth the person disconnected (its card's port), or retry one waiting for access. */
     fun connect(port: String) {
+        _cards.value.filter { it.port == port }.forEach { asked -= it.id }
         val info = plugged[port] ?: return
         val driver = driverOf[port] ?: return
         _access.update { it - info }
@@ -366,7 +400,8 @@ class SynthModel(
             driverOf.remove(port)
             synth.gone(port)
             _access.update { list -> list.filterNot { linkName(it) == port } }
-            _cards.update { list -> list.filterNot { it.port == port } }
+            // Its card stays, unplugged, to take back when it comes again.
+            _cards.update { list -> list.map { if (it.port == port) it.copy(plugged = false) else it } }
         }
         val fresh = now.filterKeys { it !in plugged }
         plugged += fresh
@@ -395,68 +430,127 @@ class SynthModel(
 
     private suspend fun on(event: SynthEvent) {
         when (event) {
-            is SynthEvent.Connected -> {
-                _notice.value = null
-                val card = SynthCard(
-                    event.id,
-                    models[event.driverId] ?: event.driverId,
-                    event.firmware,
-                    event.simulated,
-                    if (event.simulated) "" else event.port,
-                    driverId = event.driverId,
-                )
-                _cards.update { list -> list.filterNot { it.id == event.id || (!event.simulated && it.port == card.port) } + card }
-                release(event.id)
-                documents[event.id] = Document.synth(event.driverId, card.model)
-                synth.readAll(event.id)
+            is SynthEvent.Connected -> connected(event)
+            is SynthEvent.ConnectFailed -> _notice.value = event.message
+            // An Error before its Disconnected is status (the cable came out): shown,
+            // and taken back if the Disconnected follows.
+            is SynthEvent.Error -> {
+                _notice.value = event.message
+                errorFor = event.id?.let(::cardOf)
             }
-            is SynthEvent.ReadProgress -> updateCard(event.id) {
+            else -> {
+                // Events of a connection already let go mean nothing now.
+                val id = workerId(event)?.let(::cardOf) ?: return
+                on(id, event)
+            }
+        }
+    }
+
+    /** The worker id an event is about. */
+    private fun workerId(event: SynthEvent): ULong? = when (event) {
+        is SynthEvent.ReadProgress -> event.id
+        is SynthEvent.Program -> event.id
+        is SynthEvent.ReadDone -> event.id
+        is SynthEvent.Disconnected -> event.id
+        is SynthEvent.WriteProgress -> event.id
+        is SynthEvent.Written -> event.id
+        is SynthEvent.WriteFailed -> event.id
+        is SynthEvent.Slots -> event.id
+        is SynthEvent.Current -> event.id
+        else -> null
+    }
+
+    private suspend fun connected(event: SynthEvent.Connected) {
+        _notice.value = null
+        if (reattach(event)) return
+        links[event.id] = event.id
+        val card = SynthCard(
+            event.id,
+            models[event.driverId] ?: event.driverId,
+            event.firmware,
+            event.simulated,
+            if (event.simulated) "" else event.port,
+            driverId = event.driverId,
+        )
+        _cards.update { list -> list + card }
+        documents[event.id] = Document.synth(event.driverId, card.model)
+        synth.readAll(event.id)
+    }
+
+    /**
+     * A real synth connected while a card of its model waits, not connected: it takes
+     * that card back (the one it left from the same port first), programs and edits
+     * kept, and is read again. False when there is none.
+     */
+    private fun reattach(event: SynthEvent.Connected): Boolean {
+        if (event.simulated) return false
+        val waiting = _cards.value.filter { !it.connected && !it.simulated && it.driverId == event.driverId && it.id in documents }
+        val card = waiting.firstOrNull { it.port == event.port } ?: waiting.firstOrNull() ?: return false
+        links[card.id] = event.id
+        updateCard(card.id) { it.copy(connected = true, plugged = true, port = event.port, firmware = event.firmware, read = null) }
+        synth.readAll(event.id)
+        _programs.value++
+        return true
+    }
+
+    /** Event [event] of card [id]'s connection. */
+    private suspend fun on(id: ULong, event: SynthEvent) {
+        when (event) {
+            is SynthEvent.ReadProgress -> updateCard(id) {
                 it.copy(read = ReadProgress(event.done.toInt(), event.total.toInt()))
             }
-            is SynthEvent.Program -> documents[event.id]?.receive(event.slot, event.data)?.let { _received.tryEmit(event.id to it) }
+            is SynthEvent.Program -> documents[id]?.receive(event.slot, event.data)?.let { _received.tryEmit(id to it) }
             is SynthEvent.ReadDone -> {
-                updateCard(event.id) { it.copy(read = null) }
+                updateCard(id) { it.copy(read = null) }
                 _programs.value++
             }
             is SynthEvent.Disconnected -> {
+                links.remove(id)
                 // A write cut short stored nothing it can vouch for (no reason: the synth went).
-                if (writing.remove(event.id) != null) _writes.update { it + (event.id to WriteState.Failed("")) }
-                release(event.id)
-                _units.update { it - event.id }
+                if (writing.remove(id) != null) _writes.update { it + (id to WriteState.Failed("")) }
+                _units.update { it - id }
+                listing -= id
+                val card = _cards.value.firstOrNull { it.id == id }
+                if (card == null || card.simulated) {
+                    release(id)
+                    _cards.update { list -> list.filterNot { it.id == id } }
+                } else {
+                    updateCard(id) { it.copy(connected = false, read = null, plugged = it.port in plugged) }
+                    // A cable still in: let go of its ports; a synth that stopped answering on its
+                    // own (the person did not disconnect it) is opened again.
+                    plugged[card.port]?.let(midi::release)
+                    if (id !in asked && card.port in plugged) reopen(id, card.port)
+                }
                 _programs.value++
-                disconnected(event.id)
-                // A cable still in: let go of its ports until the person connects again.
-                _cards.value.firstOrNull { it.id == event.id && !it.simulated }?.let { card -> plugged[card.port]?.let(midi::release) }
                 // The cable came out: its error was this, not news.
-                if (errorFor == event.id) {
+                if (errorFor == id) {
                     _notice.value = null
                     errorFor = null
                 }
             }
-            is SynthEvent.ConnectFailed -> _notice.value = event.message
-            is SynthEvent.WriteProgress -> _writes.update { it + (event.id to WriteState.Writing(event.done.toInt(), event.total.toInt())) }
+            is SynthEvent.WriteProgress -> _writes.update { it + (id to WriteState.Writing(event.done.toInt(), event.total.toInt())) }
             is SynthEvent.Written -> {
                 // What was written becomes each slot's saved version; an edit made
                 // while it ran stays an edit.
-                val batch = writing.remove(event.id).orEmpty()
+                val batch = writing.remove(id).orEmpty()
                 for (slot in event.indices) {
-                    batch.firstOrNull { it.slot == slot }?.let { documents[event.id]?.receive(slot, it.data) }
+                    batch.firstOrNull { it.slot == slot }?.let { documents[id]?.receive(slot, it.data) }
                 }
                 _programs.value++
-                _writes.update { it + (event.id to WriteState.Written(event.indices.size)) }
+                _writes.update { it + (id to WriteState.Written(event.indices.size)) }
                 refreshBackups()
             }
             is SynthEvent.WriteFailed -> {
-                writing.remove(event.id)
-                _writes.update { it + (event.id to WriteState.Failed(event.message)) }
+                writing.remove(id)
+                _writes.update { it + (id to WriteState.Failed(event.message)) }
             }
             is SynthEvent.Slots -> {
-                _units.update { it + (event.id to event.slots.map { s -> UnitSlot(s.module, s.slot, s.name, unitSection(s.module)) }) }
+                _units.update { it + (id to event.slots.map { s -> UnitSlot(s.module, s.slot, s.name, unitSection(s.module)) }) }
                 // A cleared slot left a backup.
                 refreshBackups()
             }
             is SynthEvent.Current -> {
-                val model = _cards.value.firstOrNull { it.id == event.id }?.let { c -> c.model to c.driverId } ?: return
+                val model = _cards.value.firstOrNull { it.id == id }?.let { c -> c.model to c.driverId } ?: return
                 val title = getString(Res.string.library_current, model.first)
                 try {
                     _kept.trySend(KeptEdits(title, Document.ofPrograms(model.second, title, listOf(event.data)), reveal = true))
@@ -464,29 +558,35 @@ class SynthModel(
                     _notice.value = e.reason()
                 }
             }
-            // An Error before its Disconnected is status (the cable came out): shown,
-            // and taken back if the Disconnected follows.
-            is SynthEvent.Error -> {
-                _notice.value = event.message
-                errorFor = event.id
-            }
             else -> Unit
+        }
+    }
+
+    /**
+     * Open card [id]'s port [port] again, after [ReopenGap], until it connects: a synth
+     * that stopped answering (a minilogue xd asked for a program as it boots) answers
+     * again once its port has been closed a moment. Ends when it connects, its cable
+     * comes out, the person disconnects it, or after [ReopenAttempts].
+     */
+    private fun reopen(id: ULong, port: String) {
+        viewModelScope.launch {
+            repeat(ReopenAttempts) {
+                delay(ReopenGap)
+                val card = _cards.value.firstOrNull { it.id == id } ?: return@launch
+                if (card.connected || id in asked || card.port != port) return@launch
+                val info = plugged[port] ?: return@launch
+                val driver = driverOf[port] ?: return@launch
+                open(info, driver)
+                // Its answer to the inquiry, or the inquiry given up (the core's bound).
+                val back = withTimeoutOrNull(InquiryWait) { _cards.first { cards -> cards.any { it.id == id && it.connected } } }
+                if (back != null) return@launch
+                midi.release(info)
+            }
         }
     }
 
     private fun updateCard(id: ULong, change: (SynthCard) -> SynthCard) =
         _cards.update { list -> list.map { if (it.id == id) change(it) else it } }
-
-    private fun disconnected(id: ULong) = _cards.update { list ->
-        list.mapNotNull { card ->
-            when {
-                card.id != id || !card.connected -> card
-                // Still plugged in: keep it, to connect again.
-                card.port in plugged -> card.copy(connected = false)
-                else -> null
-            }
-        }
-    }
 
     override fun onCleared() {
         documents.values.forEach { it.close() }
@@ -505,3 +605,10 @@ class SynthModel(
 
 /** How long the synth's events are handled before the main loop turns: a quarter of a 60 Hz frame. */
 private val EventSlice = 4.milliseconds
+
+/** How long a stalled synth's port stays closed between attempts to open it again, and how many attempts. */
+private val ReopenGap = 2.seconds
+private const val ReopenAttempts = 15
+
+/** How long an opened port's synth has to answer: the core gives up on the inquiry after 2 s. */
+private val InquiryWait = 3.seconds

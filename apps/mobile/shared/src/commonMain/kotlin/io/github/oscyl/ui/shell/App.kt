@@ -203,7 +203,7 @@ fun App(platform: Platform) {
             // Each synth's edits waiting, asked again whenever an edit (through the
             // library), a read or a write may have changed them.
             val editedCounts = remember(cards, libraryUi, editorHead, programsRevision, writes) {
-                cards.filter { it.connected }.associate { it.id to (synth.document(it.id)?.editedCount()?.toInt() ?: 0) }
+                cards.associate { it.id to (synth.document(it.id)?.editedCount()?.toInt() ?: 0) }
             }
             // The destination shown (later launches start where the welcome's answer said,
             // the desktop's start stage), and the pages over it: About, a licence, ...

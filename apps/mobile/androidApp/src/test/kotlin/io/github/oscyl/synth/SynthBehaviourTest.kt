@@ -19,6 +19,7 @@ import io.github.oscyl.platform.MidiPortInfo
 import io.github.oscyl.platform.OpenResult
 import io.github.oscyl.theme.OscylTheme
 import io.github.oscyl.theme.OscylThemeMode
+import io.github.oscyl.ui.synth.SynthCard
 import io.github.oscyl.ui.synth.SynthModel
 import io.github.oscyl.ui.synth.SynthScreen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,16 +74,98 @@ class SynthBehaviourTest {
         assertTrue(compose.onAllNodesWithText("Add a synth").fetchSemanticsNodes().isNotEmpty())
     }
 
+    /** Waits until synth [card]'s every program has been read and it is connected. */
+    private fun awaitRead(model: SynthModel, timeout: Long = TIMEOUT_MS) = compose.waitUntil(timeout) {
+        compose.runOnIdle {
+            model.cards.value.isNotEmpty() && model.cards.value.all { c -> c.connected && c.read == null && model.document(c.id)?.allRead() == true }
+        }
+    }
+
+    private fun awaitCards(model: SynthModel, test: (List<SynthCard>) -> Boolean) =
+        compose.waitUntil(TIMEOUT_MS) { compose.runOnIdle { test(model.cards.value) } }
+
+    /** Its cable out, the synth stays with its programs, waiting to be plugged in again. */
     @Test
-    fun unplugShowsDisconnected() {
+    fun unplugKeepsTheCardAndItsPrograms() {
         val midi = FakeMidi(XD)
         val model = show(midi)
-        awaitText("Connected, firmware 2.10")
-        assertEquals(false, model.cards.value.single().simulated)
+        awaitRead(model)
         midi.unplug(XD)
-        awaitText("Plug in your synth over USB")
-        assertTrue(model.cards.value.isEmpty())
+        awaitCards(model) { it.singleOrNull()?.connected == false }
+        val card = model.cards.value.single()
+        assertTrue(model.document(card.id)!!.allRead())
+        awaitText("Plug it in to reconnect")
         assertTrue(compose.onAllNodesWithContentDescription("Disconnect", substring = true).fetchSemanticsNodes().isEmpty())
+    }
+
+    /** Plugged in again (Android gives it a new id), it comes back to its own card. */
+    @Test
+    fun replugReattachesToTheSameCard() {
+        val midi = FakeMidi(XD)
+        val model = show(midi)
+        awaitRead(model)
+        val before = model.cards.value.single()
+        midi.unplug(XD)
+        awaitCards(model) { it.singleOrNull()?.connected == false }
+        midi.replug(XD.copy(id = "9"))
+        awaitRead(model)
+        val after = model.cards.value.single()
+        assertEquals(before.id, after.id)
+        awaitText("Connected, firmware 2.10")
+    }
+
+    /** An edit made while the synth was away is still there when it is back. */
+    @Test
+    fun editsSurviveUnplugAndReplug() {
+        val midi = FakeMidi(XD)
+        val model = show(midi)
+        awaitRead(model)
+        val id = model.cards.value.single().id
+        midi.unplug(XD)
+        awaitCards(model) { it.singleOrNull()?.connected == false }
+        val (field, to) = compose.runOnIdle {
+            model.document(id)!!.editor(3u).use { e ->
+                val f = e.fields(e.firstPage()).first { it.control is io.github.oscyl.core.ControlKind.Dial }
+                val to = if (f.raw > 500u) f.raw - 100u else f.raw + 100u
+                e.set(f.field, to)
+                f.field to to
+            }
+        }
+        midi.replug(XD.copy(id = "9"))
+        awaitRead(model)
+        compose.runOnIdle {
+            model.document(id)!!.editor(3u).use { e ->
+                assertTrue(e.field(field).edited)
+                assertEquals(to, e.field(field).raw)
+            }
+            assertTrue(model.kept.tryReceive().isFailure)
+        }
+    }
+
+    /** A synth that stops answering (asked too soon after it booted) is let go and opened again. */
+    @Test
+    fun aSynthThatStopsAnsweringIsReopened() {
+        val midi = FakeMidi(XD).apply { muteOpens = 1 }
+        val model = show(midi)
+        awaitRead(model, timeout = 30_000L)
+        assertEquals(listOf(XD), midi.released)
+        assertEquals(2, midi.opens)
+    }
+
+    /** Two synths of one model: only the one plugged out and in again goes away and comes back. */
+    @Test
+    fun twoSynthsOnlyTheReplugggedOneReattaches() {
+        val other = MidiPortInfo(name = "minilogue xd _ SOUND", id = "8")
+        val midi = FakeMidi(XD, other)
+        val model = show(midi)
+        awaitCards(model) { it.size == 2 }
+        awaitRead(model, timeout = 20_000L)
+        val ids = model.cards.value.map { it.id }.toSet()
+        midi.unplug(other)
+        awaitCards(model) { cards -> cards.count { !it.connected } == 1 }
+        midi.replug(other.copy(id = "11"))
+        awaitRead(model, timeout = 20_000L)
+        assertEquals(ids, model.cards.value.map { it.id }.toSet())
     }
 
     @Test
@@ -138,6 +221,12 @@ class FakeMidi(vararg plugged: MidiPortInfo) : MidiPlatform {
     /** How many opens to refuse USB access before allowing it. */
     var denials = 0
 
+    /** How many opens give a synth that answers the identity, then nothing (a wedged xd). */
+    var muteOpens = 0
+
+    /** How many ports were opened. */
+    var opens = 0
+
     /** Synths opened from now on hold every reply but the identity until [answer]. */
     var holdReplies = false
 
@@ -160,13 +249,17 @@ class FakeMidi(vararg plugged: MidiPortInfo) : MidiPlatform {
             return OpenResult.PermissionDenied
         }
         open.remove(port.id)?.detach()
-        val xd = FakeXd(holdReplies)
+        opens++
+        val xd = FakeXd(holdReplies || muteOpens-- > 0)
         open[port.id] = xd
         return OpenResult.Opened(xd, xd::attach)
     }
 
     /** Deliver every reply the open synths held. */
     fun answer() = synchronized(open) { open.values.forEach(FakeXd::answer) }
+
+    /** The cable goes in: the platform lists the port (Android gives it a new id). */
+    fun replug(port: MidiPortInfo) = ports.update { it + port }
 
     /** The cable comes out: the sink goes first, then the port. */
     fun unplug(port: MidiPortInfo) {

@@ -337,7 +337,8 @@ class LibraryModel(
         synth?.let { s ->
             viewModelScope.launch {
                 // Read progress moves the synth's card and the list's progress line only.
-                s.cards.map { cards -> cards.filter { it.connected } }.distinctUntilChanged().collect { cards ->
+                // A synth away keeps its programs: listed while it holds them.
+                s.cards.map { cards -> cards.filter { it.connected || s.document(it.id) != null } }.distinctUntilChanged().collect { cards ->
                     val ids = cards.map { it.id }
                     _ui.update { ui ->
                         ui.copy(
@@ -388,7 +389,7 @@ class LibraryModel(
         val dir = unsyncedDir ?: return
         val s = synth ?: return
         // What is kept is taken now, on this thread: a document closed later (the app going) can't lose it.
-        val kept = s.cards.value.filter { it.connected }.mapNotNull { card -> s.document(card.id)?.let { unsyncedKey(card) to it.offline("") } }
+        val kept = s.cards.value.mapNotNull { card -> s.document(card.id)?.let { unsyncedKey(card) to it.offline("") } }
         written += kept.map { it.first }
         viewModelScope.launch {
             withContext(io + NonCancellable) {

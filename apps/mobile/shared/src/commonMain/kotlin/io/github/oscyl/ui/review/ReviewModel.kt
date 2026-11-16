@@ -124,7 +124,7 @@ class ReviewModel(
         waiting?.cancel()
         waiting = viewModelScope.launch {
             // Or not at all: the synth went before its slots showed.
-            val gone = { cards: List<io.github.oscyl.ui.synth.SynthCard> -> cards.none { synthSource(it.id) == source && it.connected } }
+            val gone = { cards: List<io.github.oscyl.ui.synth.SynthCard> -> cards.none { synthSource(it.id) == source && synth.document(it.id) != null } }
             val shown = combine(library.shown, synth.cards) { shown, cards -> (shown?.source == source) to gone(cards) }
                 .first { (shown, gone) -> shown || gone }
             if (shown.first) open()

@@ -34,6 +34,7 @@
     <string name="synth_state_firmware">Connesso, firmware %1$s</string>
     <string name="synth_state_simulated">Simulato, senza suono</string>
     <string name="synth_state_disconnected">Disconnesso</string>
+    <string name="synth_state_unplugged">Collegalo per riconnetterlo</string>
     <string name="synth_state_access">In attesa dell’accesso USB</string>
     <string name="synth_action_disconnect">Disconnetti</string>
     <string name="synth_action_disconnect_named">Disconnetti %1$s</string>
