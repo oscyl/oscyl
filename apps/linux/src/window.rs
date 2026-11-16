@@ -69,6 +69,8 @@ pub struct OscylWindow {
     pub settings: std::cell::RefCell<Settings>,
     /// The interface-size toast while it shows.
     zoom_toast: Rc<std::cell::RefCell<Option<adw::Toast>>>,
+    /// The toast showing (or about to), dismissed by the next one.
+    shown_toast: std::cell::RefCell<Option<adw::Toast>>,
 }
 
 impl std::ops::Deref for OscylWindow {
@@ -160,6 +162,7 @@ impl OscylWindow {
             editor_page,
             toasts,
             zoom_toast: Rc::default(),
+            shown_toast: Default::default(),
             settings: std::cell::RefCell::new(settings),
         })
     }
@@ -392,7 +395,18 @@ impl OscylWindow {
     }
 
     pub fn toast(&self, text: &str) {
-        self.toasts.add_toast(adw::Toast::new(text));
+        self.show_toast(adw::Toast::new(text));
+    }
+
+    /// Show `toast` now. Toasts never queue: a new one dismisses the one
+    /// showing, so actions in a row (rolls, say) leave one toast, the last.
+    pub fn show_toast(&self, toast: adw::Toast) {
+        if let Some(old) = self.shown_toast.replace(Some(toast.clone()))
+            && old != toast
+        {
+            old.dismiss();
+        }
+        self.toasts.add_toast(toast);
     }
 
     /// Say the interface size after a change, in one toast that updates
@@ -416,6 +430,6 @@ impl OscylWindow {
             slot.replace(None);
         });
         self.zoom_toast.replace(Some(t.clone()));
-        self.toasts.add_toast(t);
+        self.show_toast(t);
     }
 }

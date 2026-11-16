@@ -277,7 +277,7 @@ impl App {
             .button_label(tr("Undo"))
             .action_name("win.undo")
             .build();
-        self.win.toasts.add_toast(toast);
+        self.win.show_toast(toast);
     }
 
     /// Programs can be put in another order here, or why not: one of
@@ -409,6 +409,6 @@ impl App {
             .button_label(tr("Undo"))
             .action_name("win.undo")
             .build();
-        self.win.toasts.add_toast(toast);
+        self.win.show_toast(toast);
     }
 }

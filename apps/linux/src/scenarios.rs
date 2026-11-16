@@ -299,3 +299,18 @@ fn without_live_or_off_the_synth_page_the_app_stays() {
         assert_eq!(app.current.get(), Some(3), "generating");
     });
 }
+
+/// Toasts never queue up: a new one (rolls in a row, say) replaces the
+/// one showing, so spamming leaves one, not an endless line.
+#[test]
+fn a_new_toast_replaces_the_one_showing() {
+    with_app(|app| {
+        let gone = Rc::new(std::cell::Cell::new(false));
+        let first = adw::Toast::new("Rolled Voice");
+        let flag = gone.clone();
+        first.connect_dismissed(move |_| flag.set(true));
+        app.win.show_toast(first);
+        app.win.toast("Rolled Filter");
+        assert!(gone.get());
+    });
+}

@@ -426,7 +426,7 @@ impl App {
                 if let Some(path) = self.with_synth_id(id, |s| s.sync_backup.take()).flatten() {
                     self.offer_open(&toast, path);
                 }
-                self.win.toasts.add_toast(toast);
+                self.win.show_toast(toast);
                 self.after_edit();
             }
             Ev::WriteFailed(id, e) => {

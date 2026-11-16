@@ -854,7 +854,7 @@ impl App {
             }
         });
         toast.connect_dismissed(move |_| purge(()));
-        self.win.toasts.add_toast(toast);
+        self.win.show_toast(toast);
     }
 
     pub(crate) fn export_library(&self, i: usize) {
@@ -1069,7 +1069,7 @@ impl App {
             }
         });
         toast.connect_button_clicked(move |_| open(()));
-        self.win.toasts.add_toast(toast);
+        self.win.show_toast(toast);
     }
 
     /// Ctrl+Shift+L: the libraries the selected program can be copied to,

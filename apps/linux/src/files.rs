@@ -218,7 +218,7 @@ impl App {
             Ok(path) => {
                 let toast = adw::Toast::new(&tr("Backup saved"));
                 self.offer_open(&toast, path);
-                self.win.toasts.add_toast(toast);
+                self.win.show_toast(toast);
             }
             Err(e) => self.error_dialog(&tr("Couldn't save the backup"), &e),
         }
