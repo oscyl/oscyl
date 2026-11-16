@@ -56,6 +56,10 @@ impl App {
                         Change::Gone(c) => {
                             let known = me.synths.borrow().iter().any(|s| s.port == c.port);
                             if known {
+                                // It may come back on another port.
+                                for s in me.synths.borrow_mut().iter_mut() {
+                                    s.unplugged |= s.port == c.port;
+                                }
                                 me.win.toast(
                                     &tr("{model} unplugged. Your edits are kept.")
                                         .replace("{model}", c.driver.info().model),
@@ -210,15 +214,11 @@ impl App {
     ) -> bool {
         let old = {
             let mut synths = self.synths.borrow_mut();
-            let entries: Vec<(bool, bool, &str, &str)> = synths
+            let entries: Vec<(bool, bool, bool, &str, &str)> = synths
                 .iter()
                 .map(|s| {
-                    (
-                        s.online,
-                        s.simulated,
-                        s.doc.driver.info().id,
-                        s.port.as_str(),
-                    )
+                    let d = s.doc.driver.info().id;
+                    (s.online, s.simulated, s.unplugged, d, s.port.as_str())
                 })
                 .collect();
             let Some(k) = reattach_index(&entries, driver.info().id, port, simulated) else {
@@ -228,6 +228,7 @@ impl App {
             let old = s.id;
             s.id = id;
             s.online = true;
+            s.unplugged = false;
             s.reading = true;
             s.port = port.to_string();
             s.status = SynthStatus::Connected {
@@ -275,6 +276,7 @@ impl App {
                 self.synths.borrow_mut().push(Synth {
                     id,
                     online: true,
+                    unplugged: false,
                     name: name.clone(),
                     firmware,
                     simulated,
@@ -489,15 +491,32 @@ mod tests {
     const XD: &str = "korg-minilogue-xd";
 
     /// A synth that comes back takes the entry it left on the same port;
-    /// on another port (re-plugged elsewhere), the first of its model.
+    /// on another port (re-plugged elsewhere), the first of its model that
+    /// was unplugged. Entries are (online, simulated, unplugged, driver, port).
     #[test]
     fn reattach_prefers_same_port() {
         let entries = [
-            (false, false, XD, "xd A 28:1"),
-            (false, false, XD, "xd B 32:1"),
+            (false, false, true, XD, "xd A 28:1"),
+            (false, false, true, XD, "xd B 32:1"),
         ];
         assert_eq!(reattach_index(&entries, XD, "xd B 32:1", false), Some(1));
         assert_eq!(reattach_index(&entries, XD, "xd C 40:1", false), Some(0));
+    }
+
+    /// A synth the person disconnected (its cable still in) comes back only
+    /// on its own port: another of its model never takes its entry.
+    #[test]
+    fn reattach_on_another_port_takes_only_an_unplugged_entry() {
+        let entries = [
+            (false, false, false, XD, "xd A 28:1"),
+            (false, false, true, XD, "xd B 32:1"),
+        ];
+        assert_eq!(reattach_index(&entries, XD, "xd C 40:1", false), Some(1));
+        assert_eq!(reattach_index(&entries[..1], XD, "xd C 40:1", false), None);
+        assert_eq!(
+            reattach_index(&entries[..1], XD, "xd A 28:1", false),
+            Some(0)
+        );
     }
 
     /// Only an offline real synth of the same model is taken; a simulated
@@ -505,13 +524,13 @@ mod tests {
     #[test]
     fn reattach_skips_online_simulated_and_other_models() {
         let entries = [
-            (true, false, XD, "xd A 28:1"),
-            (false, false, "sequential-prophet-rev2", "rev2 36:0"),
-            (false, true, XD, ""),
+            (true, false, true, XD, "xd A 28:1"),
+            (false, false, true, "sequential-prophet-rev2", "rev2 36:0"),
+            (false, true, true, XD, ""),
         ];
         assert_eq!(reattach_index(&entries, XD, "xd A 28:1", false), None);
         assert_eq!(
-            reattach_index(&[(false, false, XD, "xd")], XD, "", true),
+            reattach_index(&[(false, false, true, XD, "xd")], XD, "", true),
             None
         );
     }

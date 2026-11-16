@@ -45,6 +45,7 @@
     <string name="synth_state_simulated">Simulated, no sound</string>
     <string name="synth_state_disconnected">Disconnected</string>
     <string name="synth_state_unplugged">Plug it in to reconnect</string>
+    <string name="notice_synth_silent">The synth does not answer. Turn it off and on again, then connect.</string>
     <!-- A plugged synth Android has not let Oscyl use yet. -->
     <string name="synth_state_access">Waiting for USB access</string>
     <!-- A synth's action; the _named forms are what a screen reader says (the synth's model). -->

@@ -284,6 +284,10 @@ struct Dev {
     /// Closed while `recovery` runs.
     device: Device,
     recovery: Option<Recovery>,
+    /// Reopens left before giving up; counts down across reconnects
+    /// until an op completes, so a synth that answers only the inquiry is
+    /// not reopened forever.
+    reopens_left: u32,
     simulated: bool,
     jobs: VecDeque<Job>,
     read: Option<Read>,
@@ -500,6 +504,7 @@ impl Worker {
             id,
             device,
             recovery: None,
+            reopens_left: self.retry.attempts,
             simulated,
             jobs: VecDeque::new(),
             read: None,
@@ -751,18 +756,23 @@ impl Worker {
                 }
             }
             SessionEvent::Current(p) => self.emit(Ev::Current(id, p)),
-            SessionEvent::Done => match self.devices[k].jobs.pop_front() {
-                Some(Job::Read) => {
-                    if let Some(r) = self.devices[k].read.as_mut() {
-                        r.done += 1;
-                        let (done, total) = (r.done, r.slots.len());
-                        self.emit(Ev::ReadProgress { id, done, total });
+            SessionEvent::Done => {
+                // It answers: a later stall gets every attempt again.
+                self.devices[k].reopens_left = self.retry.attempts;
+                let job = self.devices[k].jobs.pop_front();
+                match job {
+                    Some(Job::Read) => {
+                        if let Some(r) = self.devices[k].read.as_mut() {
+                            r.done += 1;
+                            let (done, total) = (r.done, r.slots.len());
+                            self.emit(Ev::ReadProgress { id, done, total });
+                        }
+                        self.next_read(k);
                     }
-                    self.next_read(k);
+                    Some(Job::Write(indices)) => self.emit(Ev::Written { id, indices }),
+                    Some(Job::Audition | Job::Current) | None => {}
                 }
-                Some(Job::Write(indices)) => self.emit(Ev::Written { id, indices }),
-                Some(Job::Audition | Job::Current) | None => {}
-            },
+            }
             SessionEvent::Failed(err) => {
                 let driver = self.devices[k].device.driver();
                 let job = self.devices[k].jobs.pop_front();
@@ -813,7 +823,7 @@ impl Worker {
         self.devices[k].recovery = Some(Recovery {
             opening: None,
             next: Instant::now() + self.retry.gap,
-            attempts_left: self.retry.attempts,
+            attempts_left: self.devices[k].reopens_left,
         });
         for e in evs {
             self.on_event(k, e);
@@ -845,6 +855,8 @@ impl Worker {
                 Opened::Ready(mut device) => {
                     device.ring_on_input(self.bell.clone());
                     d.device = *device;
+                    // What is left carries on until an op completes.
+                    d.reopens_left = r.attempts_left;
                     d.recovery = None;
                     // A read in progress goes on where it stopped.
                     self.next_read(k);
@@ -1257,6 +1269,39 @@ mod tests {
         ));
         assert!(matches!(rx.recv_blocking().unwrap(), Ev::Disconnected(i) if i == id));
         assert_eq!(*reopened.lock().unwrap(), 2);
+    }
+
+    /// A synth that answers the device inquiry after each reopen but never
+    /// the read itself is not reopened forever: the attempts count down
+    /// across reconnects until an op completes, then the worker gives up.
+    #[test]
+    fn a_synth_that_only_answers_the_inquiry_is_given_up() {
+        let reopened = Arc::new(Mutex::new(0));
+        let count = reopened.clone();
+        let (handle, rx) = spawn_with(
+            Some(Box::new(move |d, port| {
+                *count.lock().unwrap() += 1;
+                Opening::start(d, Box::new(Wedged(VecDeque::new())), port.into())
+            })),
+            Retry {
+                gap: Duration::from_millis(10),
+                attempts: 1,
+            },
+        );
+        let id = attach(&handle, &rx, wedged_xd());
+        handle.send(Cmd::ReadAll(id));
+        loop {
+            match rx.recv_blocking().expect("worker alive") {
+                Ev::Error(Some(i), e) if i == id && e.contains("does not answer") => break,
+                Ev::Program(..) => panic!("nothing answered a read"),
+                _ => {}
+            }
+        }
+        assert!(matches!(
+            next(&rx, |e| matches!(e, Ev::Disconnected(_))),
+            Ev::Disconnected(i) if i == id
+        ));
+        assert_eq!(*reopened.lock().unwrap(), 1);
     }
 
     /// Where the platform moves the bytes the worker cannot reopen the

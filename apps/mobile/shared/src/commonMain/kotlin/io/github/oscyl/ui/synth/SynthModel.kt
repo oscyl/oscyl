@@ -31,6 +31,7 @@ import io.github.oscyl.shared.generated.resources.Res
 import io.github.oscyl.shared.generated.resources.library_current
 import io.github.oscyl.shared.generated.resources.library_disconnected
 import io.github.oscyl.shared.generated.resources.notice_cannot_read
+import io.github.oscyl.shared.generated.resources.notice_synth_silent
 import io.github.oscyl.shared.generated.resources.notice_unit_lost
 import io.github.oscyl.shared.generated.resources.units_no_empty
 import io.github.oscyl.shared.generated.resources.units_no_synth
@@ -54,6 +55,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -123,6 +125,7 @@ class SynthModel(
     newSynth: (SynthListener) -> Synth = ::Synth,
     private val files: Files = NoFiles,
     private val backupsDir: String? = null,
+    private val reopen: Reopen = Reopen(),
 ) : ViewModel() {
     /** The app's language changed: the unit sections' names are asked again. */
     fun relocalise() {
@@ -218,6 +221,16 @@ class SynthModel(
 
     /** Cards the person disconnected: never reopened on their own. */
     private val asked = mutableSetOf<ULong>()
+
+    /**
+     * Opens left for each card whose synth stopped answering: counted down across
+     * reconnects until a program arrives, so one that answers only the inquiry is
+     * not reopened forever.
+     */
+    private val opensLeft = mutableMapOf<ULong, Int>()
+
+    /** Cards being opened again (one loop each). */
+    private val reopening = mutableSetOf<ULong>()
 
     /** Plugged ports by their link name; the driver for those a driver recognised. */
     private val plugged = mutableMapOf<String, MidiPortInfo>()
@@ -431,7 +444,8 @@ class SynthModel(
     private suspend fun on(event: SynthEvent) {
         when (event) {
             is SynthEvent.Connected -> connected(event)
-            is SynthEvent.ConnectFailed -> _notice.value = event.message
+            // While a stalled synth is opened again its "Reconnecting" notice stays.
+            is SynthEvent.ConnectFailed -> if (reopening.isEmpty()) _notice.value = event.message
             // An Error before its Disconnected is status (the cable came out): shown,
             // and taken back if the Disconnected follows.
             is SynthEvent.Error -> {
@@ -485,7 +499,11 @@ class SynthModel(
     private fun reattach(event: SynthEvent.Connected): Boolean {
         if (event.simulated) return false
         val waiting = _cards.value.filter { !it.connected && !it.simulated && it.driverId == event.driverId && it.id in documents }
-        val card = waiting.firstOrNull { it.port == event.port } ?: waiting.firstOrNull() ?: return false
+        // On another port only a card whose cable came out: one the person disconnected comes back on its own port.
+        val card = waiting.firstOrNull { it.port == event.port }
+            ?: waiting.firstOrNull { it.port !in plugged && it.id !in asked }
+            ?: return false
+        asked -= card.id
         links[card.id] = event.id
         updateCard(card.id) { it.copy(connected = true, plugged = true, port = event.port, firmware = event.firmware, read = null) }
         synth.readAll(event.id)
@@ -499,7 +517,11 @@ class SynthModel(
             is SynthEvent.ReadProgress -> updateCard(id) {
                 it.copy(read = ReadProgress(event.done.toInt(), event.total.toInt()))
             }
-            is SynthEvent.Program -> documents[id]?.receive(event.slot, event.data)?.let { _received.tryEmit(id to it) }
+            is SynthEvent.Program -> {
+                // It answers: a later stall gets every attempt again.
+                opensLeft -= id
+                documents[id]?.receive(event.slot, event.data)?.let { _received.tryEmit(id to it) }
+            }
             is SynthEvent.ReadDone -> {
                 updateCard(id) { it.copy(read = null) }
                 _programs.value++
@@ -519,7 +541,12 @@ class SynthModel(
                     // A cable still in: let go of its ports; a synth that stopped answering on its
                     // own (the person did not disconnect it) is opened again.
                     plugged[card.port]?.let(midi::release)
-                    if (id !in asked && card.port in plugged) reopen(id, card.port)
+                    if (id !in asked && card.port in plugged) {
+                        reopen(id, card.port)
+                        _programs.value++
+                        // Its "stopped answering. Reconnecting…" stays.
+                        return
+                    }
                 }
                 _programs.value++
                 // The cable came out: its error was this, not news.
@@ -563,24 +590,37 @@ class SynthModel(
     }
 
     /**
-     * Open card [id]'s port [port] again, after [ReopenGap], until it connects: a synth
+     * Open card [id]'s port [port] again after [Reopen.gap], until it connects: a synth
      * that stopped answering (a minilogue xd asked for a program as it boots) answers
      * again once its port has been closed a moment. Ends when it connects, its cable
-     * comes out, the person disconnects it, or after [ReopenAttempts].
+     * comes out or the person disconnects it; after [Reopen.attempts] opens with no
+     * program read in between, it says to power-cycle the synth.
      */
     private fun reopen(id: ULong, port: String) {
+        if (!reopening.add(id)) return
         viewModelScope.launch {
-            repeat(ReopenAttempts) {
-                delay(ReopenGap)
-                val card = _cards.value.firstOrNull { it.id == id } ?: return@launch
-                if (card.connected || id in asked || card.port != port) return@launch
-                val info = plugged[port] ?: return@launch
-                val driver = driverOf[port] ?: return@launch
-                open(info, driver)
-                // Its answer to the inquiry, or the inquiry given up (the core's bound).
-                val back = withTimeoutOrNull(InquiryWait) { _cards.first { cards -> cards.any { it.id == id && it.connected } } }
-                if (back != null) return@launch
-                midi.release(info)
+            try {
+                while (true) {
+                    val left = opensLeft.getOrPut(id) { reopen.attempts }
+                    if (left <= 0) {
+                        opensLeft -= id
+                        _notice.value = getString(Res.string.notice_synth_silent)
+                        return@launch
+                    }
+                    delay(reopen.gap)
+                    val card = _cards.value.firstOrNull { it.id == id } ?: return@launch
+                    if (card.connected || id in asked || card.port != port) return@launch
+                    val info = plugged[port] ?: return@launch
+                    val driver = driverOf[port] ?: return@launch
+                    opensLeft[id] = left - 1
+                    open(info, driver)
+                    // Its answer to the inquiry, or the inquiry given up (the core's bound).
+                    val back = withTimeoutOrNull(InquiryWait) { _cards.first { cards -> cards.any { it.id == id && it.connected } } }
+                    if (back != null) return@launch
+                    midi.release(info)
+                }
+            } finally {
+                reopening -= id
             }
         }
     }
@@ -607,8 +647,7 @@ class SynthModel(
 private val EventSlice = 4.milliseconds
 
 /** How long a stalled synth's port stays closed between attempts to open it again, and how many attempts. */
-private val ReopenGap = 2.seconds
-private const val ReopenAttempts = 15
+data class Reopen(val gap: Duration = 2.seconds, val attempts: Int = 15)
 
 /** How long an opened port's synth has to answer: the core gives up on the inquiry after 2 s. */
 private val InquiryWait = 3.seconds

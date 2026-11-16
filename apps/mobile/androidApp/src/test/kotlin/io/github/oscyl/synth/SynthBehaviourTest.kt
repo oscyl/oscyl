@@ -19,6 +19,7 @@ import io.github.oscyl.platform.MidiPortInfo
 import io.github.oscyl.platform.OpenResult
 import io.github.oscyl.theme.OscylTheme
 import io.github.oscyl.theme.OscylThemeMode
+import io.github.oscyl.ui.synth.Reopen
 import io.github.oscyl.ui.synth.SynthCard
 import io.github.oscyl.ui.synth.SynthModel
 import io.github.oscyl.ui.synth.SynthScreen
@@ -30,6 +31,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.Duration.Companion.seconds
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -48,8 +50,8 @@ class SynthBehaviourTest {
     @After
     fun clear() = store.clear()
 
-    private fun show(midi: MidiPlatform): SynthModel {
-        val model = ViewModelProvider.create(store, viewModelFactory { initializer { SynthModel(midi) } })[SynthModel::class]
+    private fun show(midi: MidiPlatform, reopen: Reopen = Reopen()): SynthModel {
+        val model = ViewModelProvider.create(store, viewModelFactory { initializer { SynthModel(midi, reopen = reopen) } })[SynthModel::class]
         compose.setContent { OscylTheme(OscylThemeMode.Dark) { SynthScreen(model, onAbout = {}) } }
         return model
     }
@@ -150,6 +152,39 @@ class SynthBehaviourTest {
         awaitRead(model, timeout = 30_000L)
         assertEquals(listOf(XD), midi.released)
         assertEquals(2, midi.opens)
+    }
+
+    /**
+     * A synth that answers the identity after every reopen but never a read is not
+     * reopened forever: the person hears it is reconnecting, then to power-cycle it.
+     */
+    @Test
+    fun aSynthThatNeverAnswersReadsIsGivenUp() {
+        val midi = FakeMidi(XD).apply { muteOpens = 99 }
+        val model = show(midi, Reopen(gap = 1.seconds, attempts = 2))
+        compose.waitUntil(20_000L) { compose.runOnIdle { model.notice.value?.contains("Reconnecting") == true } }
+        compose.waitUntil(45_000L) { compose.runOnIdle { model.notice.value?.contains("Turn it off and on again") == true } }
+        assertEquals(3, midi.opens)
+        assertTrue(model.cards.value.single().let { !it.connected && it.plugged })
+    }
+
+    /** A synth the person disconnected (cable in) keeps its card when another of its model is replugged. */
+    @Test
+    fun aDisconnectedSynthKeepsItsCardWhenAnotherIsReplugged() {
+        val other = MidiPortInfo(name = "minilogue xd _ SOUND", id = "8")
+        val midi = FakeMidi(XD, other)
+        val model = show(midi)
+        awaitCards(model) { it.size == 2 }
+        awaitRead(model, timeout = 20_000L)
+        val mine = model.cards.value.single { it.port.startsWith("7:") }
+        val theirs = model.cards.value.single { it.port.startsWith("8:") }
+        compose.runOnIdle { model.disconnect(mine) }
+        awaitCards(model) { cards -> cards.single { it.id == mine.id }.connected.not() }
+        midi.unplug(other)
+        awaitCards(model) { cards -> cards.single { it.id == theirs.id }.connected.not() }
+        midi.replug(other.copy(id = "11"))
+        awaitCards(model) { cards -> cards.single { it.id == theirs.id }.connected }
+        assertTrue(model.cards.value.single { it.id == mine.id }.let { !it.connected && it.port.startsWith("7:") })
     }
 
     /** Two synths of one model: only the one plugged out and in again goes away and comes back. */

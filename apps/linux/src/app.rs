@@ -69,6 +69,9 @@ pub(crate) struct Synth {
     /// The worker has it. A real synth that went away stays, offline,
     /// with its programs and edits, until it comes back.
     pub online: bool,
+    /// Its port went away (unplugged, switched off), so it may come back
+    /// on another one.
+    pub unplugged: bool,
     /// What the sidebar calls it ("minilogue xd", "minilogue xd 2").
     pub name: String,
     pub firmware: Option<String>,
@@ -101,11 +104,13 @@ pub(crate) fn target_of(
 }
 
 /// The offline entry a synth connecting on `port` comes back to: the real
-/// synth of its model that left from the same port, else the first that
-/// left. Never one for a simulated synth. Entries are (online, simulated,
-/// driver id, port).
+/// synth of its model that left from the same port, else the first of its
+/// model that was unplugged (re-plugged elsewhere). One the person
+/// disconnected, its cable still in, comes back only on its own port.
+/// Never one for a simulated synth. Entries are (online, simulated,
+/// unplugged, driver id, port).
 pub(crate) fn reattach_index(
-    entries: &[(bool, bool, &str, &str)],
+    entries: &[(bool, bool, bool, &str, &str)],
     driver: &str,
     port: &str,
     simulated: bool,
@@ -113,11 +118,11 @@ pub(crate) fn reattach_index(
     if simulated {
         return None;
     }
-    let free = |&(online, sim, d, _): &(bool, bool, &str, &str)| !online && !sim && d == driver;
+    let free = |e: &(bool, bool, bool, &str, &str)| !e.0 && !e.1 && e.3 == driver;
     entries
         .iter()
-        .position(|e| free(e) && e.3 == port)
-        .or_else(|| entries.iter().position(free))
+        .position(|e| free(e) && e.4 == port)
+        .or_else(|| entries.iter().position(|e| free(e) && e.2))
 }
 
 /// A new synth's name: its model, numbered when that model is already
