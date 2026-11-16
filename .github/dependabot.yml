@@ -21,7 +21,7 @@ updates:
     cooldown:
       default-days: 7
     commit-message:
-      prefix: deps
+      prefix: chore
       include: scope
     groups:
       cargo:
@@ -35,8 +35,14 @@ updates:
     cooldown:
       default-days: 7
     commit-message:
-      prefix: deps
+      prefix: chore
       include: scope
     groups:
       gradle:
         update-types: [minor, patch]
+    ignore:
+      # Roborazzi's preview support (1.79.0) is built against 0.9.x: 0.10.0 changed
+      # ComposablePreview.invoke and every preview golden fails with NoSuchMethodError.
+      # Take it together with the Roborazzi release that moves to it.
+      - dependency-name: io.github.sergio-sastre.ComposablePreviewScanner:android
+        versions: [">=0.10.0"]
