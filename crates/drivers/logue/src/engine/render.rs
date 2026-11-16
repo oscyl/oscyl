@@ -510,18 +510,25 @@ pub fn render(patch: &Patch, play: &Play, frames: usize) -> Vec<f32> {
 }
 
 /// One cycle of `patch` as a picture, `points` long: a C below middle C
-/// with every knob at half, once it has settled.
+/// with every knob at half, once it has settled, scaled so its peak is 1
+/// (a picture shows the shape; the level is the gain's business).
 pub fn picture(patch: &Patch, points: usize) -> Vec<f32> {
     let note = 48u8;
     let period = RATE / (440.0 * 2f32.powf((f32::from(note) - 69.0) / 12.0));
     let s = render(patch, &Play::at(note, 0.5), 4096);
     let start = s.len() as f32 - period - 1.0;
-    (0..points)
+    let cycle: Vec<f32> = (0..points)
         .map(|i| {
             let at = start + period * i as f32 / points as f32;
             let j = at as usize;
             let f = at - j as f32;
             s[j] + (s[j + 1] - s[j]) * f
         })
-        .collect()
+        .collect();
+    let peak = cycle.iter().fold(0.0f32, |m, x| m.max(x.abs()));
+    if peak > 1e-6 {
+        cycle.iter().map(|x| x / peak).collect()
+    } else {
+        cycle
+    }
 }
