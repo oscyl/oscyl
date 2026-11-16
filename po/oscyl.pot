@@ -489,6 +489,9 @@ msgstr ""
 msgid "Connect the synth to audition."
 msgstr ""
 
+msgid "Connect the synth to load a new oscillator"
+msgstr ""
+
 msgid "Connect the synth with a USB cable and switch it on."
 msgstr ""
 
@@ -541,6 +544,9 @@ msgid "Couldn't duplicate the library"
 msgstr ""
 
 msgid "Couldn't export the library"
+msgstr ""
+
+msgid "Couldn't keep the oscillator"
 msgstr ""
 
 msgid "Couldn't make the folder"
@@ -661,6 +667,9 @@ msgid "Deal six variations of this sound"
 msgstr ""
 
 msgid "Deal the sound a recipe code names"
+msgstr ""
+
+msgid "Deal with a New Oscillator"
 msgstr ""
 
 msgid "Decay"
@@ -1176,6 +1185,9 @@ msgstr ""
 msgid "Keep Editing"
 msgstr ""
 
+msgid "Keep Oscillator"
+msgstr ""
+
 msgid "Keep a unit file on the shelf"
 msgstr ""
 
@@ -1344,6 +1356,9 @@ msgstr ""
 msgid "Load {name} into the first free slot of {section}"
 msgstr ""
 
+msgid "Loading “{name}”. Its sounds follow once the synth lists it."
+msgstr ""
+
 msgid "Loading “{name}”…"
 msgstr ""
 
@@ -1369,6 +1384,18 @@ msgid "Main menu"
 msgstr ""
 
 msgid "Main noise control; what it sets depends on the noise type."
+msgstr ""
+
+msgid "Make an oscillator, load it into the synth, and deal sounds that use it"
+msgstr ""
+
+msgid "Make six children of this oscillator and another"
+msgstr ""
+
+msgid "Make six new oscillators"
+msgstr ""
+
+msgid "Make six variations of this oscillator"
 msgstr ""
 
 msgid "Managing units"
@@ -1583,6 +1610,9 @@ msgstr ""
 msgid "New Library Here"
 msgstr ""
 
+msgid "New Oscillators"
+msgstr ""
+
 msgid "New Program"
 msgstr ""
 
@@ -1760,6 +1790,9 @@ msgstr ""
 msgid "Oscillators and effects"
 msgstr ""
 
+msgid "Oscillators of your own for the synth's user slots. Keep one to load it: Generate then uses it."
+msgstr ""
+
 msgid "Oscyl can't read .{ext} files."
 msgstr ""
 
@@ -1833,6 +1866,9 @@ msgid "Parameter the joystick moves when pulled down."
 msgstr ""
 
 msgid "Parameter the joystick moves when pushed up."
+msgstr ""
+
+msgid "Parameters: {names}"
 msgstr ""
 
 msgid "Paste Sound Here"
@@ -1955,6 +1991,9 @@ msgstr ""
 msgid "Press Generate to deal six sounds."
 msgstr ""
 
+msgid "Press New Oscillators to make six."
+msgstr ""
+
 msgid "Previous program"
 msgstr ""
 
@@ -1998,6 +2037,12 @@ msgid "Programs swapped"
 msgstr ""
 
 msgid "Put it back, as one step you can undo"
+msgstr ""
+
+msgid "Put it on the shelf and load it into the synth's first free oscillator slot"
+msgstr ""
+
+msgid "Put it on the shelf, to load once the synth is connected"
 msgstr ""
 
 msgid "Quick, playable chords"
@@ -3226,5 +3271,8 @@ msgid "“{name}” is off the shelf"
 msgstr ""
 
 msgid "“{name}” is on the shelf"
+msgstr ""
+
+msgid "“{name}” is on the shelf. Connect the synth to load it."
 msgstr ""
 

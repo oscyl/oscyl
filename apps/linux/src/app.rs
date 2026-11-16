@@ -777,6 +777,24 @@ impl App {
                 self.sidebar.select(&doc);
             }
             Ask::Copied => self.win.toast(&tr("Recipe code copied")),
+            Ask::KeepOscillator(d, p) => match oscyl_app::oscillators::keep(&self.shelf(), d, &p) {
+                Ok(u) => match self.target_synth(d) {
+                    Some(id) => {
+                        self.win
+                            .toast(&tr("Loading “{name}”…").replace("{name}", &u.name));
+                        self.synth.send(Cmd::LoadUnit {
+                            id,
+                            module: u.module,
+                            data: u.data,
+                        });
+                    }
+                    None => self.win.toast(
+                        &tr("“{name}” is on the shelf. Connect the synth to load it.")
+                            .replace("{name}", &u.name),
+                    ),
+                },
+                Err(e) => self.error_dialog(&tr("Couldn't keep the oscillator"), &e),
+            },
             Ask::PickSlot => {
                 self.win
                     .toast(&tr("Select a slot in the program list first."));

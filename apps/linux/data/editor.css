@@ -240,6 +240,10 @@ flowboxchild:selected .gen-tile graph.mini { color: var(--oscyl-on-plate); }
 .generator .gen-families { margin: 0 0 0.6em; }
 .generator .gen-code { margin-top: 0.75em; }
 .generator .gen-code .gen-code-text { font-family: monospace; }
+.generator .gen-osc > .section-heading { margin: 1.5em 0 0.6em; }
+.generator .gen-osc .gen-intro { margin: 0 0 0.75em; }
+.generator .gen-osc-buttons { margin-bottom: 0.75em; }
+.generator .gen-osc-status { margin-bottom: 0.75em; }
 .generator .gen-code button { min-width: 32px; min-height: 32px; margin: -6px 0; }
 .gen-code-box { padding: 6px; }
 .gen-code-error { color: var(--oscyl-ink); font-weight: 600; }

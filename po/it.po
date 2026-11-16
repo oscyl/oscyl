@@ -514,6 +514,9 @@ msgstr "Connetti il synth"
 msgid "Connect the synth to audition."
 msgstr "Connetti il synth per ascoltare."
 
+msgid "Connect the synth to load a new oscillator"
+msgstr "Collega il synth per caricare un nuovo oscillatore"
+
 msgid "Connect the synth with a USB cable and switch it on."
 msgstr "Collega il synth con un cavo USB e accendilo."
 
@@ -570,6 +573,9 @@ msgstr "Impossibile duplicare la libreria"
 
 msgid "Couldn't export the library"
 msgstr "Impossibile esportare la libreria"
+
+msgid "Couldn't keep the oscillator"
+msgstr "Impossibile tenere l'oscillatore"
 
 msgid "Couldn't make the folder"
 msgstr "Impossibile creare la cartella"
@@ -694,6 +700,9 @@ msgstr "Crea sei variazioni di questo suono"
 
 msgid "Deal the sound a recipe code names"
 msgstr "Crea il suono indicato da un codice ricetta"
+
+msgid "Deal with a New Oscillator"
+msgstr "Crea con un nuovo oscillatore"
 
 msgid "Decay"
 msgstr "Decay"
@@ -1255,6 +1264,9 @@ msgstr "Tieni"
 msgid "Keep Editing"
 msgstr "Continua a modificare"
 
+msgid "Keep Oscillator"
+msgstr "Tieni l'oscillatore"
+
 msgid "Keep a unit file on the shelf"
 msgstr "Tieni un file di unità sullo scaffale"
 
@@ -1427,6 +1439,9 @@ msgstr "Carica un'unità in {section}, slot {number}"
 msgid "Load {name} into the first free slot of {section}"
 msgstr "Carica {name} nel primo slot libero di {section}"
 
+msgid "Loading “{name}”. Its sounds follow once the synth lists it."
+msgstr "Caricamento di «{name}». I suoni arrivano appena il synth lo elenca."
+
 msgid "Loading “{name}”…"
 msgstr "Caricamento di «{name}»…"
 
@@ -1458,6 +1473,18 @@ msgstr "Menu principale"
 msgid "Main noise control; what it sets depends on the noise type."
 msgstr ""
 "Controllo principale del rumore; cosa regola dipende dal tipo di rumore."
+
+msgid "Make an oscillator, load it into the synth, and deal sounds that use it"
+msgstr "Crea un oscillatore, caricalo nel synth e crea suoni che lo usano"
+
+msgid "Make six children of this oscillator and another"
+msgstr "Crea sei figli di questo oscillatore e di un altro"
+
+msgid "Make six new oscillators"
+msgstr "Crea sei nuovi oscillatori"
+
+msgid "Make six variations of this oscillator"
+msgstr "Crea sei varianti di questo oscillatore"
 
 msgid "Managing units"
 msgstr "Gestione delle unità"
@@ -1673,6 +1700,9 @@ msgstr "Nuova libreria"
 msgid "New Library Here"
 msgstr "Nuova libreria qui"
 
+msgid "New Oscillators"
+msgstr "Nuovi oscillatori"
+
 msgid "New Program"
 msgstr "Nuovo programma"
 
@@ -1864,6 +1894,9 @@ msgstr "Oscillatori"
 msgid "Oscillators and effects"
 msgstr "Oscillatori ed effetti"
 
+msgid "Oscillators of your own for the synth's user slots. Keep one to load it: Generate then uses it."
+msgstr "Oscillatori tutti tuoi per gli slot utente del synth. Tienine uno per caricarlo: Genera poi lo usa."
+
 msgid "Oscyl can't read .{ext} files."
 msgstr "Oscyl non sa leggere i file .{ext}."
 
@@ -1944,6 +1977,9 @@ msgstr "Parametro che il joystick muove quando lo tiri in basso."
 
 msgid "Parameter the joystick moves when pushed up."
 msgstr "Parametro che il joystick muove quando lo spingi in alto."
+
+msgid "Parameters: {names}"
+msgstr "Parametri: {names}"
 
 msgid "Paste Sound Here"
 msgstr "Incolla il suono qui"
@@ -2110,6 +2146,9 @@ msgstr "Preparare un'esibizione"
 msgid "Press Generate to deal six sounds."
 msgstr "Premi Genera per creare sei suoni."
 
+msgid "Press New Oscillators to make six."
+msgstr "Premi Nuovi oscillatori per crearne sei."
+
 msgid "Previous program"
 msgstr "Programma precedente"
 
@@ -2154,6 +2193,12 @@ msgstr "Programmi scambiati"
 
 msgid "Put it back, as one step you can undo"
 msgstr "Ripristinalo, come un passo che puoi annullare"
+
+msgid "Put it on the shelf and load it into the synth's first free oscillator slot"
+msgstr "Mettilo sullo scaffale e caricalo nel primo slot oscillatore libero del synth"
+
+msgid "Put it on the shelf, to load once the synth is connected"
+msgstr "Mettilo sullo scaffale, da caricare quando il synth è collegato"
 
 msgid "Quick, playable chords"
 msgstr "Accordi rapidi e suonabili"
@@ -3465,3 +3510,6 @@ msgstr "«{name}» tolta dallo scaffale"
 
 msgid "“{name}” is on the shelf"
 msgstr "«{name}» è sullo scaffale"
+
+msgid "“{name}” is on the shelf. Connect the synth to load it."
+msgstr "«{name}» è sullo scaffale. Collega il synth per caricarlo."

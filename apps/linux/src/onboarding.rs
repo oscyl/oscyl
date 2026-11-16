@@ -188,7 +188,7 @@ impl crate::app::App {
 
     /// Scripted state for design screenshots: `demo`, optionally
     /// `:synth=<driver id>`, followed by any of
-    /// `:<stage>`, `:edited`, `:enlarge`, `:reading`, `:arp`, `:fx`, `:audition`, `:compare`, `:blend` (40% of the way to the edit), `:roll` (the stage shown, rolled), `:history` (snapshot A stored, the History popover open), `:perform` (the Perform page), `:demos` (the demo chooser's nameplates), `:welcome`, `:generate` (or `:generate-empty`, no hand), `:keep`, `:libraries` (two of Oscyl's libraries, one shown), `:folders` (those in nested folders, one closed), `:drop-line` and `:drop-into` (a drop's mark in the tree), `:new-library` (an empty one, being named), `:new-program` (an Init Program after the one shown, being named), `:reorder` and `:swap` (a program held between rows, or onto one), `:sources` (the sidebar over a phone's window), `:units` (a shelf and slots, no synth needed), `:guide` and `:about`
+    /// `:<stage>`, `:edited`, `:enlarge`, `:reading`, `:arp`, `:fx`, `:audition`, `:compare`, `:blend` (40% of the way to the edit), `:roll` (the stage shown, rolled), `:history` (snapshot A stored, the History popover open), `:perform` (the Perform page), `:demos` (the demo chooser's nameplates), `:welcome`, `:generate` (or `:generate-empty`, no hand), `:new-oscillators` (six new oscillators), `:keep`, `:libraries` (two of Oscyl's libraries, one shown), `:folders` (those in nested folders, one closed), `:drop-line` and `:drop-into` (a drop's mark in the tree), `:new-library` (an empty one, being named), `:new-program` (an Init Program after the one shown, being named), `:reorder` and `:swap` (a program held between rows, or onto one), `:sources` (the sidebar over a phone's window), `:units` (a shelf and slots, no synth needed), `:guide` and `:about`
     /// (stages by title, e.g. `demo:filter:edited`).
     pub fn run_demo(&self, spec: &str) {
         let mut parts = spec.split(':');
@@ -289,6 +289,13 @@ impl crate::app::App {
                 if let Some(g) = self.generator.get().filter(|_| part == "generate") {
                     g.set_seed(7);
                     g.deal();
+                }
+            } else if part == "new-oscillators" {
+                // New oscillators dealt, in view, with a fixed seed.
+                self.sidebar.select(&Place::Generate);
+                if let Some(g) = self.generator.get() {
+                    g.set_seed(7);
+                    g.deal_oscillators();
                 }
             } else if part == "keep" {
                 if let Some(g) = self.generator.get() {

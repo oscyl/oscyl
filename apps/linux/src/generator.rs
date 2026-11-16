@@ -8,6 +8,13 @@
 //! sound's recipe code can be copied, and a code typed in deals its sound
 //! again.
 //!
+//! On a synth that runs Oscyl's oscillator engine (minilogue xd,
+//! prologue), New Oscillators deals six oscillators of its own
+//! (`oscyl_app::oscillators`), varied and bred like sounds; Keep puts one
+//! on the shelf and loads it into the synth. Deal with a New Oscillator
+//! does that with a new one and, once the synth lists it, deals sounds
+//! that use it.
+//!
 //! The page owns no documents: it tells the app what to do through
 //! [`Ask`], and the app tells it the target slot and the connection.
 
@@ -17,7 +24,9 @@ use std::rc::{Rc, Weak};
 use adw::prelude::*;
 use gtk::glib;
 use oscyl_app::generator::Hands;
-use oscyl_driver::{Driver, Family, Macros, Recipe};
+use oscyl_app::oscillators::{Oscillators, family_title};
+use oscyl_driver::{Driver, Family, Macros, Palette, Recipe};
+use oscyl_logue::engine::{self, Patch};
 
 use crate::callback::Slot;
 use crate::editor::graph_of;
@@ -40,6 +49,9 @@ pub enum Ask {
     PickSlot,
     /// The selected sound's recipe code went to the clipboard.
     Copied,
+    /// Put this oscillator on the shelf and load it into the synth's
+    /// first free oscillator slot (its synth's driver comes along).
+    KeepOscillator(&'static dyn Driver, Patch),
 }
 
 /// The selected slot: where Keep puts a sound, and the base for kept
@@ -103,6 +115,22 @@ pub struct Generator {
     code_entry: gtk::Entry,
     code_error: gtk::Label,
     lamps: RefCell<Vec<gtk::Widget>>,
+    /// New oscillators: the section (shown when the synth runs Oscyl's
+    /// engine), its tiles, actions and the hands behind them.
+    osc_section: gtk::Widget,
+    osc_tiles: gtk::FlowBox,
+    osc_plate: Plated,
+    osc_empty: gtk::Label,
+    osc_actions: gtk::Widget,
+    osc_keep: gtk::Button,
+    osc_deal_with: gtk::Button,
+    osc_status: gtk::Label,
+    osc_breed: gtk::MenuButton,
+    osc_breed_list: gtk::ListBox,
+    oscillators: RefCell<Oscillators>,
+    /// The oscillator Deal with a New Oscillator loaded: its sounds are
+    /// dealt once the synth lists it.
+    pending: RefCell<Option<String>>,
     character: Cell<usize>,
     macros: Cell<Macros>,
     target: RefCell<Option<Target>>,
@@ -247,6 +275,57 @@ fn sound_tile(
             .replace("{category}", &caption),
     )]);
     (child, lamp.upcast())
+}
+
+/// A new oscillator's tile: its name, its family, one cycle of its wave
+/// and its parameters' names.
+fn oscillator_tile(p: &Patch) -> gtk::FlowBoxChild {
+    let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    body.add_css_class("gen-tile");
+    let title = gtk::Label::builder()
+        .label(&p.name)
+        .xalign(0.0)
+        .ellipsize(pango::EllipsizeMode::End)
+        .css_classes(["tile-title"])
+        .build();
+    let family = family_title(p.family);
+    let legend = gtk::Label::builder()
+        .label(&family)
+        .xalign(0.0)
+        .css_classes(["tile-legend"])
+        .build();
+    let wave = mini_graph();
+    wave.set_min_width_em(12.0);
+    wave.set_data(
+        crate::widgets::GraphData::Wave(engine::render::picture(p, 128)),
+        None,
+    );
+    wave.set_accessible_role(gtk::AccessibleRole::Presentation);
+    let params = p.params.join(" · ");
+    let hint = gtk::Label::builder()
+        .label(&params)
+        .xalign(0.0)
+        .wrap(true)
+        .lines(2)
+        .ellipsize(pango::EllipsizeMode::End)
+        .css_classes(["tile-hint"])
+        .build();
+    body.append(&title);
+    body.append(&legend);
+    body.append(&wave);
+    body.append(&hint);
+    let child = gtk::FlowBoxChild::builder().child(&body).build();
+    child.update_property(&[
+        gtk::accessible::Property::Label(
+            &tr("{name}, {category}")
+                .replace("{name}", &p.name)
+                .replace("{category}", &family),
+        ),
+        gtk::accessible::Property::Description(
+            &tr("Parameters: {names}").replace("{names}", &p.params.join(", ")),
+        ),
+    ]);
+    child
 }
 
 /// A grid of `columns` tiles a row (breakpoints change it).
@@ -571,6 +650,80 @@ impl Generator {
         page.append(&actions);
         page.append(&code_row);
 
+        // New oscillators, for a synth that runs Oscyl's engine.
+        let osc_section = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        osc_section.add_css_class("gen-osc");
+        osc_section.append(&legend(&tr("New Oscillators")));
+        let osc_intro = gtk::Label::builder()
+            .label(tr(
+                "Oscillators of your own for the synth's user slots. Keep one to load it: Generate then uses it.",
+            ))
+            .xalign(0.0)
+            .wrap(true)
+            .css_classes(["dim-label", "gen-intro"])
+            .build();
+        osc_section.append(&osc_intro);
+        let osc_buttons = adw::WrapBox::builder()
+            .child_spacing(8)
+            .line_spacing(8)
+            .css_classes(["gen-osc-buttons"])
+            .build();
+        let osc_new = gtk::Button::builder()
+            .label(tr("New Oscillators"))
+            .tooltip_text(tr("Make six new oscillators"))
+            .build();
+        let osc_deal_with = gtk::Button::builder()
+            .label(tr("Deal with a New Oscillator"))
+            .build();
+        osc_buttons.append(&osc_new);
+        osc_buttons.append(&osc_deal_with);
+        osc_section.append(&osc_buttons);
+        let osc_status = gtk::Label::builder()
+            .xalign(0.0)
+            .wrap(true)
+            .visible(false)
+            .css_classes(["dim-label", "caption", "gen-osc-status"])
+            .build();
+        osc_status.set_accessible_role(gtk::AccessibleRole::Status);
+        osc_section.append(&osc_status);
+        let osc_tiles = flow(&tr("New Oscillators"), 3);
+        let (osc_plate, osc_frame) = framed(&osc_tiles);
+        let osc_empty = gtk::Label::builder()
+            .label(tr("Press New Oscillators to make six."))
+            .css_classes(["dim-label", "gen-empty"])
+            .build();
+        osc_frame.append(&osc_empty);
+        osc_section.append(&osc_frame);
+        let osc_actions = adw::WrapBox::builder()
+            .child_spacing(8)
+            .line_spacing(8)
+            .css_classes(["gen-actions"])
+            .visible(false)
+            .build();
+        let osc_keep = gtk::Button::builder()
+            .label(tr("Keep Oscillator"))
+            .css_classes(["gen-keep"])
+            .build();
+        let osc_vary = gtk::Button::builder()
+            .label(tr("Vary"))
+            .tooltip_text(tr("Make six variations of this oscillator"))
+            .build();
+        let osc_breed_list = gtk::ListBox::builder()
+            .selection_mode(gtk::SelectionMode::None)
+            .css_classes(["gen-breed-list"])
+            .build();
+        osc_breed_list.update_property(&[gtk::accessible::Property::Label(&tr("Breed with"))]);
+        let osc_breed = gtk::MenuButton::builder()
+            .label(tr("Breed With…"))
+            .tooltip_text(tr("Make six children of this oscillator and another"))
+            .popover(&gtk::Popover::builder().child(&osc_breed_list).build())
+            .build();
+        osc_actions.append(&osc_keep);
+        osc_actions.append(&osc_vary);
+        osc_actions.append(&osc_breed);
+        osc_section.append(&osc_actions);
+        page.append(&osc_section);
+
         let scroll = gtk::ScrolledWindow::builder()
             .child(&page)
             .hscrollbar_policy(gtk::PolicyType::Never)
@@ -601,6 +754,7 @@ impl Generator {
             );
             columns(&characters, &bp, chars);
             columns(&sounds, &bp, sound_cols);
+            columns(&osc_tiles, &bp, sound_cols);
             if narrow {
                 bp.add_setter(
                     &shape_row,
@@ -665,6 +819,20 @@ impl Generator {
             code_entry,
             code_error,
             lamps: RefCell::default(),
+            osc_section: osc_section.upcast(),
+            osc_tiles,
+            osc_plate,
+            osc_empty,
+            osc_actions: osc_actions.upcast(),
+            osc_keep,
+            osc_deal_with,
+            osc_status,
+            osc_breed,
+            osc_breed_list,
+            oscillators: RefCell::new(Oscillators::new(
+                u64::from(glib::random_int()) << 32 | u64::from(glib::random_int()),
+            )),
+            pending: RefCell::default(),
             character: Cell::new(0),
             macros: Cell::new(Macros::default()),
             target: RefCell::default(),
@@ -682,6 +850,10 @@ impl Generator {
         copy.connect_clicked(move |_| me(()));
         let me = this.weak(|me, ()| me.deal_code());
         code_deal.connect_clicked(move |_| me(()));
+        let me = this.weak(|me, ()| me.deal_oscillators());
+        osc_new.connect_clicked(move |_| me(()));
+        let me = this.weak(|me, ()| me.vary_oscillator());
+        osc_vary.connect_clicked(move |_| me(()));
         this.build(driver);
         this.set_target(None);
         this.set_connected(false);
@@ -713,6 +885,9 @@ impl Generator {
             self.characters.append(&character_tile(d, i));
         }
         self.build_families(d);
+        let engine = oscyl_midi::logue::platform(d).is_some_and(|p| engine::supports(&p));
+        self.osc_section.set_visible(engine);
+        self.set_pending(None);
         self.refresh_units();
         self.generate.set_sensitive(!d.characters().is_empty());
         self.surprise.set_sensitive(!d.characters().is_empty());
@@ -776,6 +951,31 @@ impl Generator {
         }
         self.units_legend.set_visible(!entries.is_empty());
         self.units.set_visible(!entries.is_empty());
+        // The new oscillator is in a slot and its parameters known: deal
+        // sounds that use it.
+        let loaded = self.pending.borrow().as_ref().and_then(|name| {
+            entries
+                .iter()
+                .find(|e| &e.unit.name == name && e.unit.params.is_some())
+                .map(|e| e.unit.clone())
+        });
+        if let Some(unit) = loaded {
+            self.set_pending(None);
+            self.deal_with(Palette { units: vec![unit] });
+        }
+    }
+
+    /// Wait for oscillator `name` to be listed (or no longer, `None`),
+    /// saying so under the section's buttons.
+    fn set_pending(&self, name: Option<String>) {
+        if let Some(n) = &name {
+            self.osc_status.set_label(
+                &tr("Loading “{name}”. Its sounds follow once the synth lists it.")
+                    .replace("{name}", n),
+            );
+        }
+        self.osc_status.set_visible(name.is_some());
+        *self.pending.borrow_mut() = name;
     }
 
     /// The hands deal with the units that are on.
@@ -995,6 +1195,19 @@ impl Generator {
         let picked = self.weak(|me, ()| me.on_sound_selected());
         self.sounds
             .connect_selected_children_changed(move |_| picked(()));
+        let picked = self.weak(|me, ()| me.on_oscillator_selected());
+        self.osc_tiles
+            .connect_selected_children_changed(move |_| picked(()));
+        let keep = self.weak(|me, ()| me.keep_oscillator());
+        self.osc_keep.connect_clicked(move |_| keep(()));
+        let new = self.weak(|me, ()| me.deal_with_new_oscillator());
+        self.osc_deal_with.connect_clicked(move |_| new(()));
+        let breed = self.weak(|me, row: i32| me.breed_oscillator(row));
+        let breed_button = self.osc_breed.clone();
+        self.osc_breed_list.connect_row_activated(move |_, row| {
+            breed_button.popdown();
+            breed(row.index());
+        });
         let back = self.weak(|me, ()| me.step(-1));
         self.back.connect_clicked(move |_| back(()));
         let forward = self.weak(|me, ()| me.step(1));
@@ -1058,6 +1271,7 @@ impl Generator {
     /// Start dealing from `seed` (screenshots use a fixed one).
     pub fn set_seed(&self, seed: u64) {
         self.hands.borrow_mut().set_seed(seed);
+        *self.oscillators.borrow_mut() = Oscillators::new(seed);
     }
 
     /// Put keyboard focus on Generate, so Space deals at once.
@@ -1076,6 +1290,17 @@ impl Generator {
         self.connected.set(on);
         self.offline.set_visible(!on);
         self.update_lamps();
+        self.osc_deal_with.set_sensitive(on);
+        self.osc_deal_with.set_tooltip_text(Some(&if on {
+            tr("Make an oscillator, load it into the synth, and deal sounds that use it")
+        } else {
+            tr("Connect the synth to load a new oscillator")
+        }));
+        self.osc_keep.set_tooltip_text(Some(&if on {
+            tr("Put it on the shelf and load it into the synth's first free oscillator slot")
+        } else {
+            tr("Put it on the shelf, to load once the synth is connected")
+        }));
     }
 
     pub fn set_target(&self, target: Option<Target>) {
@@ -1140,6 +1365,116 @@ impl Generator {
             .deal(d, c, self.macros.get(), &keep, base.as_deref());
         if dealt {
             self.show_hand(true, true);
+        }
+    }
+
+    /// Deal as Generate does, with only `palette`'s units (a new
+    /// oscillator just loaded); later deals use all the units that are on.
+    fn deal_with(&self, palette: Palette) {
+        let d = self.driver.get();
+        let base = self.target.borrow().as_ref().and_then(|t| t.base.clone());
+        let dealt = {
+            let mut hands = self.hands.borrow_mut();
+            hands.set_palette(palette);
+            hands.deal(
+                d,
+                self.character.get(),
+                self.macros.get(),
+                &[],
+                base.as_deref(),
+            )
+        };
+        if dealt {
+            self.show_hand(true, true);
+        }
+    }
+
+    /// New Oscillators: six of every family in turn.
+    pub fn deal_oscillators(&self) {
+        self.oscillators.borrow_mut().deal(None);
+        self.show_oscillators(true);
+    }
+
+    fn vary_oscillator(&self) {
+        let amount = oscyl_app::generator::AMOUNTS[(self.amount.active() as usize).min(2)];
+        if self.oscillators.borrow_mut().vary(amount) {
+            self.show_oscillators(true);
+        }
+    }
+
+    /// Breed the selected oscillator with the `row`-th of the others.
+    fn breed_oscillator(&self, row: i32) {
+        let selected = self.oscillators.borrow().selected_index();
+        let Ok(row) = usize::try_from(row) else {
+            return;
+        };
+        let other = if row >= selected { row + 1 } else { row };
+        if self.oscillators.borrow_mut().breed(other) {
+            self.show_oscillators(true);
+        }
+    }
+
+    /// Keep the selected oscillator: the app shelves it and loads it.
+    pub fn keep_oscillator(&self) {
+        let p = self.oscillators.borrow().selected().cloned();
+        if let Some(p) = p {
+            self.on_ask.emit(Ask::KeepOscillator(self.driver.get(), p));
+        }
+    }
+
+    /// Deal with a New Oscillator: make one, keep it, and deal sounds that
+    /// use it once the synth lists it.
+    fn deal_with_new_oscillator(&self) {
+        let seed = u64::from(glib::random_int()) << 32 | u64::from(glib::random_int());
+        let family = engine::Family::ALL[(seed % engine::Family::ALL.len() as u64) as usize];
+        let p = engine::generate(family, seed);
+        self.set_pending(Some(p.name.clone()));
+        self.on_ask.emit(Ask::KeepOscillator(self.driver.get(), p));
+    }
+
+    /// Rebuild the oscillator tiles; `dealt` plays the deal-in.
+    fn show_oscillators(&self, dealt: bool) {
+        let o = self.oscillators.borrow();
+        self.rebuilding.set(true);
+        self.osc_tiles.remove_all();
+        for (i, p) in o.hand().iter().enumerate() {
+            let child = oscillator_tile(p);
+            if dealt {
+                child.add_css_class("deal");
+                child.add_css_class(&format!("deal-{i}"));
+            }
+            self.osc_tiles.append(&child);
+        }
+        if let Some(child) = self.osc_tiles.child_at_index(o.selected_index() as i32) {
+            self.osc_tiles.select_child(&child);
+        }
+        self.osc_plate.snap();
+        self.rebuilding.set(false);
+        let any = !o.hand().is_empty();
+        self.osc_empty.set_visible(!any);
+        self.osc_actions.set_visible(any);
+        drop(o);
+        self.on_oscillator_selected();
+        if dealt {
+            reveal(self.osc_section.clone(), self.osc_actions.clone());
+        }
+    }
+
+    /// An oscillator was picked: the others are offered to breed with.
+    fn on_oscillator_selected(&self) {
+        if self.rebuilding.get() {
+            return;
+        }
+        if let Some(i) = index_of(&self.osc_tiles) {
+            self.oscillators.borrow_mut().select(i);
+        }
+        let o = self.oscillators.borrow();
+        self.osc_breed_list.remove_all();
+        for (j, p) in o.hand().iter().enumerate() {
+            if j != o.selected_index() {
+                let row = gtk::Label::builder().label(&p.name).xalign(0.0).build();
+                self.osc_breed_list.append(&row);
+            }
         }
     }
 
@@ -1243,39 +1578,7 @@ impl Generator {
     /// their top when they are taller than the view; once they are laid
     /// out, frame by frame.
     fn reveal_sounds(&self) {
-        let (head, actions) = (self.sounds_head.clone(), self.actions.clone());
-        head.clone().add_tick_callback(move |_, _| {
-            let Some(scroll) = head
-                .ancestor(gtk::ScrolledWindow::static_type())
-                .and_downcast::<gtk::ScrolledWindow>()
-            else {
-                return glib::ControlFlow::Break;
-            };
-            let Some(page) = scroll.child() else {
-                return glib::ControlFlow::Break;
-            };
-            let (Some(top), Some(bottom)) =
-                (head.compute_bounds(&page), actions.compute_bounds(&page))
-            else {
-                return glib::ControlFlow::Break;
-            };
-            if actions.height() == 0 {
-                return glib::ControlFlow::Continue;
-            }
-            let adj = scroll.vadjustment();
-            let (view, at) = (adj.page_size(), adj.value());
-            let top = f64::from(top.y()) - 16.0;
-            let bottom = f64::from(bottom.y() + bottom.height()) + 16.0;
-            let want = if bottom - top > view || top < at {
-                top
-            } else if bottom > at + view {
-                bottom - view
-            } else {
-                at
-            };
-            adj.set_value(want);
-            glib::ControlFlow::Break
-        });
+        reveal(self.sounds_head.clone(), self.actions.clone());
     }
 
     /// A sound was picked (click, arrow keys, a new hand): play it and
@@ -1340,6 +1643,42 @@ impl Generator {
         // Redraw the kept tile's legend without playing it again.
         self.show_hand(false, false);
     }
+}
+
+/// Scroll so `head` to `bottom` are in view, or their top when they are
+/// taller than the view; once they are laid out, frame by frame.
+fn reveal(head: gtk::Widget, actions: gtk::Widget) {
+    head.clone().add_tick_callback(move |_, _| {
+        let Some(scroll) = head
+            .ancestor(gtk::ScrolledWindow::static_type())
+            .and_downcast::<gtk::ScrolledWindow>()
+        else {
+            return glib::ControlFlow::Break;
+        };
+        let Some(page) = scroll.child() else {
+            return glib::ControlFlow::Break;
+        };
+        let (Some(top), Some(bottom)) = (head.compute_bounds(&page), actions.compute_bounds(&page))
+        else {
+            return glib::ControlFlow::Break;
+        };
+        if actions.height() == 0 {
+            return glib::ControlFlow::Continue;
+        }
+        let adj = scroll.vadjustment();
+        let (view, at) = (adj.page_size(), adj.value());
+        let top = f64::from(top.y()) - 16.0;
+        let bottom = f64::from(bottom.y() + bottom.height()) + 16.0;
+        let want = if bottom - top > view || top < at {
+            top
+        } else if bottom > at + view {
+            bottom - view
+        } else {
+            at
+        };
+        adj.set_value(want);
+        glib::ControlFlow::Break
+    });
 }
 
 #[cfg(test)]
@@ -1569,6 +1908,83 @@ mod tests {
             oscyl_app::palette::shared().listed(XD, &listing(None));
             g.refresh_units();
             assert!(!g.units.is_visible());
+        });
+    }
+
+    /// New oscillators: dealt, varied, bred and kept; Deal with a New
+    /// Oscillator deals sounds that use it once the synth lists it. Needs
+    /// a display; skipped without.
+    #[test]
+    fn new_oscillators_deal_keep_and_feed_the_sounds() {
+        crate::on_gtk_thread(|| {
+            let g = Generator::new(XD);
+            let asks = Rc::new(RefCell::new(Vec::new()));
+            let a = asks.clone();
+            g.connect_ask(move |ask| a.borrow_mut().push(ask));
+            g.set_seed(7);
+            assert!(g.osc_section.is_visible(), "the xd runs the engine");
+            assert!(g.osc_empty.is_visible() && !g.osc_actions.is_visible());
+            g.deal_oscillators();
+            assert_eq!(g.osc_tiles.observe_children().n_items() as usize, HAND);
+            assert!(g.osc_actions.is_visible());
+            let first = g.oscillators.borrow().hand().to_vec();
+            g.osc_tiles
+                .select_child(&g.osc_tiles.child_at_index(2).unwrap());
+            assert_eq!(g.oscillators.borrow().selected_index(), 2);
+            assert_eq!(
+                g.osc_breed_list.observe_children().n_items() as usize,
+                HAND - 1
+            );
+            g.vary_oscillator();
+            assert!(
+                g.oscillators
+                    .borrow()
+                    .hand()
+                    .iter()
+                    .all(|p| !first.contains(p))
+            );
+            g.breed_oscillator(0);
+            assert_eq!(g.oscillators.borrow().hand().len(), HAND);
+            g.keep_oscillator();
+            let kept = match asks.borrow().last() {
+                Some(Ask::KeepOscillator(_, p)) => p.clone(),
+                _ => panic!("Keep asks the app to keep it"),
+            };
+            assert_eq!(Some(&kept), g.oscillators.borrow().selected());
+
+            // Offline, Deal with a New Oscillator waits for a synth.
+            g.set_connected(false);
+            assert!(!g.osc_deal_with.is_sensitive());
+            g.set_connected(true);
+            g.deal_with_new_oscillator();
+            let new = match asks.borrow().last() {
+                Some(Ask::KeepOscillator(_, p)) => p.clone(),
+                _ => panic!("it is kept"),
+            };
+            assert!(g.osc_status.is_visible());
+            // Listed, its parameters known: sounds that use it are dealt.
+            let info = oscyl_logue::engine::build(&oscyl_midi::logue::platform(XD).unwrap(), &new)
+                .unwrap()
+                .info();
+            g.select_character(XD.characters().iter().position(|c| c.id == "pad").unwrap());
+            oscyl_app::palette::shared().listed(
+                XD,
+                &[oscyl_app::synth::SlotInfo {
+                    module: oscyl_midi::logue::Module::Osc,
+                    slot: 5,
+                    name: Some(new.name.clone()),
+                    info: Some(info),
+                }],
+            );
+            g.refresh_units();
+            assert!(!g.osc_status.is_visible());
+            let h = g.hands.borrow().current().unwrap().clone();
+            assert!(
+                h.units.iter().any(|u| u == std::slice::from_ref(&new.name)),
+                "{:?}",
+                h.units
+            );
+            oscyl_app::palette::shared().listed(XD, &[]);
         });
     }
 }
