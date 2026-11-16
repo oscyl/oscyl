@@ -22,8 +22,8 @@ What to expect:
 
 ## Supported versions
 
-Oscyl is pre-release; fixes land on `main` and in the next release. Once
-releases exist, the latest one gets security fixes.
+Oscyl is pre-release: fixes land on `main` and ship in the next release.
+Only the latest release gets security fixes; upgrade to it first.
 
 ## Scope
 
@@ -36,6 +36,10 @@ Areas where we especially want reports:
   vendor library and program files that users may download from anywhere. A
   crafted file must fail cleanly, never crash or write outside the files the
   user chose.
+- **User unit files.** Oscyl reads logue SDK unit files (`.mnlgxdunit`,
+  `.prlgunit`) from anywhere and builds its own oscillator units. A crafted
+  unit file must fail cleanly, and a unit Oscyl builds must never make the
+  synth crash or play unbounded noise.
 - **Firmware-write safety.** Writes to a synth's memory (programs, user units,
   and anything that touches firmware) must only happen when the user asked
   for them, and must leave the device in a committed, safe state. A way to
