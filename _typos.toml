@@ -9,6 +9,8 @@ extend-exclude = [
     "*.pbxproj",
     # Baseline Profiles: generated method signatures.
     "**/baselineProfiles/*.txt",
+    # The logue SDK's files, vendored as Korg wrote them.
+    "units/oscyl-engine/sdk/",
 ]
 
 [default.extend-words]
@@ -20,6 +22,10 @@ prelease = "prelease"
 writeable = "writeable"
 # "caf\u{e9}" in a test of non-ASCII names.
 caf = "caf"
+# "64ths": the oscillator engine's amounts.
+ths = "ths"
+# A syllable of generated oscillator names.
+nd = "nd"
 
 [default.extend-identifiers]
 # A simulator's unique device identifier (xcrun simctl).
