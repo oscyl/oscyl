@@ -96,7 +96,7 @@ and Italian, and an `oscyl` command line for backups, diffs and scripts.
 |----------|--------|
 | Linux | [Flatpak](https://github.com/oscyl/oscyl/releases) (GNOME app) and the `oscyl` CLI |
 | Android | [APK](https://github.com/oscyl/oscyl/releases) for phones, foldables and tablets |
-| macOS, Windows | The `oscyl` CLI from [Releases](https://github.com/oscyl/oscyl/releases) |
+| macOS, Windows | The desktop app (`Oscyl.app`, a zipped folder on Windows) and the `oscyl` CLI from [Releases](https://github.com/oscyl/oscyl/releases). The app is not yet tested with a synth there |
 | iOS | [Build from source](docs/building.md#ios) for now |
 
 Every release lists SHA-256 sums and carries signed build provenance.

@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **The desktop app on Windows and macOS.** Each release carries the
+  GTK app as a zipped folder for Windows (x86_64) and as `Oscyl.app`
+  for macOS (Apple silicon and Intel), with the libraries it needs
+  inside, next to the Linux Flatpak. Neither is signed or notarised
+  yet, and neither has met a real synth: testers are welcome. There is
+  no hotplug there yet; a synth plugged in later connects with Connect.
 - **Generate goes deeper.** The minilogue xd has 28 kinds of sound, the
   prologue 18 and the Rev2 16, grouped in families, with a quality gate
   for every driver. Surprise picks a kind for you, Morph blends two

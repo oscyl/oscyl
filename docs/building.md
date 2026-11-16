@@ -25,6 +25,56 @@ Rust is all you need:
 cargo run -p oscyl-cli -- --help
 ```
 
+### macOS (desktop app)
+
+With [Homebrew](https://brew.sh):
+
+```sh
+brew install pkgconf gtk4 libadwaita gettext adwaita-icon-theme
+GETTEXT_DIR="$(brew --prefix gettext)" cargo run -p oscyl-gtk -- --simulator
+```
+
+To make `Oscyl.app` (also `dylibbundler` and `librsvg`):
+
+```sh
+GETTEXT_DIR="$(brew --prefix gettext)" cargo build --release -p oscyl-gtk
+packaging/desktop/bundle-macos.sh target/release/oscyl-gtk 0.0.0 dist
+```
+
+The release's `Oscyl.app` is signed ad hoc but not notarised, so macOS
+refuses to open it the first time. Open it once from Finder with
+Control-click, Open, then Open in the dialog (on macOS 15 and later: try to
+open it, then System Settings, Privacy & Security, Open Anyway). Or clear
+the quarantine flag: `xattr -dr com.apple.quarantine Oscyl.app`.
+
+There is no hotplug on macOS yet: a synth plugged in after Oscyl started
+connects when you choose Connect.
+
+### Windows (desktop app)
+
+In an [MSYS2](https://www.msys2.org) UCRT64 shell:
+
+```sh
+pacman -S --needed mingw-w64-ucrt-x86_64-{toolchain,rust,pkgconf,gtk4,libadwaita,gettext-tools}
+cargo run -p oscyl-gtk -- --simulator
+```
+
+To make the folder the release ships (`bin/Oscyl.exe` runs it):
+
+```sh
+cargo build --release -p oscyl-gtk
+packaging/desktop/bundle-windows.sh target/release/oscyl-gtk.exe "$MSYSTEM_PREFIX" dist/Oscyl
+```
+
+From Linux, `cargo build -p oscyl-gtk --target x86_64-pc-windows-gnu` also
+works with `mingw-w64-gcc` and the same MSYS2 packages unpacked into a
+directory (`PKG_CONFIG_SYSROOT_DIR`, `PKG_CONFIG_LIBDIR` and
+`MSYSTEM_PREFIX` pointing into it, `PKG_CONFIG_ALLOW_CROSS=1`).
+
+The app is not signed, so SmartScreen may warn on first launch: More info,
+then Run anyway. As on macOS, a synth plugged in later connects when you
+choose Connect.
+
 ### Android
 
 You need a JDK 21, the Android SDK (`ANDROID_HOME`) with NDK r30, `cargo

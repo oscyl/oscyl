@@ -59,6 +59,8 @@ public until a maintainer publishes the draft.
 | `oscyl-X.Y.Z-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` | The `oscyl` CLI for Linux (ALSA). No musl build: it would need a static libasound. Built on Ubuntu 24.04 (glibc 2.39 or newer). |
 | `oscyl-X.Y.Z-{aarch64,x86_64}-apple-darwin.tar.gz` | The `oscyl` CLI for macOS (CoreMIDI). Not signed or notarised. |
 | `oscyl-X.Y.Z-x86_64-pc-windows-msvc.zip` | The `oscyl` CLI for Windows (WinMM). Not signed. |
+| `oscyl-X.Y.Z-desktop-windows-x86_64.zip` | The desktop app for Windows: a folder with `bin\Oscyl.exe` and the MSYS2 UCRT64 DLLs, data and licence texts it needs. Not signed. |
+| `oscyl-X.Y.Z-desktop-macos-{aarch64,x86_64}.zip` | The desktop app for macOS: `Oscyl.app` with Homebrew's libraries inside, signed ad hoc, not notarised. Needs the macOS version of the runner that built it, or newer. |
 | `oscyl-X.Y.Z-x86_64.flatpak` | The GNOME app, GNOME 49 runtime (installs it from Flathub). |
 | `oscyl-X.Y.Z.apk`, `.aab` | Android, signed when the keystore secrets exist; otherwise `-unsigned` in the name. |
 | `oscyl-X.Y.Z.tar.gz` | Source (`git archive` of the tag). |

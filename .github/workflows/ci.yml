@@ -41,7 +41,8 @@ jobs:
       - run: cargo test -p oscyl-midi -p oscyl-app --no-default-features --locked
 
   # The command-line tool and the shared crates on the other desktops
-  # (CoreMIDI on macOS, WinMM on Windows). The GNOME app is Linux only.
+  # (CoreMIDI on macOS, WinMM on Windows). The desktop app on these is
+  # built and bundled by desktop-apps.yml.
   desktop:
     name: desktop (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
