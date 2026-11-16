@@ -7,7 +7,8 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
-use oscyl_driver::{Driver, LibProgram, LibraryData, SessionEvent, SessionOp};
+use oscyl_app::generator;
+use oscyl_driver::{Driver, LibProgram, LibraryData, Macros, Recipe, SessionEvent, SessionOp};
 use oscyl_midi::{DRIVERS, Device};
 // User units, global and tuning data are minilogue xd matters the
 // contract does not model; they run through `Device::run_units` on
@@ -65,11 +66,58 @@ enum Cmd {
         #[arg(long, default_value_t = 0)]
         index: usize,
     },
+    /// Deal new sounds, each with a recipe code that makes it again.
+    /// Needs no synth, except to --audition.
+    Generate(Generate),
     /// Manage logue SDK user oscillators and effects (minilogue xd).
     Units {
         #[command(subcommand)]
         cmd: UnitsCmd,
     },
+}
+
+#[derive(clap::Args)]
+struct Generate {
+    /// List the kinds of sound the synth (--synth) can generate.
+    #[arg(long)]
+    list: bool,
+    /// The kind of sound, by id (see --list).
+    #[arg(long)]
+    character: Option<String>,
+    /// Filter openness, 0-100.
+    #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
+    bright: u8,
+    /// Modulation, 0-100.
+    #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
+    movement: u8,
+    /// Drive, noise and other dirt, 0-100.
+    #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
+    grit: u8,
+    /// Delay, reverb and other ambience, 0-100.
+    #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
+    space: u8,
+    /// The first sound's seed; the others follow from it. Random when
+    /// left out.
+    #[arg(long)]
+    seed: Option<u64>,
+    /// Deal the sound a recipe code names, first.
+    #[arg(long, conflicts_with_all = ["character", "bright", "movement", "grit", "space", "seed"])]
+    code: Option<String>,
+    /// How many sounds [default: 6, or 1 with --code].
+    #[arg(long)]
+    count: Option<usize>,
+    /// Write each sound into this folder as a program file.
+    #[arg(long)]
+    out: Option<PathBuf>,
+    /// Play the first sound on the synth, without storing it.
+    #[arg(long)]
+    audition: bool,
+    /// Deal variations of the program in a file instead.
+    #[arg(long, value_name = "FILE", conflicts_with_all = ["character", "code", "breed"])]
+    vary: Option<PathBuf>,
+    /// Deal children of the programs in two files instead.
+    #[arg(long, num_args = 2, value_names = ["A", "B"], conflicts_with_all = ["character", "code"])]
+    breed: Option<Vec<PathBuf>>,
 }
 
 #[derive(Subcommand)]
@@ -161,7 +209,7 @@ fn prepare(
             .unwrap_or(DRIVERS[0])
     });
     Ok(match cmd {
-        Cmd::Ports => unreachable!("handled before connecting"),
+        Cmd::Ports | Cmd::Generate(_) => unreachable!("handled before connecting"),
         Cmd::Info => (Job::Info, None),
         Cmd::Current { raw } => (Job::Current { raw }, None),
         Cmd::Backup { out } => {
@@ -242,7 +290,11 @@ fn main() -> Result<()> {
         ),
         None => None,
     };
-    let (job, from_file) = prepare(cli.cmd, chosen)?;
+    let cmd = match cli.cmd {
+        Cmd::Generate(g) => return generate(g, chosen, cli.simulator, cli.port.as_deref()),
+        cmd => cmd,
+    };
+    let (job, from_file) = prepare(cmd, chosen)?;
     if let (Some(a), Some(b)) = (chosen, from_file)
         && a.info().id != b.info().id
     {
@@ -259,6 +311,176 @@ fn main() -> Result<()> {
         open(driver, cli.port.as_deref())?
     };
     run(job, &mut device)
+}
+
+/// The first program of a file, and the synth it is for (which must be
+/// `chosen`, when one is).
+fn first_program(
+    path: &Path,
+    chosen: Option<&'static dyn Driver>,
+) -> Result<(&'static dyn Driver, Vec<u8>)> {
+    let (d, progs) = programs(path)?;
+    if let Some(c) = chosen.filter(|c| c.info().id != d.info().id) {
+        bail!(
+            "{} is for the {}, not the {}",
+            path.display(),
+            d.info().model,
+            c.info().model
+        );
+    }
+    let p = progs
+        .into_iter()
+        .next()
+        .with_context(|| format!("{} has no programs", path.display()))?;
+    Ok((d, p))
+}
+
+/// `base` and a number, within the synth's name length.
+fn numbered(d: &dyn Driver, base: &str, k: usize) -> String {
+    let tail = format!(" {k}");
+    let room = d.name_rules().max_len.saturating_sub(tail.len());
+    let head: String = base.trim_end().chars().take(room).collect();
+    format!("{}{tail}", head.trim_end())
+}
+
+/// `oscyl generate`: deal sounds, print each one's name and recipe code,
+/// and write or play them when asked.
+fn generate(
+    g: Generate,
+    chosen: Option<&'static dyn Driver>,
+    simulator: bool,
+    port: Option<&str>,
+) -> Result<()> {
+    let fail = |e: oscyl_driver::DriverError| anyhow::anyhow!("{e}");
+    // The clock when no seed is given; 32 bits, as a dealt seed is.
+    let seed = match g.seed {
+        Some(s) => s,
+        None => u64::from(SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()),
+    };
+    // Seeds for variations and children: SplitMix64's steps from `seed`.
+    let step = |k: usize| seed.wrapping_add((k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+    let count = g.count.unwrap_or(if g.code.is_some() { 1 } else { 6 });
+    let (d, sounds) = if let Some(file) = &g.vary {
+        let (d, p) = first_program(file, chosen)?;
+        let name = d.name(&p)?;
+        let mut out = vec![];
+        for k in 0..count {
+            // The page's "Clear" amount.
+            let mut v = d.vary(&p, generator::AMOUNTS[1], step(k)).map_err(fail)?;
+            d.set_name(&mut v, &numbered(d, &name, k + 1))
+                .map_err(fail)?;
+            out.push((v, None));
+        }
+        (d, out)
+    } else if let Some(files) = &g.breed {
+        let (d, a) = first_program(&files[0], chosen)?;
+        let (_, b) = first_program(&files[1], Some(d))?;
+        let name = d.name(&a)?;
+        let mut out = vec![];
+        for k in 0..count {
+            // From mostly the first parent to mostly the second.
+            let mix = 0.2 + 0.6 * (k as f32 + 0.5) / count as f32;
+            let mut c = d.breed(&a, &b, mix, step(k)).map_err(fail)?;
+            d.set_name(&mut c, &numbered(d, &name, k + 1))
+                .map_err(fail)?;
+            out.push((c, None));
+        }
+        (d, out)
+    } else {
+        let d = chosen.unwrap_or(DRIVERS[0]);
+        if g.list {
+            for c in d.characters() {
+                println!("{:<12} {:<7} {}", c.id, c.family.id(), c.hint);
+            }
+            return Ok(());
+        }
+        let recipe = match (&g.code, &g.character) {
+            (Some(code), _) => generator::parse_code(d, code).map_err(|e| anyhow::anyhow!(e))?,
+            (None, Some(id)) => {
+                let id = id.to_lowercase();
+                let character = d
+                    .characters()
+                    .iter()
+                    .position(|c| c.id == id)
+                    .with_context(|| {
+                        format!(
+                            "the {} has no {id:?} sounds; see `oscyl generate --list`",
+                            d.info().model
+                        )
+                    })?;
+                let dial = |v: u8| f32::from(v) / 100.0;
+                Recipe {
+                    character,
+                    macros: Macros {
+                        bright: dial(g.bright),
+                        movement: dial(g.movement),
+                        grit: dial(g.grit),
+                        space: dial(g.space),
+                    },
+                    seed,
+                    keep: vec![],
+                }
+            }
+            (None, None) => bail!(
+                "say what to generate: --character (see `oscyl generate --list`), --code, --vary or --breed"
+            ),
+        };
+        let dealt = generator::deal(d, &recipe, None, recipe.seed, Some(recipe.seed), count)
+            .map_err(fail)?;
+        (d, dealt)
+    };
+    for (p, code) in &sounds {
+        println!("{:<14}{}", d.name(p)?, code.as_deref().unwrap_or(""));
+    }
+    if let Some(dir) = &g.out {
+        // The last format a driver lists is its smallest: a single
+        // program, where it has one.
+        let ext = d
+            .file_formats()
+            .last()
+            .map_or(oscyl_core::native::EXT, |f| f.ext);
+        let mut used: Vec<String> = vec![];
+        for (p, _) in &sounds {
+            let name: String = d
+                .name(p)?
+                .chars()
+                .map(|c| {
+                    if c.is_ascii_alphanumeric() || " -_".contains(c) {
+                        c
+                    } else {
+                        '_'
+                    }
+                })
+                .collect();
+            let mut file = name.clone();
+            let mut k = 2;
+            while used.contains(&file) {
+                file = format!("{name}-{k}");
+                k += 1;
+            }
+            let lib = LibraryData {
+                programs: vec![LibProgram {
+                    data: p.clone(),
+                    ..LibProgram::default()
+                }],
+                ..LibraryData::default()
+            };
+            write_library(d, &lib, &dir.join(format!("{file}.{ext}")))?;
+            used.push(file);
+        }
+        eprintln!("wrote {} programs to {}", sounds.len(), dir.display());
+    }
+    if g.audition
+        && let Some((p, _)) = sounds.first()
+    {
+        let mut device = if simulator {
+            Device::demo(d)?
+        } else {
+            open(Some(d), port)?
+        };
+        run(Job::Audition { program: p.clone() }, &mut device)?;
+    }
+    Ok(())
 }
 
 /// The one connected synth of `driver` (any, when `None`) on a port

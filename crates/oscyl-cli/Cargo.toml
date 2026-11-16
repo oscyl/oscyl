@@ -1,6 +1,6 @@
 [package]
 name = "oscyl-cli"
-description = "Command-line tool for the synths Oscyl supports: backup, diff, restore, audition, user units"
+description = "Command-line tool for the synths Oscyl supports: backup, diff, restore, audition, generate, user units"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,6 +14,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1.0.104"
 clap = { version = "4.6.7", features = ["derive", "env"] }
+oscyl-app = { path = "../oscyl-app" }
 oscyl-core = { path = "../oscyl-core" }
 oscyl-driver = { path = "../oscyl-driver" }
 oscyl-logue = { path = "../drivers/logue" }

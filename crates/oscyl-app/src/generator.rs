@@ -170,6 +170,39 @@ pub struct Hands {
     seed: u64,
 }
 
+/// `n` sounds of `recipe`'s character, dials (each at the nearest of its
+/// 101 steps) and kept pages, each with its recipe code when a recipe
+/// alone makes it again (none with a `base`): the first from seed `first`
+/// when given, the others from 32-bit seeds drawn from `seed`
+/// (`recipe.seed` is not read). What a hand of the page is made of, for
+/// callers without a page too (the command line).
+pub fn deal(
+    d: &dyn Driver,
+    recipe: &Recipe,
+    base: Option<&[u8]>,
+    seed: u64,
+    first: Option<u64>,
+    n: usize,
+) -> Result<Vec<(Program, Option<String>)>, DriverError> {
+    let recipe = |seed| Recipe {
+        macros: stepped(recipe.macros),
+        seed,
+        ..recipe.clone()
+    };
+    let dealt = hand_seeded(d, recipe(0).character, seed, SEED_MASK, first, n, |seed| {
+        d.generate(&recipe(seed), base)
+    })?;
+    Ok(dealt
+        .into_iter()
+        .map(|(p, seed)| {
+            let code = seed
+                .filter(|_| base.is_none())
+                .and_then(|seed| code(d, &recipe(seed)));
+            (p, code)
+        })
+        .collect())
+}
+
 /// SplitMix64, for what a surprise picks.
 struct Pick(u64);
 
@@ -262,29 +295,16 @@ impl Hands {
         let Some(title) = d.characters().get(character).map(|c| c.title) else {
             return false;
         };
-        let recipe = |seed| Recipe {
+        let recipe = Recipe {
             character,
-            macros: stepped(macros),
-            seed,
+            macros,
+            seed: 0,
             keep: keep.to_vec(),
         };
-        let dealt = hand_seeded(d, character, seed, SEED_MASK, first, HAND, |seed| {
-            d.generate(&recipe(seed), base)
-        });
-        let Ok(dealt) = dealt else {
+        let Ok(dealt) = deal(d, &recipe, base, seed, first, HAND) else {
             return false;
         };
-        let codes = dealt
-            .iter()
-            .map(|(_, seed)| {
-                let recipe = Recipe {
-                    keep: vec![],
-                    ..recipe((*seed)?)
-                };
-                code(d, &recipe).filter(|_| base.is_none())
-            })
-            .collect();
-        let programs = dealt.into_iter().map(|(p, _)| p).collect();
+        let (programs, codes) = dealt.into_iter().unzip();
         self.push_coded(programs, codes, character, tr(title))
     }
 
