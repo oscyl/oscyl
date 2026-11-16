@@ -205,9 +205,10 @@ private fun phoneWidth(): Boolean {
  * It is a physical knob. A touch on the disc or its ring grabs: from then until the
  * finger lifts the knob owns the gesture, so the page cannot scroll; the value and
  * label below do not grab, so the page scrolls between knobs. Up turns it up; 220 dp
- * runs the range, a slow finger turns at 0.35×. The index and the value trail the
- * finger through a critically damped spring (heavier while [comparing]), in the draw
- * phase, while the value goes to the synth at once. Haptics: a tick per printed step,
+ * runs the range, a slow finger turns at 0.35×. The index stays under the finger;
+ * a change the finger did not make (a restore, the synth's own knob) reaches it
+ * through a critically damped spring (heavier while [comparing]), in the draw phase.
+ * The value goes to the synth at once. Haptics: a tick per printed step,
  * a detent at [saved] and the centre, a bump at an end, at most one per frame (the
  * firmest wins). A double tap restores [saved], with a confirmation.
  *
@@ -240,7 +241,9 @@ fun Dial(
     val phone = phoneWidth()
     val edited = value != saved
 
-    // The index has weight: a critically damped spring pulls it to the value, frame by frame.
+    // Held, the index is under the finger. Otherwise (a restore, the synth's own knob,
+    // compare) it has weight: a critically damped spring pulls it to the value, frame by frame.
+    var active by remember { mutableStateOf(false) }
     val shown = remember { mutableFloatStateOf(fraction(value, range)) }
     val target = rememberUpdatedState(fraction(value, range))
     val stiffness = rememberUpdatedState(if (comparing) Knob.springStiffnessComparing else Knob.springStiffness)
@@ -248,7 +251,7 @@ fun Dial(
         while (true) {
             snapshotFlow { target.value }.first { it != shown.floatValue }
             val scale = motionScale(motion)
-            if (scale == 0f) {
+            if (scale == 0f || active) {
                 shown.floatValue = target.value
                 continue
             }
@@ -259,6 +262,11 @@ fun Dial(
                     val dt = if (last < 0) 1f / 120 else ((now - last) / 1e9f).coerceAtMost(0.05f)
                     last = now
                     val t = target.value
+                    if (active) {
+                        shown.floatValue = t
+                        speed = 0f
+                        return@withFrameNanos
+                    }
                     // A slower animator scale stretches the spring's time.
                     val (x, v) = springStep(shown.floatValue, speed, t, dt, stiffness.value / (scale * scale))
                     if (abs(t - x) < 0.0005f && abs(v) < 0.01f) {
@@ -293,7 +301,6 @@ fun Dial(
     // Screen readers step one printed scale step, as their own slider gestures do.
     val step = max(1, ((range.last - range.first) / (Ticks - 1f)).roundToInt())
 
-    var active by remember { mutableStateOf(false) }
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val edit by animateFloatAsState(if (edited) 1f else 0f, tween(if (motion) OscylTokens.baseMs else 0, easing = OscylTokens.easing))
