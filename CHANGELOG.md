@@ -6,6 +6,32 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Generate goes deeper.** The minilogue xd has 28 kinds of sound, the
+  prologue 18 and the Rev2 16, grouped in families, with a quality gate
+  for every driver. Surprise picks a kind for you, Morph blends two
+  sounds, and a recipe code copies a sound as a short code that deals it
+  again anywhere. On the desktop, Android and the new `oscyl generate`.
+- **Your units in Generate.** The user oscillators and effects in a
+  synth's slots become Generate's palette, so about one sound in three
+  uses one, within each parameter's declared range. A chip row turns
+  units off for the session. The editor names a user oscillator's
+  parameters and their ranges after the unit in its slot.
+- **A shelf of unit files.** Oscyl keeps unit files for each synth, and
+  one tap loads one into the first free slot of its section. Also
+  `oscyl units shelf add|list|remove|load` and `oscyl units info`.
+- **New oscillators.** Oscyl makes oscillators of its own for the
+  minilogue xd and prologue: one prebuilt engine unit (wavetables, phase
+  distortion, FM, folding, sync, supersaw, formants, noise, crush) that
+  a generated patch wires up. Generate deals six as tiles with their
+  waves; vary and breed them, keep one to load it, or deal sounds that
+  use a new one in one tap. Also `oscyl units make`. Not yet heard on a
+  real synth; testers are welcome.
+
+### Fixed
+- The Rev2's generated modulation goes to the destinations its manual
+  lists.
+
 ## [0.4.0] - 2026-11-14
 
 Oscyl now runs on Android, with an iOS app ready for its first Mac build,
