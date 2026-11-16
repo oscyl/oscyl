@@ -113,7 +113,7 @@ pub trait Link: Send {
 #[cfg(feature = "midir")]
 /// The real synth over midir (ALSA on Linux).
 pub struct MidirLink {
-    out: MidiOutputConnection,
+    out: Out,
     _in: MidiInputConnection<()>,
     inbox: Inbox,
 }
@@ -168,13 +168,84 @@ impl MidirLink {
                 (),
             )
             .map_err(midi_err)?;
-        let out = output.connect(&out_ports[o], "out").map_err(midi_err)?;
+        let out = match Out::raw(&out_ports[o].id()) {
+            Some(raw) => raw,
+            None => Out::Seq(output.connect(&out_ports[o], "out").map_err(midi_err)?),
+        };
         let link = MidirLink {
             out,
             _in: conn_in,
             inbox,
         };
         Ok((link, out_names[o].clone()))
+    }
+}
+
+/// Where a link's output goes.
+#[cfg(feature = "midir")]
+enum Out {
+    /// midir's connection (the ALSA sequencer on Linux).
+    Seq(MidiOutputConnection),
+    /// The port's ALSA rawmidi device. The sequencer's bridge to a
+    /// hardware port drops any message bigger than its output buffer
+    /// (4 KiB; the kernel logs "seq_midi: MIDI output buffer overrun"),
+    /// and a unit upload is bigger. Writing here waits for room (through
+    /// poll; the device is opened non-blocking, since a blocking open
+    /// would wait for whoever holds the port).
+    #[cfg(target_os = "linux")]
+    Raw(alsa::rawmidi::Rawmidi),
+}
+
+#[cfg(feature = "midir")]
+impl Out {
+    /// The rawmidi device behind sequencer port `id` (`client:port`), when
+    /// it is a hardware port no one else is writing to.
+    #[cfg(target_os = "linux")]
+    fn raw(id: &str) -> Option<Out> {
+        let (client, port) = id.split_once(':')?;
+        let (client, port): (i32, i32) = (client.parse().ok()?, port.parse().ok()?);
+        let seq = alsa::seq::Seq::open(None, None, false).ok()?;
+        let card = seq.get_any_client_info(client).ok()?.get_card().ok()?;
+        // The sequencer numbers the first device's subdevices first, so
+        // port N is subdevice N there, or not there at all (the open
+        // fails and the sequencer is used).
+        let name = format!("hw:{card},0,{port}");
+        alsa::rawmidi::Rawmidi::new(&name, alsa::Direction::Playback, true)
+            .ok()
+            .map(Out::Raw)
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    fn raw(_: &str) -> Option<Out> {
+        None
+    }
+
+    fn send(&mut self, msg: &[u8]) -> Result<(), Error> {
+        let lost = |e: &dyn std::fmt::Display| Error::Disconnected(e.to_string());
+        match self {
+            Out::Seq(c) => c.send(msg).map_err(|e| lost(&e)),
+            #[cfg(target_os = "linux")]
+            Out::Raw(r) => {
+                use alsa::poll::Descriptors;
+                let mut rest = msg;
+                while !rest.is_empty() {
+                    match std::io::Write::write(&mut r.io(), rest) {
+                        Ok(n) => rest = &rest[n..],
+                        // rawmidi's write returns -EAGAIN when full.
+                        Err(e) if e.raw_os_error() == Some(-11) => {
+                            // Full: wait until the synth has taken some.
+                            // A stall this long is a synth gone quiet.
+                            let mut fds = r.get().map_err(|e| lost(&e))?;
+                            if alsa::poll::poll(&mut fds, 5000).map_err(|e| lost(&e))? == 0 {
+                                return Err(lost(&"the synth stopped taking data"));
+                            }
+                        }
+                        Err(e) => return Err(lost(&e)),
+                    }
+                }
+                Ok(())
+            }
+        }
     }
 }
 
@@ -185,9 +256,7 @@ impl Link for MidirLink {
     fn send(&mut self, bytes: &[u8]) -> Result<(), Error> {
         for chunk in split_messages(bytes) {
             trace("->", chunk);
-            self.out
-                .send(chunk)
-                .map_err(|e| Error::Disconnected(e.to_string()))?;
+            self.out.send(chunk)?;
         }
         Ok(())
     }
