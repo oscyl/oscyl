@@ -184,6 +184,7 @@ fun App(platform: Platform) {
             }
             val library = viewModel { LibraryModel(platform.librariesDir, synth, platform.files, platform.unsyncedDir) }
             val editor = viewModel { EditorModel(library, synth, { preferences.prefs.value.role }, teaching) }
+            LaunchedEffect(editor) { editor.followPanels() }
             val play = viewModel { PlayModel(editor, preferences) }
             val review = viewModel { ReviewModel(library, synth, platform.backupsDir) }
             val generate = viewModel { GenerateModel(library, synth, files = platform.files) }

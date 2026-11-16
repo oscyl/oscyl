@@ -83,6 +83,8 @@ class EditorBehaviourTest {
         library = make(LibraryModel::class) { LibraryModel(dir, synth) }
         editor = make(EditorModel::class) { EditorModel(library, synth) }
         compose.setContent {
+            // As App does: the synths' panels are followed frame by frame.
+            androidx.compose.runtime.LaunchedEffect(editor) { editor.followPanels() }
             OscylTheme(OscylThemeMode.Dark) {
                 val head by editor.head.collectAsStateWithLifecycle()
                 EditorScreen(head, editor.panel, editor, onOpenLibrary = {})

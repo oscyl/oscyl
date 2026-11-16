@@ -206,9 +206,10 @@ private fun phoneWidth(): Boolean {
  * finger lifts the knob owns the gesture, so the page cannot scroll; the value and
  * label below do not grab, so the page scrolls between knobs. Up turns it up; 220 dp
  * runs the range, a slow finger turns at 0.35×. The index is where the value is at
- * once (the finger, the synth's own knob, a restore); only [comparing] swings it
- * through a critically damped spring, in the draw phase. The value goes to the synth
- * at once. Haptics: a tick per printed step,
+ * once for a step (the finger, the synth's own knob, however fast); a jump past
+ * `Knob.glideFrom` of the range (a restore, another program) and anything while
+ * [comparing] glide there through a critically damped spring, in the draw phase. The
+ * value goes to the synth at once. Haptics: a tick per printed step,
  * a detent at [saved] and the centre, a bump at an end, at most one per frame (the
  * firmest wins). A double tap restores [saved], with a confirmation.
  *
@@ -241,19 +242,22 @@ fun Dial(
     val phone = phoneWidth()
     val edited = value != saved
 
-    // The index is where the value is, at once: under the finger, or tracking the synth's
-    // own knob. Only compare gives it weight: a critically damped spring pulls it to the
-    // value, frame by frame, so A and B are seen to swing.
+    // The index is where the value is, at once, for a step (the finger, the synth's own
+    // knob turned, however fast). A jump (a restore, another program) has weight: a
+    // critically damped spring pulls the index there, frame by frame; compare swings
+    // it, heavier, at any size.
     var active by remember { mutableStateOf(false) }
-    val glides = rememberUpdatedState(comparing)
+    val comparingNow = rememberUpdatedState(comparing)
     val shown = remember { mutableFloatStateOf(fraction(value, range)) }
     val target = rememberUpdatedState(fraction(value, range))
+    fun glides(to: Float) = !active && (comparingNow.value || abs(to - shown.floatValue) > Knob.glideFrom)
     LaunchedEffect(motion) {
         while (true) {
             snapshotFlow { target.value }.first { it != shown.floatValue }
             val scale = motionScale(motion)
-            if (scale == 0f || active || !glides.value) {
-                shown.floatValue = target.value
+            var to = target.value
+            if (scale == 0f || !glides(to)) {
+                shown.floatValue = to
                 continue
             }
             var last = -1L
@@ -263,13 +267,16 @@ fun Dial(
                     val dt = if (last < 0) 1f / 120 else ((now - last) / 1e9f).coerceAtMost(0.05f)
                     last = now
                     val t = target.value
-                    if (active || !glides.value) {
+                    // A new value mid-glide: a step lands at once, a jump glides on.
+                    if (active || (t != to && !glides(t))) {
                         shown.floatValue = t
                         speed = 0f
                         return@withFrameNanos
                     }
+                    to = t
+                    val stiffness = if (comparingNow.value) Knob.springStiffnessComparing else Knob.springStiffness
                     // A slower animator scale stretches the spring's time.
-                    val (x, v) = springStep(shown.floatValue, speed, t, dt, Knob.springStiffnessComparing / (scale * scale))
+                    val (x, v) = springStep(shown.floatValue, speed, t, dt, stiffness / (scale * scale))
                     if (abs(t - x) < 0.0005f && abs(v) < 0.01f) {
                         shown.floatValue = t
                         speed = 0f

@@ -34,6 +34,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
+import androidx.compose.runtime.withFrameNanos
 
 /** The editor's top row and title: what changes only now and then. */
 data class EditorHead(
@@ -279,8 +281,53 @@ class EditorModel(
                 .collect { (open, cards) -> show(open, cards) }
         }
         viewModelScope.launch { synth.selected.collect { (card, slot) -> follow(card, slot) } }
-        viewModelScope.launch { synth.knobs.collect { (card, controls) -> followKnobs(card, controls) } }
+        viewModelScope.launch {
+            synth.knobs.collect { (card, controls) ->
+                turnedOnPanel += card to controls
+                panelTurned.trySend(Unit)
+            }
+        }
     }
+
+    /** What the synths' panels sent since the last frame, in order. */
+    private val turnedOnPanel = mutableListOf<Pair<ULong, List<io.github.oscyl.core.ControlChange>>>()
+    private val panelTurned = Channel<Unit>(Channel.CONFLATED)
+
+    /**
+     * Follow the synths' panels, once per frame: a knob turned fast sends a step every
+     * few milliseconds, faster than a frame, and taking them one by one (each redrawing
+     * the stages) fell seconds behind. Each frame takes everything sent since the last
+     * one and redraws the stages once, so the value shown is the knob's, in the next
+     * frame. As with a finger, the library hears of it once the knob rests: a frame
+     * with nothing new from the panel. Run by the composition, which has the frame clock.
+     */
+    suspend fun followPanels() {
+        for (turned in panelTurned) {
+            while (withFrameNanos { takePanels() }) Unit
+            panelRested()
+        }
+    }
+
+    /** Everything the panels sent since the last frame, applied; false when nothing came. */
+    private fun takePanels(): Boolean {
+        if (turnedOnPanel.isEmpty()) return false
+        val batch = turnedOnPanel.toList()
+        turnedOnPanel.clear()
+        batch.groupBy({ it.first }, { it.second }).forEach { (card, sent) -> followKnobs(card, sent.flatten()) }
+        return true
+    }
+
+    /** The panel's knob rests: the library shows and saves the change, as at a finger's release. */
+    private fun panelRested() {
+        if (!panelMoved) return
+        panelMoved = false
+        midGesture = false
+        library.editorChanged()
+        refreshHead()
+    }
+
+    /** The panel changed the program since it last rested. */
+    private var panelMoved = false
 
     /** Each synth's decoder of what its panel's knobs send (null: its driver has none). */
     private val decoders = mutableMapOf<ULong, io.github.oscyl.core.PanelDecoder?>()
@@ -306,11 +353,11 @@ class EditorModel(
             val change = decoder.control(c.cc, c.value, e) ?: continue
             if (panelField != null && panelField != change.field) e.seal()
             panelField = change.field
-            changed = edit(turning = change.field, send = false) { it.set(change.field, change.raw) } || changed
+            changed = edit(turning = change.field, send = false, show = false) { it.set(change.field, change.raw) } || changed
         }
         if (changed) {
-            library.editorChanged()
-            refreshHead()
+            panel?.update(e, following = true)
+            panelMoved = true
         }
     }
 
@@ -418,7 +465,14 @@ class EditorModel(
      * Run an edit; true when it took. The core refuses a factory slot and a slot not
      * read yet: nothing changes, and the note under the title says why.
      */
-    private fun edit(turning: UInt? = null, following: Boolean = turning != null, send: Boolean = true, change: (ProgramEditor) -> Audition?): Boolean {
+    private fun edit(
+        turning: UInt? = null,
+        following: Boolean = turning != null,
+        send: Boolean = true,
+        /** False when the caller redraws once after several edits. */
+        show: Boolean = true,
+        change: (ProgramEditor) -> Audition?,
+    ): Boolean {
         val e = editor ?: return false
         // Another control, or another kind of edit: what was written for the last knob is void.
         if (turning == null || turning != turned) formats.clear()
@@ -428,7 +482,7 @@ class EditorModel(
         } catch (_: FfiException) {
             return false
         }
-        panel?.update(e, following)
+        if (show) panel?.update(e, following)
         if (send) played?.let(::play)
         // Within one gesture the head (undo, the Save count) changes with its first step only.
         if (!midGesture) refreshHead()
