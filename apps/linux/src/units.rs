@@ -353,4 +353,59 @@ impl App {
         });
         dialog.present(Some(&self.win.window));
     }
+
+    /// The page for captures: a shelf and a few slots, no synth needed.
+    pub(crate) fn demo_units(&self) {
+        use oscyl_logue::unit::{ParamKind, UnitInfo, UnitParam};
+        let param = |name: &str, min, max, kind| UnitParam {
+            name: name.into(),
+            min,
+            max,
+            kind,
+        };
+        let info = |module, name: &str, params| UnitInfo {
+            module,
+            platform: 2,
+            name: name.into(),
+            dev_id: 0,
+            prg_id: 0,
+            version: 0x1_00_00,
+            params: Some(params),
+        };
+        let waves = info(
+            Module::Osc,
+            "waves",
+            vec![
+                param("Wave A", 0, 44, ParamKind::Select),
+                param("Ring Mix", 0, 100, ParamKind::Percent),
+                param("Bit Crush", 0, 100, ParamKind::Percent),
+                param("Drift", -100, 100, ParamKind::Bipolar),
+            ],
+        );
+        let slots: Vec<SlotInfo> = Module::ALL
+            .into_iter()
+            .flat_map(|module| {
+                (0..if module == Module::Osc { 16 } else { 8 }).map(move |slot| (module, slot))
+            })
+            .map(|(module, slot)| {
+                let unit = match (module, slot) {
+                    (Module::Osc, 0) => Some(waves.clone()),
+                    (Module::ModFx, 0) => Some(info(module, "chorus", vec![])),
+                    _ => None,
+                };
+                SlotInfo {
+                    module,
+                    slot,
+                    name: unit.as_ref().map(|u| u.name.clone()),
+                    info: unit,
+                }
+            })
+            .collect();
+        let shelf = [ShelfUnit {
+            file: "waves.mnlgxdunit".into(),
+            section: module_title(Module::Osc),
+            info: waves,
+        }];
+        show(&self.editor, &slots, &shelf, |_| {});
+    }
 }
