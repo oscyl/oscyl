@@ -377,7 +377,9 @@ impl Worker {
             match pumped {
                 Ok(t) => {
                     t.into_iter().for_each(&mut at);
-                    self.flush(k);
+                    // An audition it submits goes out on the next pump: now,
+                    // not when the synth next sends something (a key).
+                    busy |= self.flush(k);
                     if busy {
                         // Something new was submitted: pump it now.
                         at(Instant::now());
@@ -724,13 +726,18 @@ impl Worker {
         self.submit(k, SessionOp::ReadPrograms(vec![slot]), Job::Read);
     }
 
-    /// Send what the outbox allows now.
-    fn flush(&mut self, k: usize) {
+    /// Send what the outbox allows now. True when it submitted an op,
+    /// which goes out on the next pump.
+    fn flush(&mut self, k: usize) -> bool {
         let d = &mut self.devices[k];
         let auditioning = d.jobs.iter().any(|j| matches!(j, Job::Audition));
+        let mut submitted = false;
         for out in d.outbox.take(auditioning) {
             match out {
-                Out::Audition(p) => self.submit(k, SessionOp::Audition(p), Job::Audition),
+                Out::Audition(p) => {
+                    self.submit(k, SessionOp::Audition(p), Job::Audition);
+                    submitted = true;
+                }
                 Out::Live(msgs) => {
                     let channel = self.devices[k].device.channel();
                     for m in msgs {
@@ -744,6 +751,7 @@ impl Worker {
                 }
             }
         }
+        submitted
     }
 
     fn on_event(&mut self, k: usize, e: SessionEvent) {
@@ -1302,6 +1310,68 @@ mod tests {
             Ev::Disconnected(i) if i == id
         ));
         assert_eq!(*reopened.lock().unwrap(), 1);
+    }
+
+    /// A synth that speaks only when spoken to (no clock), its messages
+    /// as they go out reported on `sent`.
+    struct Quiet {
+        sim: Box<dyn oscyl_driver::Simulator>,
+        framer: oscyl_driver::sysex::Framer,
+        replies: VecDeque<Vec<u8>>,
+        bell: Option<mpsc::Sender<()>>,
+        sent: mpsc::Sender<Vec<u8>>,
+    }
+
+    impl oscyl_midi::Link for Quiet {
+        fn send(&mut self, bytes: &[u8]) -> Result<(), oscyl_midi::Error> {
+            for m in self.framer.push(bytes) {
+                let _ = self.sent.send(m.clone());
+                self.replies.extend(self.sim.handle(&m));
+            }
+            if let Some(b) = &self.bell {
+                let _ = b.send(());
+            }
+            Ok(())
+        }
+
+        fn recv_until(&mut self, _: Instant) -> Result<Option<Vec<u8>>, oscyl_midi::Error> {
+            Ok(self.replies.pop_front())
+        }
+
+        fn ring_on_input(&mut self, bell: mpsc::Sender<()>) {
+            self.bell = Some(bell);
+        }
+    }
+
+    /// An audition reaches the synth at once, without waiting for the
+    /// synth to send something (a key press) to wake the worker.
+    #[test]
+    fn an_audition_goes_out_at_once() {
+        let xd = driver("korg-minilogue-xd");
+        let (sent, out) = mpsc::channel();
+        let link = Quiet {
+            sim: xd.demo_simulator(),
+            framer: oscyl_driver::sysex::Framer::new(),
+            replies: VecDeque::new(),
+            bell: None,
+            sent,
+        };
+        let device = Device::connect(xd, Box::new(link), "usb xd".into()).unwrap();
+        let (handle, rx) = spawn();
+        let id = attach(&handle, &rx, Box::new(device));
+        while out.try_recv().is_ok() {}
+        handle.send(Cmd::Audition(id, xd.init_program()));
+        // The current-program dump (function 0x40), possibly after the
+        // lag check's reads.
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            let left = deadline.saturating_duration_since(Instant::now());
+            match out.recv_timeout(left) {
+                Ok(m) if m.get(6) == Some(&0x40) => break,
+                Ok(_) => {}
+                Err(_) => panic!("the audition never went out"),
+            }
+        }
     }
 
     /// Where the platform moves the bytes the worker cannot reopen the
