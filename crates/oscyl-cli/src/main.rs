@@ -706,7 +706,7 @@ fn generate(
             ),
         };
         // With --units the first sound may take one too: no seed is its own.
-        let (mut recipe, mut first) = (recipe, Some(seed).filter(|_| !g.units));
+        let (mut recipe, mut first) = (recipe, (!g.units).then_some(seed));
         if g.code.is_some() {
             first = Some(recipe.seed);
         }
