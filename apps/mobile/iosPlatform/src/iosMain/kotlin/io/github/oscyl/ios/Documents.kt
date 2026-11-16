@@ -120,8 +120,16 @@ class Documents {
         NSFileManager.defaultManager.createDirectoryAtPath(dir, withIntermediateDirectories = true, attributes = null, error = null)
         val url = NSURL.fileURLWithPath(dir + name)
         if (!dataOf(bytes).writeToURL(url, atomically = true)) return
+        offer(url)
+    }
+
+    /** Offer a line of text to another app. */
+    fun shareText(text: String) = offer(text)
+
+    /** The share sheet for [item] (a file's URL, a text), over the page shown. */
+    private fun offer(item: Any) {
         val top = topController() ?: return
-        val sheet = UIActivityViewController(activityItems = listOf(url), applicationActivities = null)
+        val sheet = UIActivityViewController(activityItems = listOf(item), applicationActivities = null)
         // On iPad the sheet is a popover: centred over the page, with no arrow.
         sheet.popoverPresentationController?.let { popover ->
             popover.sourceView = top.view

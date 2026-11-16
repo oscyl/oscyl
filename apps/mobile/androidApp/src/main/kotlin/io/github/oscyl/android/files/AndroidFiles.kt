@@ -155,6 +155,11 @@ class AndroidFiles private constructor(private val context: Context) : Files {
         context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
+    override fun shareText(text: String) {
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+        context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     companion object {
         /** Library files have no registered type of their own. */
         private const val MIME = "application/octet-stream"

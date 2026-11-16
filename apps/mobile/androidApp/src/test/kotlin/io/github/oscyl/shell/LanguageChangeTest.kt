@@ -50,13 +50,13 @@ class LanguageChangeTest {
         val restoration = StateRestorationTester(compose)
         restoration.setContent { App(device) }
         compose.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab) and hasText("Generate")).performClick()
-        compose.waitUntil(10_000) { shows("Fuzz Bass") }
+        compose.waitUntil(10_000) { shows("Scream Lead") }
         // A rotation: the same language, the same words.
         restoration.emulateSavedInstanceStateRestore()
-        compose.waitUntil(10_000) { shows("Fuzz Bass") }
+        compose.waitUntil(10_000) { shows("Scream Lead") }
         // The language changes while the models are kept: Generate's characters follow.
         device.lang = "it"
         restoration.emulateSavedInstanceStateRestore()
-        compose.waitUntil(10_000) { shows("Basso fuzz") }
+        compose.waitUntil(10_000) { shows("Lead urlante") }
     }
 }

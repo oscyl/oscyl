@@ -296,6 +296,25 @@
     <string name="gen_breed">Breed with…</string>
     <!-- Where a sound was kept (a slot or a library). -->
     <string name="gen_kept">kept in %1$s</string>
+    <!-- Generate: the kinds of sound are grouped by family; a row of these filters them. -->
+    <string name="gen_family">Family</string>
+    <string name="gen_family_all">All</string>
+    <string name="gen_family_keys">Keys</string>
+    <string name="gen_family_bass">Bass</string>
+    <string name="gen_family_lead">Lead</string>
+    <string name="gen_family_pad">Pad</string>
+    <string name="gen_family_rhythm">Rhythm</string>
+    <string name="gen_family_effect">Effect</string>
+    <!-- Picks a character and dials by itself, and generates. -->
+    <string name="gen_surprise">Surprise me</string>
+    <!-- Six steps from the picked sound to another of the set. -->
+    <string name="gen_morph">Morph to…</string>
+    <!-- A short code that makes a generated sound again anywhere. -->
+    <string name="gen_code">Recipe code</string>
+    <string name="gen_code_share">Share the recipe code</string>
+    <string name="gen_code_enter">Enter a code…</string>
+    <string name="gen_code_title">Enter a code</string>
+    <string name="gen_code_deal">Deal</string>
     <!-- First run: what the person mainly does arranges where Oscyl starts. -->
     <string name="onb_question">What do you mainly do?</string>
     <string name="onb_design">Design sounds</string>

@@ -79,6 +79,8 @@ private class IosFiles(private val documents: Documents) : Files {
 
     override fun share(name: String, bytes: ByteArray, mime: String) = documents.share(name, bytes)
 
+    override fun shareText(text: String) = documents.shareText(text)
+
     override val opened: Flow<suspend () -> PickedFile> = Incoming.files.receiveAsFlow()
 }
 

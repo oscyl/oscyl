@@ -181,7 +181,7 @@ fun App(platform: Platform) {
             val editor = viewModel { EditorModel(library, synth, { preferences.prefs.value.role }, teaching) }
             val play = viewModel { PlayModel(editor, preferences) }
             val review = viewModel { ReviewModel(library, synth, platform.backupsDir) }
-            val generate = viewModel { GenerateModel(library, synth) }
+            val generate = viewModel { GenerateModel(library, synth, files = platform.files) }
             // A language change (the activity is made again; the models are kept): the core
             // words they hold are asked again. Rotation keeps the language and asks nothing.
             var wordsIn by rememberSaveable { mutableStateOf(language) }

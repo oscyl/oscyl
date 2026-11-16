@@ -3,6 +3,7 @@ package io.github.oscyl.generate
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -14,6 +15,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.oscyl.core.Generator
 import io.github.oscyl.core.Libraries
 import io.github.oscyl.core.setLocale
+import io.github.oscyl.platform.Files
+import io.github.oscyl.platform.NoFiles
 import io.github.oscyl.platform.NoMidi
 import io.github.oscyl.theme.OscylTheme
 import io.github.oscyl.theme.OscylThemeMode
@@ -26,6 +29,8 @@ import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -113,6 +118,60 @@ class GenerateBehaviourTest {
         } finally {
             setLocale("en")
         }
+    }
+
+    @Test
+    fun familiesSurpriseCodesAndMorph() {
+        val shared = mutableListOf<String>()
+        val files = object : Files by NoFiles {
+            override fun shareText(text: String) {
+                shared += text
+            }
+        }
+        val synth = make(SynthModel::class) { SynthModel(NoMidi) }
+        val library = make(LibraryModel::class) { LibraryModel(temp.newFolder("libraries").path, synth) }
+        val generate = make(GenerateModel::class) { GenerateModel(library, synth, seed = 3, files = files) }
+        compose.setContent { OscylTheme(OscylThemeMode.Dark) { GenerateScreen(generate) } }
+        await { generate.ui.value.characters.isNotEmpty() }
+        // The page opens on the first character's family: a handful of tiles, not all of them.
+        assertEquals(generate.ui.value.characters[0].family, generate.ui.value.family)
+        compose.onNodeWithText("Wobble").assertDoesNotExist()
+        // Another family shows its own characters and takes the choice along.
+        compose.onNode(hasText("Bass") and hasClickAction()).performClick()
+        await { generate.ui.value.family == "bass" }
+        generate.ui.value.let { assertEquals("bass", it.characters[it.character].family) }
+        assertNotNull(compose.onNodeWithText("Wobble").fetchSemanticsNode())
+
+        // Surprise deals, and the page shows what was picked: its character (out of a family that hides it) and dials.
+        compose.onNodeWithTag("generate-surprise").performScrollTo().performClick()
+        await { generate.ui.value.hand != null && generate.ui.value.code != null }
+        val ui = generate.ui.value
+        assertTrue(ui.family == null || ui.characters[ui.character].family == ui.family)
+        assertTrue(ui.values.all { it % 5 == 0 })
+        // The picked sound's code is shown, and shared as text.
+        val code = ui.code!!
+        assertNotNull(compose.onNodeWithText(code).fetchSemanticsNode())
+        compose.runOnIdle { generate.shareCode() }
+        assertEquals(listOf(code), shared)
+
+        // A bad code stays in its field with the reason under it; nothing is dealt.
+        compose.onNodeWithTag("generate-enter-code").performScrollTo().performClick()
+        await { generate.ui.value.entering }
+        val count = generate.ui.value.hand!!.count
+        compose.runOnIdle { generate.dealCode("pad-nonsense") }
+        await { generate.ui.value.codeError != null }
+        assertNotNull(compose.onNodeWithText(generate.ui.value.codeError!!).fetchSemanticsNode())
+        assertEquals(count, generate.ui.value.hand!!.count)
+        // The good one deals its sound first and closes the field.
+        compose.runOnIdle { generate.dealCode(code.uppercase()) }
+        await { !generate.ui.value.entering && generate.ui.value.hand!!.count == count + 1u }
+        await { generate.ui.value.code == code }
+
+        // Morph: six steps between two sounds of the hand, named in the legend, with no code.
+        compose.runOnIdle { generate.morph(3) }
+        await { generate.ui.value.hand!!.origin.startsWith("From") }
+        assertEquals(6, generate.ui.value.hand!!.sounds.size)
+        assertNull(generate.ui.value.code)
     }
 
     private companion object {

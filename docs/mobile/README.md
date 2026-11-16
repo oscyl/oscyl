@@ -304,6 +304,13 @@ Library logic lives in `oscyl-app`; the bindings only carry it across.
   `pages`, `deal`, `vary`, `breed`, `step`, `select`, `markKept`,
   `selectedProgram` and `hand(points)` (tiles with their pictures). The
   same seed deals the same bytes.
+- `CharacterInfo.family` ("keys", "bass", "lead", "pad", "rhythm",
+  "effect") groups the characters; the page's family row filters by it.
+  `Generator.surprise()` and `dealCode(code)` deal and return what they
+  chose (`Dealt`: character and dials) for the page to show; `morph(other)`
+  deals six steps between two sounds; `code()` is the picked sound's
+  recipe code (none for a variation, a child or a morph step).
+  `Files.shareText` offers the code to another app.
 - `Document.put(index, data)` puts a program over a slot or at the end
   of a library (refused when read-only or full).
 - `Settings.onboarded`/`role` keep the welcome's answer; `role` picks the

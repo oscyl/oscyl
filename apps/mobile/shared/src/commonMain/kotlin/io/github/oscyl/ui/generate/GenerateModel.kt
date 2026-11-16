@@ -3,13 +3,18 @@ package io.github.oscyl.ui.generate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.oscyl.core.CharacterInfo
+import io.github.oscyl.core.Dealt
+import io.github.oscyl.core.FfiException
 import io.github.oscyl.core.Generator
 import io.github.oscyl.core.HandState
 import io.github.oscyl.core.MacroInfo
 import io.github.oscyl.core.SynthRef
 import io.github.oscyl.core.auditionTarget
 import io.github.oscyl.core.drivers
+import io.github.oscyl.platform.Files
+import io.github.oscyl.platform.NoFiles
 import io.github.oscyl.ui.library.LibraryModel
+import io.github.oscyl.ui.library.reason
 import io.github.oscyl.ui.synth.SynthModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -20,6 +25,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 /** What the Generate destination shows. */
 data class GenerateUi(
@@ -27,6 +33,8 @@ data class GenerateUi(
     val model: String = "",
     val characters: List<CharacterInfo> = emptyList(),
     val character: Int = 0,
+    /** The family whose characters show (its id, as [CharacterInfo.family]); null shows all. */
+    val family: String? = null,
     val macros: List<MacroInfo> = emptyList(),
     /** Bright, movement, grit, space: 0..100. */
     val values: List<Int> = listOf(50, 50, 50, 50),
@@ -40,11 +48,27 @@ data class GenerateUi(
     val amount: Int = 1,
     /** Dealing (a moment). */
     val busy: Boolean = false,
+    /** The picked sound's recipe code; null when it has none (a variation, a child, a morph step). */
+    val code: String? = null,
+    /** A code is being typed in. */
+    val entering: Boolean = false,
+    /** What is wrong with the code typed last, in the core's words. */
+    val codeError: String? = null,
 )
+
+/** The families [characters] come in, in the core's order. */
+fun families(characters: List<CharacterInfo>): List<String> =
+    listOf("keys", "bass", "lead", "pad", "rhythm", "effect").filter { f -> characters.any { it.family == f } }
 
 /** What Generate can ask for; every default does nothing (previews). */
 interface GenerateActions {
     fun character(i: Int) {}
+    fun family(id: String?) {}
+    fun surprise() {}
+    fun morph(other: Int) {}
+    fun shareCode() {}
+    fun enterCode(open: Boolean) {}
+    fun dealCode(code: String) {}
     fun value(i: Int, v: Int) {}
     fun keepPage(page: Int, on: Boolean) {}
     fun deal() {}
@@ -70,11 +94,16 @@ class GenerateModel(
     private val library: LibraryModel,
     private val synth: SynthModel,
     private val seed: Long = kotlin.random.Random.nextLong(),
+    private val files: Files = NoFiles,
 ) : ViewModel(), GenerateActions {
     private val _ui = MutableStateFlow(GenerateUi())
     val ui: StateFlow<GenerateUi> = _ui.asStateFlow()
     private var generator: Generator? = null
     private var driver: String? = null
+
+    /** The family picked, kept for the session and across synths; until one is, each synth opens on its first character's. */
+    private var family: String? = null
+    private var familyPicked = false
 
     /** Each synth's generator, kept: going back to a synth finds its hands as they were. */
     private val generators = mutableMapOf<String, Generator>()
@@ -95,9 +124,12 @@ class GenerateModel(
         val g = generators.getOrPut(id) { Generator(id, seed.toULong() + generators.size.toULong()) }
         generator = g
         driver = id
+        val characters = g.characters()
         _ui.value = GenerateUi(
             model = models[id] ?: id,
-            characters = g.characters(),
+            characters = characters,
+            // A handful of tiles, not all of them; a family this synth lacks shows all.
+            family = (if (familyPicked) family else characters.firstOrNull()?.family)?.takeIf { f -> characters.any { it.family == f } },
             macros = g.macros(),
             pages = g.pages(),
             slot = _ui.value.slot,
@@ -128,8 +160,8 @@ class GenerateModel(
     private fun show(play: Boolean) {
         val g = generator ?: return
         viewModelScope.launch {
-            val hand = withContext(Dispatchers.IO) { g.hand(POINTS) }
-            if (g === generator) _ui.update { it.copy(hand = hand) }
+            val (hand, code) = withContext(Dispatchers.IO) { g.hand(POINTS) to g.code() }
+            if (g === generator) _ui.update { it.copy(hand = hand, code = code) }
             if (play) play()
         }
     }
@@ -144,6 +176,50 @@ class GenerateModel(
     }
 
     override fun character(i: Int) = _ui.update { it.copy(character = i) }
+
+    /** Show only [id]'s characters (null: all); the chosen one stays when it is among them, else the family's first is. */
+    override fun family(id: String?) {
+        family = id
+        familyPicked = true
+        _ui.update { ui ->
+            val shown = { i: Int -> id == null || ui.characters.getOrNull(i)?.family == id }
+            ui.copy(family = id, character = if (shown(ui.character)) ui.character else ui.characters.indices.firstOrNull(shown) ?: ui.character)
+        }
+    }
+
+    /** The page moves to what the core chose (a surprise, a code): its character, out of a family that hides it, and its dials. */
+    private fun chosen(dealt: Dealt) = _ui.update { ui ->
+        val character = dealt.character.toInt()
+        val hidden = ui.family != null && ui.characters.getOrNull(character)?.family != ui.family
+        if (hidden) { family = null; familyPicked = true }
+        ui.copy(
+            character = character,
+            family = if (hidden) null else ui.family,
+            values = dealt.macros.map { (it * 100).roundToInt() },
+        )
+    }
+
+    override fun surprise() = dealt { g -> g.surprise()?.also(::chosen) != null }
+
+    override fun morph(other: Int) = dealt { g -> g.morph(other.toUInt()) }
+
+    override fun shareCode() {
+        _ui.value.code?.let(files::shareText)
+    }
+
+    override fun enterCode(open: Boolean) = _ui.update { it.copy(entering = open, codeError = null) }
+
+    /** Deal the hand [code] names; a bad code stays in its field with the core's word on why. */
+    override fun dealCode(code: String) = dealt { g ->
+        try {
+            chosen(g.dealCode(code))
+            _ui.update { it.copy(entering = false, codeError = null) }
+            true
+        } catch (e: FfiException) {
+            _ui.update { it.copy(codeError = e.reason()) }
+            false
+        }
+    }
 
     override fun value(i: Int, v: Int) = _ui.update { it.copy(values = it.values.toMutableList().also { l -> l[i] = v }) }
 

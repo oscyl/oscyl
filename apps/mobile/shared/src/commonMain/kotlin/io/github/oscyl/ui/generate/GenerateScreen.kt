@@ -1,5 +1,39 @@
 package io.github.oscyl.ui.generate
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import io.github.oscyl.shared.generated.resources.action_cancel
+import io.github.oscyl.shared.generated.resources.gen_code
+import io.github.oscyl.shared.generated.resources.gen_code_deal
+import io.github.oscyl.shared.generated.resources.gen_code_enter
+import io.github.oscyl.shared.generated.resources.gen_code_share
+import io.github.oscyl.shared.generated.resources.gen_code_title
+import io.github.oscyl.shared.generated.resources.gen_family
+import io.github.oscyl.shared.generated.resources.gen_family_all
+import io.github.oscyl.shared.generated.resources.gen_family_bass
+import io.github.oscyl.shared.generated.resources.gen_family_effect
+import io.github.oscyl.shared.generated.resources.gen_family_keys
+import io.github.oscyl.shared.generated.resources.gen_family_lead
+import io.github.oscyl.shared.generated.resources.gen_family_pad
+import io.github.oscyl.shared.generated.resources.gen_family_rhythm
+import io.github.oscyl.shared.generated.resources.gen_morph
+import io.github.oscyl.shared.generated.resources.gen_surprise
+import io.github.oscyl.shared.generated.resources.ic_dice
+import io.github.oscyl.shared.generated.resources.ic_share
+import io.github.oscyl.ui.library.LocalPanelLeave
+
 import io.github.oscyl.shared.generated.resources.ic_check
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -149,10 +183,11 @@ fun GenerateScreen(model: GenerateModel, modifier: Modifier = Modifier) {
 }
 
 /**
- * Generate (UX brief): the synth's characters, four macro dials and the stages to keep
- * from the program open, then the hand of six as lifted tiles (two columns on a
- * phone, three when wider), Back and Forward through the last hands, and Vary, Breed
- * and Keep for the sound picked. Picking a sound plays it on the synth.
+ * Generate (UX brief): the synth's characters under their family row, four macro dials
+ * with Surprise me and Enter a code under them, and the stages to keep from the program
+ * open; then the hand of six as lifted tiles (two columns on a phone, three when wider),
+ * Back and Forward through the last hands, Vary, Breed, Morph and Keep for the sound
+ * picked, and its recipe code to share. Picking a sound plays it on the synth.
  */
 @Composable
 fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier = Modifier) {
@@ -185,7 +220,7 @@ fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier 
             val heard = LocalSynthStatus.current.model != null
             BasicText(stringResource(if (heard) Res.string.gen_intro else Res.string.gen_intro_no_synth), style = type.bodyMedium.copy(color = c.legend))
             Legend(stringResource(Res.string.gen_character))
-            Characters(ui.characters, ui.character, actions::character)
+            Characters(ui, actions)
             Legend(stringResource(Res.string.gen_shape))
             // Four in a row where they fit, else two by two (never three and one).
             BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -198,6 +233,16 @@ fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier 
                         }
                     }
                 }
+            }
+            // The core picks for you, or deals the sound a code names.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val can = !ui.busy && ui.characters.isNotEmpty()
+                OutlinedAction(
+                    stringResource(Res.string.gen_surprise), actions::surprise, Modifier.testTag("generate-surprise"),
+                    leading = { Image(painterResource(Res.drawable.ic_dice), null, Modifier.size(18.dp), colorFilter = ColorFilter.tint(if (can) c.ink else c.legend)) },
+                    enabled = can,
+                )
+                OutlinedAction(stringResource(Res.string.gen_code_enter), { actions.enterCode(true) }, Modifier.testTag("generate-enter-code"), enabled = can)
             }
             if (ui.slot != null && ui.pages.isNotEmpty()) {
                 Legend(stringResource(Res.string.gen_keep_stages, ui.slot))
@@ -263,6 +308,7 @@ fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier 
         }
     }
     }
+    if (ui.entering) CodeDialog(ui.codeError, ui.busy, onDismiss = { actions.enterCode(false) }, onDeal = actions::dealCode)
     val hand = ui.hand
     if (keeping && hand != null) {
         MenuPanel(hand.sounds.getOrNull(hand.selected.toInt())?.name ?: stringResource(Res.string.gen_keep), onDismiss = { keeping = false }) {
@@ -273,16 +319,139 @@ fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier 
     }
 }
 
-/** The characters as a wrapped group of choices, the chosen one on the plate. */
+/** A family's name, from its id ([CharacterInfo.family]). */
 @Composable
-private fun Characters(characters: List<CharacterInfo>, chosen: Int, onChoose: (Int) -> Unit) {
-    FlowRow(
-        Modifier.selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+private fun familyTitle(id: String): String = stringResource(
+    when (id) {
+        "keys" -> Res.string.gen_family_keys
+        "bass" -> Res.string.gen_family_bass
+        "lead" -> Res.string.gen_family_lead
+        "pad" -> Res.string.gen_family_pad
+        "rhythm" -> Res.string.gen_family_rhythm
+        else -> Res.string.gen_family_effect
+    },
+)
+
+/**
+ * The characters: a row of families (All first; it scrolls sideways when it must), then
+ * the chosen family's characters as a wrapped group of choices, the chosen one on the plate.
+ */
+@Composable
+private fun Characters(ui: GenerateUi, actions: GenerateActions) {
+    val all = families(ui.characters)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // A synth with one family needs no row.
+        if (all.size > 1) {
+            val label = stringResource(Res.string.gen_family)
+            Row(
+                Modifier
+                    .semantics { contentDescription = label }
+                    .selectableGroup()
+                    .horizontalScroll(rememberScrollState())
+                    .testTag("generate-families"),
+            ) {
+                FamilyTab(stringResource(Res.string.gen_family_all), ui.family == null) { actions.family(null) }
+                all.forEach { id -> FamilyTab(familyTitle(id), ui.family == id) { actions.family(id) } }
+            }
+        }
+        FlowRow(
+            Modifier.selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ui.characters.forEachIndexed { i, ch ->
+                if (ui.family == null || ch.family == ui.family) {
+                    Choice(ch.title, i == ui.character, description = ch.hint) { actions.character(i) }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A family in its row: its word alone, in `legend`; the chosen one in `ink` at 600 over an
+ * ink index line (weight and line, not colour alone). Quieter than the characters under
+ * it, which are the choice that counts.
+ */
+@Composable
+private fun FamilyTab(text: String, on: Boolean, onClick: () -> Unit) {
+    val c = OscylTheme.colors
+    val haptics = LocalOscylHaptics.current
+    val shape = RoundedCornerShape(OscylTokens.radius)
+    val interaction = remember { MutableInteractionSource() }
+    val motion = LocalOscylMotion.current
+    val ink by animateColorAsState(if (on) c.ink else c.legend, tween(if (motion) OscylTokens.fastMs else 0, easing = OscylTokens.easing))
+    Box(
+        Modifier
+            .heightIn(min = 48.dp)
+            .selectable(on, interaction, indication = null, role = Role.RadioButton) { if (!on) haptics.tick(); onClick() }
+            .touchStates(interaction, shape, c.press)
+            .padding(horizontal = 12.dp)
+            .drawBehind {
+                // The index line under the chosen family's word, drawn in place: nothing is laid out for it.
+                if (on) {
+                    val h = 2.dp.toPx()
+                    drawRect(c.ink, Offset(0f, size.height - 10.dp.toPx()), Size(size.width, h))
+                }
+            },
+        contentAlignment = Alignment.Center,
     ) {
-        characters.forEachIndexed { i, ch ->
-            Choice(ch.title, i == chosen, description = ch.hint) { onChoose(i) }
+        // Both weights are laid out, so choosing a family moves none of them.
+        val style = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content)
+        BasicText(text, Modifier.clearAndSetSemantics {}, style = style.copy(color = androidx.compose.ui.graphics.Color.Transparent, fontWeight = FontWeight.SemiBold))
+        BasicText(text, style = style.copy(color = ink, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium))
+    }
+}
+
+/**
+ * Enter a code: a field for a recipe code typed or pasted, Cancel and Deal. What is wrong
+ * with a bad code stands under the field, in the core's words, in a line that is always
+ * kept (nothing moves when it appears) and is said at once.
+ */
+@Composable
+private fun CodeDialog(error: String?, busy: Boolean, onDismiss: () -> Unit, onDeal: (String) -> Unit) {
+    val c = OscylTheme.colors
+    val state = rememberTextFieldState()
+    val focus = remember { FocusRequester() }
+    val fieldLabel = stringResource(Res.string.gen_code)
+    val deal = { if (!busy) onDeal(state.text.toString().trim()) }
+    MenuPanel(stringResource(Res.string.gen_code_title), onDismiss) {
+        // Inside the dialog's window, once the field is there.
+        LaunchedEffect(Unit) { focus.requestFocus() }
+        BasicTextField(
+            state,
+            Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .border(if (error != null) 2.dp else OscylTokens.ruleWidth, if (error != null) c.ink else c.ruleStrong, RoundedCornerShape(OscylTokens.radius))
+                .padding(horizontal = 12.dp, vertical = 12.dp)
+                .focusRequester(focus)
+                .testTag("generate-code-field")
+                .semantics { contentDescription = fieldLabel },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = c.ink, fontFamily = FontFamily.Monospace, textDirection = TextDirection.Ltr),
+            cursorBrush = SolidColor(c.ink),
+            lineLimits = TextFieldLineLimits.SingleLine,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+            onKeyboardAction = { deal() },
+        )
+        BasicText(
+            error.orEmpty(),
+            Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .testTag("generate-code-error")
+                .semantics { liveRegion = LiveRegionMode.Assertive },
+            style = MaterialTheme.typography.bodySmall.copy(color = c.ink, fontWeight = FontWeight.SemiBold),
+            minLines = 1,
+        )
+        FlowRow(
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+        ) {
+            val leave = LocalPanelLeave.current
+            OutlinedAction(stringResource(Res.string.action_cancel), { leave(onDismiss) })
+            OutlinedAction(stringResource(Res.string.gen_code_deal), deal, enabled = !busy)
         }
     }
 }
@@ -416,12 +585,17 @@ private fun Tile(sound: SoundTile, picked: Boolean, modifier: Modifier, onPick: 
     }
 }
 
-/** Where the hand came from, Back and Forward, then Vary (with its amount), Breed with and Keep. */
+/**
+ * Where the hand came from, Back and Forward, then Vary (with its amount), Breed with and
+ * Morph to (each asks which other sound of the hand, in the same row of names), and the
+ * picked sound's recipe code with its Share.
+ */
 @Composable
 private fun HandActions(ui: GenerateUi, hand: HandState, actions: GenerateActions) {
     val c = OscylTheme.colors
     val type = MaterialTheme.typography
-    var breeding by rememberSaveable { mutableStateOf(false) }
+    // Which action waits for another sound of the hand: 0 none, 1 Breed with, 2 Morph to.
+    var picking by rememberSaveable { mutableStateOf(0) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -443,19 +617,43 @@ private fun HandActions(ui: GenerateUi, hand: HandState, actions: GenerateAction
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedAction(stringResource(Res.string.gen_vary), actions::vary)
-            OutlinedAction(stringResource(Res.string.gen_breed), { breeding = !breeding })
+            OutlinedAction(stringResource(Res.string.gen_breed), { picking = if (picking == 1) 0 else 1 }, role = Role.DropdownList)
+            OutlinedAction(stringResource(Res.string.gen_morph), { picking = if (picking == 2) 0 else 2 }, Modifier.testTag("generate-morph"), role = Role.DropdownList)
         }
-        if (breeding) {
-            // The others of the hand, to breed the picked one with.
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (picking != 0) {
+            // The others of the hand, to breed the picked one with or morph it into.
+            val what = stringResource(if (picking == 1) Res.string.gen_breed else Res.string.gen_morph)
+            FlowRow(
+                Modifier.semantics { contentDescription = what },
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 hand.sounds.forEachIndexed { i, s ->
                     if (i != hand.selected.toInt()) {
                         OutlinedAction(s.name, {
-                            breeding = false
-                            actions.breed(i)
+                            val morph = picking == 2
+                            picking = 0
+                            if (morph) actions.morph(i) else actions.breed(i)
                         })
                     }
                 }
+            }
+        }
+        // The picked sound's recipe code, small, with its Share; a sound without one shows none.
+        ui.code?.let { code ->
+            val label = stringResource(Res.string.gen_code)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
+                    BasicText(label, style = type.bodySmall.copy(color = c.legend))
+                    BasicText(
+                        code,
+                        Modifier.testTag("generate-code"),
+                        style = type.bodySmall.copy(color = c.ink, fontFamily = FontFamily.Monospace, textDirection = TextDirection.Ltr),
+                        maxLines = 1,
+                        overflow = TextOverflow.MiddleEllipsis,
+                    )
+                }
+                IconAction(Res.drawable.ic_share, stringResource(Res.string.gen_code_share), actions::shareCode)
             }
         }
     }
@@ -470,8 +668,11 @@ private fun wave(k: Float) = GraphShape(
 
 val SampleGenerate = GenerateUi(
     model = "minilogue xd",
-    characters = listOf("Pad", "Bass", "Lead", "Bells", "Pluck", "Strings", "Brass", "Space").map { CharacterInfo(it, "$it sounds") },
+    characters = listOf("Pad" to "pad", "Bass" to "bass", "Lead" to "lead", "Bells" to "keys", "Pluck" to "keys", "Strings" to "pad", "Brass" to "lead", "Space" to "effect")
+        .map { (title, family) -> CharacterInfo(title, "$title sounds", family) },
     character = 2,
+    family = "lead",
+    code = "lead-nn6agh34s69jr",
     macros = listOf("Bright", "Movement", "Grit", "Ambience").map { MacroInfo(it, "") },
     values = listOf(60, 35, 20, 70),
     pages = listOf("Voice", "Oscillators", "Filter", "Envelopes", "Effects"),

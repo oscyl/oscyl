@@ -29,6 +29,9 @@ interface Files {
     /** Offer [bytes] as a file called [name] to another app. */
     fun share(name: String, bytes: ByteArray, mime: String)
 
+    /** Offer a line of [text] to another app (a message, a note, the clipboard). */
+    fun shareText(text: String) = Unit
+
     /**
      * A file picked to open for [purpose] whose wait went with the app's process (the
      * system ended it while the picker was up), read now; null when there is none, or
