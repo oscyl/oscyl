@@ -477,7 +477,7 @@ impl ProgramList {
             .build();
         clear.add_css_class("pill");
         let empty = adw::StatusPage::builder()
-            .icon_name("system-search-symbolic")
+            .paintable(&crate::widgets::LineArt::new(crate::widgets::Art::Shelf))
             .title(tr("No matching programs"))
             .description(tr(
                 "No program matches the search and the filters together.",
@@ -485,6 +485,7 @@ impl ProgramList {
             .child(&clear)
             .build();
         empty.add_css_class("compact");
+        empty.add_css_class("line-art");
         // The selected row is the plate, sliding from the old row to the
         // new one and riding along when the list scrolls.
         let plated = {

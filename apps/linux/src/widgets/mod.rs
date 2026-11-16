@@ -11,6 +11,7 @@ mod dial;
 mod dock;
 mod fold;
 mod graph;
+mod line_art;
 mod pad;
 mod plate;
 mod section_frame;
@@ -22,6 +23,8 @@ pub use dock::Dock;
 #[allow(unused_imports)] // The widgets demo example does not use it.
 pub use fold::{Fold, Line};
 pub use graph::{Graph, GraphData, HandlePoint};
+#[allow(unused_imports)] // The widgets demo example does not use it.
+pub use line_art::{Art, LineArt};
 #[allow(unused_imports)] // The widgets demo example does not use it.
 pub use pad::XyPad;
 #[allow(unused_imports)] // The widgets demo example does not use it.

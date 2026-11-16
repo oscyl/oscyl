@@ -183,11 +183,12 @@ impl App {
             .unwrap_or_default();
         if steps.is_empty() {
             let empty = adw::StatusPage::builder()
+                .paintable(&crate::widgets::LineArt::new(crate::widgets::Art::Panel))
                 .title(tr("No edits yet"))
                 .description(tr(
                     "Every change to these programs is listed here; a click goes back to it.",
                 ))
-                .css_classes(["compact", "history-empty"])
+                .css_classes(["compact", "history-empty", "line-art"])
                 .build();
             body.append(&empty);
             return;

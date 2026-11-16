@@ -16,7 +16,7 @@ use oscyl_driver::{Control, Curation, Driver};
 use crate::callback::Slot;
 use crate::i18n::tr;
 use crate::widgets::{
-    Dial, Dock, Graph, GraphData, HandlePoint, SectionFrame, SegmentTrack, StageStrip,
+    Art, Dial, Dock, Graph, GraphData, HandlePoint, LineArt, SectionFrame, SegmentTrack, StageStrip,
 };
 
 /// One generated control, kept so programs can be shown without rebuilding.
@@ -138,7 +138,8 @@ impl Editor {
 
         // Welcome / empty state; the app sets its text.
         let welcome = adw::StatusPage::builder()
-            .icon_name("oscyl-oscillator-symbolic")
+            .paintable(&LineArt::new(Art::Panel))
+            .css_classes(["line-art"])
             .build();
         let actions = gtk::Box::new(gtk::Orientation::Vertical, 12);
         actions.set_halign(gtk::Align::Center);
@@ -803,12 +804,13 @@ impl Editor {
         set_page(&self.root, name, page);
     }
 
-    pub fn show_welcome(&self, title: &str, description: &str) {
-        self.show_status(title, description, true);
+    pub fn show_welcome(&self, art: Art, title: &str, description: &str) {
+        self.show_status(art, title, description, true);
     }
 
     /// The status page, with or without the open/connect buttons.
-    pub fn show_status(&self, title: &str, description: &str, actions: bool) {
+    pub fn show_status(&self, art: Art, title: &str, description: &str, actions: bool) {
+        self.welcome.set_paintable(Some(&LineArt::new(art)));
         self.welcome.set_title(title);
         self.welcome.set_description(Some(description));
         if let Some(c) = self.welcome.child() {

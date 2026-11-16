@@ -1177,7 +1177,8 @@ impl App {
     /// An empty library: what to do to fill it.
     pub(crate) fn show_empty_library(&self, i: usize) {
         let page = adw::StatusPage::builder()
-            .icon_name("oscyl-library-symbolic")
+            .paintable(&crate::widgets::LineArt::new(crate::widgets::Art::Shelf))
+            .css_classes(["line-art"])
             .title(tr("No programs yet"))
             .description(tr(
                 "Start a new program (Ctrl+N), copy programs here from the synth or another library with Copy to Library in a program's menu (Ctrl+Shift+L), or keep sounds from Generate.",

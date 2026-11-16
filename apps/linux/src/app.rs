@@ -19,6 +19,7 @@ use crate::programs::{Category, ProgramList, RowData, RowSource};
 use crate::sidebar::{LibRow, Place, RowKind, Sidebar, SynthStatus, TreeRow};
 use crate::state::{Doc, Program};
 use crate::synth::{self, Cmd, DeviceId, SynthHandle};
+use crate::widgets::Art;
 use crate::window::OscylWindow;
 
 pub struct App {
@@ -234,6 +235,7 @@ impl App {
         });
 
         app.editor.show_welcome(
+            Art::Panel,
             &tr("Welcome to Oscyl"),
             &tr("Everything works offline; you only need the synth to listen and sync."),
         );
@@ -504,6 +506,7 @@ impl App {
                 if let Some(error) = broken {
                     self.current.set(None);
                     self.editor.show_status(
+                        Art::Shelf,
                         &tr("Couldn't read this library"),
                         &format!(
                             "{}\n\n{error}",
@@ -515,6 +518,7 @@ impl App {
                     self.current.set(None);
                     match place {
                         Place::Synth => self.editor.show_welcome(
+                            Art::Cable,
                             &tr("No synth connected"),
                             &tr("Connect your synth over USB, or turn on the simulated synths in Preferences."),
                         ),
@@ -553,11 +557,13 @@ impl App {
                 match (self.active.get(), cached) {
                     (Some(_), Some(c)) if !c.is_empty() => self.show_units(),
                     (Some(_), _) => self.editor.show_status(
+                        Art::Chip,
                         &tr("Oscillators and effects"),
                         &tr("Reading the synth's user slots…"),
                         false,
                     ),
                     (None, _) => self.editor.show_welcome(
+                        Art::Chip,
                         &tr("Oscillators and effects"),
                         &tr("User oscillators and effects in the synth's user slots. Connect the synth to list them."),
                     ),
@@ -688,6 +694,7 @@ impl App {
             };
             self.win.editor_page.set_title(&label);
             self.editor.show_status(
+                Art::Panel,
                 &label,
                 &detail.replace("{number}", &self.slot_label(i)),
                 false,

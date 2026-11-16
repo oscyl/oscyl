@@ -132,6 +132,14 @@ fold > .ink { color: var(--oscyl-ink); }
 /* A section's frame: its rule and the ink its sheen is mixed from. */
 sectionframe > .rule { color: var(--oscyl-rule); }
 sectionframe > .ink { color: var(--oscyl-ink); }
+/* A status page's line drawing (LineArt): parts in the legend, outlines
+ * in rule-strong, what is missing dotted in rule, at the phone's size. */
+statuspage.line-art image.icon {
+  -gtk-icon-size: 120px;
+  color: var(--oscyl-legend);
+  -gtk-icon-palette: error var(--oscyl-rule-strong), warning var(--oscyl-rule);
+  opacity: 1;
+}
 
 /* The Perform page's XY pad: ink point, printed grid, orange edit line. */
 xypad { color: var(--oscyl-ink); border-radius: var(--oscyl-radius-panel); }
