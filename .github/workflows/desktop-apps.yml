@@ -1,0 +1,100 @@
+name: Desktop apps
+
+# The GTK app built and bundled for Windows (MSYS2 UCRT64) and macOS
+# (Homebrew), as release.yml does, then opened once with a simulated synth
+# to save a screenshot of its window. The Linux app is the gtk job in ci.yml.
+on:
+  push:
+    branches: [main]
+    paths: ['apps/linux/**', 'crates/**', 'Cargo.*', 'design/**', 'po/**', 'packaging/desktop/**', '.github/workflows/desktop-apps.yml']
+  pull_request:
+    paths: ['apps/linux/**', 'crates/**', 'Cargo.*', 'design/**', 'po/**', 'packaging/desktop/**', '.github/workflows/desktop-apps.yml']
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    name: windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: zip
+          pacboy: >-
+            toolchain:p rust:p pkgconf:p gtk4:p libadwaita:p gettext-tools:p
+      - run: cargo build --release --locked -p oscyl-gtk
+      - name: Bundle
+        run: packaging/desktop/bundle-windows.sh target/release/oscyl-gtk.exe "$MSYSTEM_PREFIX" dist/Oscyl
+      # From PowerShell, whose PATH has no MSYS2: only the bundle's DLLs load.
+      - name: Open once
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $app = Start-Process dist\Oscyl\bin\Oscyl.exe -Wait -PassThru `
+              -ArgumentList '--simulator', '--screenshot', 'screenshot-windows.png'
+          if ($app.ExitCode -ne 0 -or -not (Test-Path screenshot-windows.png)) { exit 1 }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: oscyl-windows
+          path: |
+            dist/
+            screenshot-windows.png
+          retention-days: 7
+
+  macos:
+    name: macos (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            runner: macos-latest
+          - arch: x86_64
+            runner: macos-15-intel
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: brew install pkgconf gtk4 libadwaita gettext adwaita-icon-theme dylibbundler librsvg
+      # gettext-rs links Homebrew's libintl.
+      - run: GETTEXT_DIR="$(brew --prefix gettext)" cargo build --release --locked -p oscyl-gtk
+      - name: Bundle
+        run: packaging/desktop/bundle-macos.sh target/release/oscyl-gtk 0.0.0 dist
+      - name: Open once
+        timeout-minutes: 5
+        run: dist/Oscyl.app/Contents/MacOS/oscyl-gtk --simulator --screenshot "screenshot-macos-$ARCH.png"
+        env:
+          ARCH: ${{ matrix.arch }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: oscyl-macos-${{ matrix.arch }}
+          path: screenshot-macos-*.png
+          retention-days: 7

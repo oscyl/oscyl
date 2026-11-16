@@ -37,3 +37,15 @@ like every other SVG under `data/`.
 ## Flatpak
 
 See [`flatpak/README.md`](flatpak/README.md).
+
+## Windows and macOS
+
+[`desktop/`](desktop/) bundles the app so it runs on a machine with nothing
+else installed. `bundle-windows.sh` makes a folder (`bin/Oscyl.exe`, the
+MSYS2 UCRT64 DLLs it loads, `share/`, `licences/`); `bundle-macos.sh` makes
+`Oscyl.app` with Homebrew's dylibs relocated into it, signed ad hoc. Both
+share `bundle-share.sh` (GTK's schemas, the Adwaita icons, the translations)
+and ship the licence texts and exact versions of the libraries they carry
+(`THIRD-PARTY.txt`, `PACKAGES.txt`). The release and `desktop-apps.yml`
+workflows run them; [docs/building.md](../docs/building.md) shows how by
+hand.

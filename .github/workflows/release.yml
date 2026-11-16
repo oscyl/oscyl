@@ -116,6 +116,83 @@ jobs:
           name: dist-cli-${{ matrix.target }}
           path: dist/
 
+  # The GTK app for Windows: a folder with the DLLs and data it needs
+  # (packaging/desktop/bundle-windows.sh), zipped. Not signed.
+  desktop-windows:
+    name: desktop-windows
+    needs: guard
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: UCRT64
+          update: true
+          # A release builds from scratch.
+          cache: false
+          install: zip
+          pacboy: >-
+            toolchain:p rust:p pkgconf:p gtk4:p libadwaita:p gettext-tools:p
+      - name: Build and package
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+        run: |
+          cargo build --release --locked -p oscyl-gtk
+          name=oscyl-$VERSION-desktop-windows-x86_64
+          packaging/desktop/bundle-windows.sh target/release/oscyl-gtk.exe "$MSYSTEM_PREFIX" "$name"
+          mkdir dist
+          zip -qr "dist/$name.zip" "$name"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-desktop-windows
+          path: dist/
+
+  # The GTK app for macOS: Oscyl.app with Homebrew's libraries inside
+  # (packaging/desktop/bundle-macos.sh), signed ad hoc, not notarised.
+  desktop-macos:
+    name: desktop-macos (${{ matrix.arch }})
+    needs: guard
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            runner: macos-latest
+          - arch: x86_64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - run: brew install pkgconf gtk4 libadwaita gettext adwaita-icon-theme dylibbundler librsvg
+      - name: Build and package
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          GETTEXT_DIR="$(brew --prefix gettext)" cargo build --release --locked -p oscyl-gtk
+          packaging/desktop/bundle-macos.sh target/release/oscyl-gtk "$VERSION" build
+          mkdir dist
+          ditto -c -k --keepParent build/Oscyl.app "dist/oscyl-$VERSION-desktop-macos-$ARCH.zip"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-desktop-macos-${{ matrix.arch }}
+          path: dist/
+
   flatpak-sources:
     name: flatpak-sources
     needs: guard
@@ -254,7 +331,7 @@ jobs:
 
   checksums:
     name: checksums
-    needs: [guard, cli, flatpak, android, source]
+    needs: [guard, cli, desktop-windows, desktop-macos, flatpak, android, source]
     runs-on: ubuntu-latest
     permissions:
       contents: read

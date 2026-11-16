@@ -1,0 +1,19 @@
+Third-party libraries in this download
+======================================
+
+Oscyl itself is licensed MIT OR Apache-2.0 (LICENSE-MIT, LICENSE-APACHE).
+The Rust crates built into it are listed with their licences in the app's
+About window.
+
+To run without anything else installed, this download also carries GTK,
+libadwaita, GLib, Pango, Cairo, HarfBuzz and the libraries they use,
+unmodified, as separate shared libraries (DLLs on Windows, dylibs on macOS),
+and the Adwaita icon theme. GTK, libadwaita, GLib and Pango are licensed under
+the GNU Lesser General Public License, version 2.1 or later; the others under
+the licences whose texts are in this folder.
+
+PACKAGES.txt names the exact build of each one: the packages of MSYS2
+(https://packages.msys2.org) on Windows, the formulae of Homebrew
+(https://formulae.brew.sh) on macOS. Their sources at those versions are
+published there. You may replace any of these libraries with your own build
+of a compatible version; Oscyl loads them from this folder.
