@@ -12,9 +12,9 @@
 //!
 //! Coherence: a VCO or the multi engine is audible, the filter is open at
 //! least a fifth of the way, resonance stays under 800, a note either
-//! sustains or decays slowly enough to hear, the multi engine is noise or
-//! VPM (a user oscillator may not be loaded), and an effect that is on has
-//! a type that is not a user slot.
+//! sustains or decays slowly enough to hear, and a user oscillator or
+//! effect slot is selected only when the recipe's palette (or, for a
+//! variation or a child, a parent) names it.
 //!
 //! Each character says what it needs of a field (`special`); the rest
 //! comes from ranges all share (`common`).
@@ -27,6 +27,8 @@ use crate::Program;
 use crate::curate::{CURATION, ENVELOPES, FILTER, OSCILLATORS, control};
 use crate::fields::{Field, all, field};
 use oscyl_logue::kinds::VPM_SAFE;
+use oscyl_logue::msg::Module;
+use oscyl_logue::unit::{UserUnit, user_units};
 
 pub const CHARACTERS: &[Character] = &[
     Character {
@@ -754,9 +756,133 @@ fn audible(p: &Program) -> bool {
         .any(|s| p.get(field(&format!("Main Mixer {s}"))) >= 400)
 }
 
-/// Make the program sound (see the module docs). Touches only free fields;
-/// idempotent.
-fn cohere(p: &mut Program) {
+const USER_OSC: &str = "Main Multi Engine User Osc";
+
+/// Every user slot `p` selects, used or not: what a variation or a child
+/// of it may keep.
+fn selections(p: &Program) -> Vec<(Module, u8)> {
+    let get = |name: &str| p.get(field(name));
+    let mut out = vec![];
+    if get("Main Multi Engine Type") == 2 {
+        out.push((Module::Osc, get(USER_OSC) as u8));
+    }
+    if get("Mod FX Type") == 5 {
+        out.push((Module::ModFx, get("Mod FX User") as u8));
+    }
+    if get("Delay/Reverb Delay Type") > 11 {
+        out.push((Module::DelFx, (get("Delay/Reverb Delay Type") - 12) as u8));
+    }
+    if get("Delay/Reverb Reverb Type") > 9 {
+        out.push((Module::RevFx, (get("Delay/Reverb Reverb Type") - 10) as u8));
+    }
+    out
+}
+
+/// The user slots `bytes` relies on: a user oscillator the mixer lets
+/// through, a user effect that is on.
+pub fn needs(bytes: &[u8]) -> Vec<(Module, u8)> {
+    let Ok(p) = program(bytes) else { return vec![] };
+    let get = |name: &str| p.get(field(name));
+    let echo = get("Delay/Reverb On") == 1;
+    selections(&p)
+        .into_iter()
+        .filter(|(m, _)| match m {
+            Module::Osc => get("Main Mixer Multi") > 0,
+            Module::ModFx => get("Mod FX On") == 1,
+            Module::DelFx => echo && get("Delay/Reverb Type") == 1,
+            Module::RevFx => echo && get("Delay/Reverb Type") == 2,
+        })
+        .collect()
+}
+
+/// What a child of `a` and `b` may keep: either parent's user selections.
+pub fn held_by(a: &[u8], b: &[u8]) -> Result<Vec<(Module, u8)>, DriverError> {
+    Ok([selections(&program(a)?), selections(&program(b)?)].concat())
+}
+
+/// Whether a user oscillator may take the multi engine's place for
+/// character `id`: not where its noise or VPM is the sound itself.
+fn takes_user_osc(id: &str) -> bool {
+    !matches!(id, "wind" | "snare" | "kick" | "fm-keys" | "organ")
+}
+
+/// Use the synth's user units in `p`: an oscillator from `units` in the
+/// multi engine's place when `osc` allows, or an effect, or both. The
+/// oscillator gets a shape and shift of its own, each declared parameter a
+/// value inside its range (and its type noted), and a level to be heard
+/// at; an effect is switched on.
+fn use_units(p: &mut Program, units: &[UserUnit], osc: bool, seed: u64) {
+    let roll = |name: &str, k: u64| roll_field(seed, crate::fields::index(name), k);
+    let within = |name: &str, lo: u16, hi: u16| {
+        lo + ((roll(name, 9) * f32::from(hi - lo + 1)) as u16).min(hi - lo)
+    };
+    let put = |p: &mut Program, name: &str, v: u16| set(p, field(name), v);
+    let fits = |u: &&UserUnit| u.slot < u.module.slots();
+    let oscs: Vec<&UserUnit> = units
+        .iter()
+        .filter(|u| osc && u.module == Module::Osc)
+        .filter(fits)
+        .collect();
+    let effects: Vec<&UserUnit> = units
+        .iter()
+        .filter(|u| u.module != Module::Osc)
+        .filter(fits)
+        .collect();
+    let of = |r: f32, n: usize| ((r * n as f32) as usize).min(n.saturating_sub(1));
+    // Mostly the oscillator; sometimes an effect instead, or as well.
+    let use_osc = !oscs.is_empty() && (effects.is_empty() || roll(USER_OSC, 7) < 0.7);
+    let use_effect = !effects.is_empty() && (!use_osc || roll("Mod FX User", 7) < 0.25);
+    if use_osc {
+        let u = oscs[of(roll(USER_OSC, 8), oscs.len())];
+        put(p, "Main Multi Engine Type", 2);
+        put(p, USER_OSC, u16::from(u.slot));
+        put(
+            p,
+            "Main Multi Engine User Shape",
+            within("Main Multi Engine User Shape", 0, 1023),
+        );
+        put(
+            p,
+            "Main Multi Engine User Shift",
+            within("Main Multi Engine User Shift", 0, 1023),
+        );
+        for (i, &(lo, hi, kind)) in u.params.iter().flatten().enumerate() {
+            let name = format!("Main Multi Engine Param {}", i + 1);
+            put(p, &name, within(&name, u16::from(lo), u16::from(hi)));
+            put(p, &format!("{name} Type"), u16::from(kind));
+        }
+        if p.get(field("Main Mixer Multi")) < 450 {
+            put(p, "Main Mixer Multi", within("Main Mixer Multi", 450, 850));
+        }
+    }
+    if use_effect {
+        let u = effects[of(roll("Mod FX User", 8), effects.len())];
+        let slot = u16::from(u.slot);
+        match u.module {
+            Module::ModFx => {
+                put(p, "Mod FX Type", 5);
+                put(p, "Mod FX User", slot);
+                put(p, "Mod FX On", 1);
+            }
+            Module::DelFx => {
+                put(p, "Delay/Reverb Type", 1);
+                put(p, "Delay/Reverb Delay Type", 12 + slot);
+                put(p, "Delay/Reverb On", 1);
+            }
+            Module::RevFx => {
+                put(p, "Delay/Reverb Type", 2);
+                put(p, "Delay/Reverb Reverb Type", 10 + slot);
+                put(p, "Delay/Reverb On", 1);
+            }
+            Module::Osc => {}
+        }
+    }
+}
+
+/// Make the program sound (see the module docs); a user oscillator or
+/// effect stays selected only in a slot `held` names. Apart from that it
+/// touches only free fields; idempotent.
+fn cohere(p: &mut Program, held: &[(Module, u8)]) {
     let clamp = |p: &mut Program, name: &str, lo: u16, hi: u16| {
         let f = field(name);
         let v = p.get(f).clamp(lo, hi);
@@ -767,19 +893,38 @@ fn cohere(p: &mut Program) {
     }
     clamp(p, "Main Filter Cutoff", 200, 1023);
     clamp(p, "Main Filter Resonance", 0, 800);
-    clamp(p, "Main Multi Engine Type", 0, 1);
-    clamp(p, "Mod FX Type", 1, 4);
-    clamp(p, "Delay/Reverb Delay Type", 0, 11);
-    clamp(p, "Delay/Reverb Reverb Type", 0, 9);
+    let get = |p: &Program, name: &str| p.get(field(name));
+    let holds = |m: Module, slot: u16| {
+        held.iter()
+            .any(|&(hm, hs)| hm == m && u16::from(hs) == slot)
+    };
+    if !holds(Module::Osc, get(p, USER_OSC)) {
+        clamp(p, "Main Multi Engine Type", 0, 1);
+    }
+    if !holds(Module::ModFx, get(p, "Mod FX User")) {
+        clamp(p, "Mod FX Type", 1, 4);
+    }
+    if !holds(
+        Module::DelFx,
+        get(p, "Delay/Reverb Delay Type").saturating_sub(12),
+    ) {
+        clamp(p, "Delay/Reverb Delay Type", 0, 11);
+    }
+    if !holds(
+        Module::RevFx,
+        get(p, "Delay/Reverb Reverb Type").saturating_sub(10),
+    ) {
+        clamp(p, "Delay/Reverb Reverb Type", 0, 9);
+    }
     if p.get(field("Main Amp EG Sustain")) < 100 {
         clamp(p, "Main Amp EG Decay", 200, 1023);
     }
 }
 
-/// `bytes` after the coherence pass.
-pub fn cohered(bytes: &[u8]) -> Result<Vec<u8>, DriverError> {
+/// `bytes` after the coherence pass; it may keep a user slot `held` names.
+pub fn cohered(bytes: &[u8], held: &[(Module, u8)]) -> Result<Vec<u8>, DriverError> {
     let mut p = program(bytes)?;
-    cohere(&mut p);
+    cohere(&mut p, held);
     Ok(p.as_bytes().to_vec())
 }
 
@@ -819,7 +964,12 @@ pub fn generate(recipe: &Recipe, base: Option<&[u8]>) -> Result<Vec<u8>, DriverE
         };
         set(&mut p, f, v);
     }
-    cohere(&mut p);
+    let units = user_units(&recipe.palette);
+    if !units.is_empty() {
+        use_units(&mut p, &units, takes_user_osc(c.id), seed);
+    }
+    let held: Vec<(Module, u8)> = units.iter().map(|u| (u.module, u.slot)).collect();
+    cohere(&mut p, &held);
     p.set_name(&name(c, recipe.seed))
         .map_err(|e| DriverError(e.to_string()))?;
     // Kept pages come back bit for bit, never through `set`.
@@ -854,7 +1004,7 @@ pub fn vary(bytes: &[u8], amount: f32, seed: u64) -> Result<Vec<u8>, DriverError
         };
         set(&mut p, f, v.round().max(0.0) as u16);
     }
-    cohere(&mut p);
+    cohere(&mut p, &held_by(bytes, bytes)?);
     Ok(p.as_bytes().to_vec())
 }
 
@@ -863,6 +1013,7 @@ pub fn vary(bytes: &[u8], amount: f32, seed: u64) -> Result<Vec<u8>, DriverError
 /// may hold an out-of-range byte). Everything else, and the name, is `a`'s.
 pub fn breed(a: &[u8], b: &[u8], mix: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
     let mix = mix.clamp(0.0, 1.0);
+    let held = held_by(a, b)?;
     let (mut p, b) = (program(a)?, program(b)?);
     for (i, f) in free() {
         let (x, y) = (f32::from(p.get(f)), f32::from(b.get(f)));
@@ -875,7 +1026,7 @@ pub fn breed(a: &[u8], b: &[u8], mix: f32, seed: u64) -> Result<Vec<u8>, DriverE
         };
         set(&mut p, f, v.round() as u16);
     }
-    cohere(&mut p);
+    cohere(&mut p, &held);
     Ok(p.as_bytes().to_vec())
 }
 

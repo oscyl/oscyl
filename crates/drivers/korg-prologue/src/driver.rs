@@ -276,7 +276,22 @@ impl Driver for Prologue {
     }
 
     fn morph(&self, a: &[u8], b: &[u8], t: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
-        generate::cohered(&oscyl_driver::morph_fields(self, a, b, t, seed)?)
+        let held = generate::held_by(a, b)?;
+        generate::cohered(&oscyl_driver::morph_fields(self, a, b, t, seed)?, &held)
+    }
+
+    fn needs(&self, p: &[u8]) -> Vec<(UnitKind, u8)> {
+        generate::needs(p)
+            .into_iter()
+            .filter_map(|(m, slot)| {
+                let kind = self
+                    .capabilities()
+                    .units
+                    .iter()
+                    .find(|k| k.name == m.name())?;
+                Some((*kind, slot))
+            })
+            .collect()
     }
 
     fn live_messages(&self, bytes: &[u8], i: usize, channel: u8) -> Option<Vec<Vec<u8>>> {

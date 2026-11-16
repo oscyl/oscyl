@@ -11,14 +11,17 @@
 //!
 //! Every program passes a coherence pass: something always sounds, the
 //! note is heard, resonance is tamed under full drive, Arp and Chord depths
-//! sit mid-band, no user oscillator or effect slot is used, and the level
-//! never goes above 0 dB.
+//! sit mid-band, a user oscillator or effect slot is used only when the
+//! recipe's units (or, for a variation or a child, a parent) name it, and
+//! the level never goes above 0 dB.
 
 use crate::present::{self, Category, Control, Stage, depth_choices, depth_raw};
 use crate::{Field, Program};
 use Field::*;
 use oscyl_driver::Family;
 use oscyl_logue::kinds::VPM_SAFE;
+use oscyl_logue::msg::Module;
+use oscyl_logue::unit::UserUnit;
 
 /// SplitMix64: tiny, fast, and good enough to make sounds.
 struct Rng(u64);
@@ -189,6 +192,16 @@ impl Character {
             ArpPulse | Kick | Snare => Family::Rhythm,
             Riser | SpaceFx | Laser | Siren | Wind | Impact | Alarm => Family::Effect,
         }
+    }
+
+    /// Whether a user oscillator may take the multi engine's place: not
+    /// where the multi engine's noise or VPM is the sound itself.
+    fn takes_user_osc(self) -> bool {
+        use Character::*;
+        !matches!(
+            self,
+            Wind | Snare | Kick | Impact | Chiptune | FmGlass | FmBass | Organ | SpaceFx | Riser
+        )
     }
 
     /// The category [`present::category`] gives its programs.
@@ -377,6 +390,9 @@ pub struct Recipe {
     pub seed: u64,
     /// Stages copied from the base program by [`generate_from`].
     pub keep: Vec<Stage>,
+    /// User units the synth holds. Not empty: the sound uses one (or an
+    /// oscillator and an effect) where its character can take it.
+    pub units: Vec<UserUnit>,
 }
 
 /// Programs per deal.
@@ -396,6 +412,17 @@ const N_PEAK: u16 = 2;
 const N_DECIM: u16 = 3;
 const NOISE: u16 = 0;
 const VPM: u16 = 1;
+const USER: u16 = 2;
+const MOD_USER: u16 = 5;
+/// Each user oscillator parameter with the field noting its type.
+const USER_PARAMS: [(Field, Field); 6] = [
+    (UserParam1, UserParam1Type),
+    (UserParam2, UserParam2Type),
+    (UserParam3, UserParam3Type),
+    (UserParam4, UserParam4Type),
+    (UserParam5, UserParam5Type),
+    (UserParam6, UserParam6Type),
+];
 const ARP: u16 = 1;
 const CHORD: u16 = 2;
 const UNISON: u16 = 3;
@@ -649,6 +676,68 @@ impl Make {
     fn sweep(&mut self, decay: (u16, u16), int: (u16, u16)) {
         self.eg(TO_PITCH, (0, 0), decay);
         self.mac(EgInt, int.0, int.1, self.m.movement, 10);
+    }
+
+    /// Use the synth's user units: an oscillator from `units` in the multi
+    /// engine's place when `osc` allows, or an effect, or both. The
+    /// oscillator gets a shape and shift-shape of its own, each declared
+    /// parameter a value inside its range, and a level to be heard at; an
+    /// effect is switched on with the character's own time and depth.
+    fn units(&mut self, units: &[UserUnit], osc: bool) {
+        let fits = |u: &&UserUnit| u.slot < u.module.slots();
+        let oscs: Vec<&UserUnit> = units
+            .iter()
+            .filter(|u| osc && u.module == Module::Osc)
+            .filter(fits)
+            .collect();
+        let effects: Vec<&UserUnit> = units
+            .iter()
+            .filter(|u| u.module != Module::Osc)
+            .filter(fits)
+            .collect();
+        let of = |r: f32, n: usize| ((r * n as f32) as usize).min(n.saturating_sub(1));
+        // Mostly the oscillator; sometimes an effect instead, or as well.
+        let (which, also) = (self.roll(SelectUser, 7), self.roll(ModFxUser, 7));
+        let use_osc = !oscs.is_empty() && (effects.is_empty() || which < 0.7);
+        let use_effect = !effects.is_empty() && (!use_osc || also < 0.25);
+        if use_osc {
+            let u = oscs[of(self.roll(SelectUser, 8), oscs.len())];
+            self.set(MultiType, USER);
+            self.set(SelectUser, u16::from(u.slot));
+            self.int(ShapeUser, 0, 1023);
+            self.int(ShiftShapeUser, 0, 1023);
+            for (f, &(lo, hi, _)) in USER_PARAMS.iter().zip(u.params.iter().flatten()) {
+                self.int(f.0, u16::from(lo), u16::from(hi));
+            }
+            if self.p.get(MultiLevel) < 450 {
+                self.int(MultiLevel, 450, 850);
+            }
+        }
+        if use_effect {
+            let u = effects[of(self.roll(ModFxUser, 8), effects.len())];
+            match u.module {
+                Module::ModFx => {
+                    self.set(ModFxType, MOD_USER);
+                    self.set(ModFxUser, u16::from(u.slot));
+                    self.set(ModFxOn, 1);
+                    // A character with no modulation effect left these at rest.
+                    if self.p.get(ModFxDepth) == 0 {
+                        let mv = self.m.movement;
+                        self.mac(ModFxTime, 150, 700, mv, 60);
+                        self.mac(ModFxDepth, 150, 800, mv, 60);
+                    }
+                }
+                Module::DelFx => {
+                    self.set(DelaySubType, LAST_DELAY + 1 + u16::from(u.slot));
+                    self.set(DelayOn, 1);
+                }
+                Module::RevFx => {
+                    self.set(ReverbSubType, LAST_REVERB + 1 + u16::from(u.slot));
+                    self.set(ReverbOn, 1);
+                }
+                Module::Osc => {}
+            }
+        }
     }
 
     /// A voice mode depth entry (chord or arp pattern) from `entries`.
@@ -1396,8 +1485,13 @@ pub fn generate(recipe: &Recipe) -> Program {
         Character::Impact => impact(&mut s),
         Character::Alarm => alarm(&mut s),
     }
+    if !recipe.units.is_empty() {
+        s.units(&recipe.units, recipe.character.takes_user_osc());
+    }
     let mut p = s.p;
-    cohere(&mut p);
+    let held: Vec<(Module, u8)> = recipe.units.iter().map(|u| (u.module, u.slot)).collect();
+    cohere(&mut p, &held);
+    note_param_types(&mut p, &recipe.units);
     p.set_name(&name(recipe.seed, recipe.character))
         .expect("generated names are valid");
     p
@@ -1416,9 +1510,55 @@ pub fn generate_from(base: &Program, recipe: &Recipe) -> Program {
     p
 }
 
+/// The user slots `p` relies on: a user oscillator the mixer lets
+/// through, a user effect that is on.
+pub fn needs(p: &Program) -> Vec<(Module, u8)> {
+    let mut out = vec![];
+    if p.get(MultiType) == USER && p.get(MultiLevel) > 0 {
+        out.push((Module::Osc, p.get(SelectUser) as u8));
+    }
+    if p.get(ModFxOn) == 1 && p.get(ModFxType) == MOD_USER {
+        out.push((Module::ModFx, p.get(ModFxUser) as u8));
+    }
+    if p.get(DelayOn) == 1 && p.get(DelaySubType) > LAST_DELAY {
+        out.push((Module::DelFx, (p.get(DelaySubType) - LAST_DELAY - 1) as u8));
+    }
+    if p.get(ReverbOn) == 1 && p.get(ReverbSubType) > LAST_REVERB {
+        out.push((
+            Module::RevFx,
+            (p.get(ReverbSubType) - LAST_REVERB - 1) as u8,
+        ));
+    }
+    out
+}
+
+/// Note in `p` the types of the parameters of the user oscillator it
+/// selects, when `units` knows them: the synth reads each stored value by
+/// its type.
+pub fn note_param_types(p: &mut Program, units: &[UserUnit]) {
+    if p.get(MultiType) != USER {
+        return;
+    }
+    let slot = p.get(SelectUser);
+    let unit = units
+        .iter()
+        .find(|u| u.module == Module::Osc && u16::from(u.slot) == slot);
+    for (f, &(_, _, kind)) in USER_PARAMS
+        .iter()
+        .zip(unit.and_then(|u| u.params.as_ref()).into_iter().flatten())
+    {
+        p.set(f.1, u16::from(kind)).expect("a type");
+    }
+}
+
 /// Make sure the program sounds and stays within what the synth's own
-/// panel offers (see the module docs). Idempotent.
-fn cohere(p: &mut Program) {
+/// panel offers (see the module docs); a user oscillator or effect stays
+/// selected only in a slot `held` names. Idempotent.
+fn cohere(p: &mut Program, held: &[(Module, u8)]) {
+    let holds = |m: Module, slot: u16| {
+        held.iter()
+            .any(|&(hm, hs)| hm == m && u16::from(hs) == slot)
+    };
     let put = |p: &mut Program, f: Field, v: u16| p.set(f, v).expect("legal value");
     if [Vco1Level, Vco2Level, MultiLevel]
         .iter()
@@ -1441,16 +1581,18 @@ fn cohere(p: &mut Program) {
         let i = present::depth_index(p.get(VoiceModeDepth), c);
         put(p, VoiceModeDepth, depth_raw(i, c));
     }
-    if p.get(MultiType) == 2 {
+    if p.get(MultiType) == USER && !holds(Module::Osc, p.get(SelectUser)) {
         put(p, MultiType, NOISE);
     }
-    if p.get(ModFxType) == 5 {
+    if p.get(ModFxType) == MOD_USER && !holds(Module::ModFx, p.get(ModFxUser)) {
         put(p, ModFxType, CHORUS);
     }
-    if p.get(DelaySubType) > LAST_DELAY {
+    let delay = p.get(DelaySubType);
+    if delay > LAST_DELAY && !holds(Module::DelFx, delay - LAST_DELAY - 1) {
         put(p, DelaySubType, D_STEREO);
     }
-    if p.get(ReverbSubType) > LAST_REVERB {
+    let reverb = p.get(ReverbSubType);
+    if reverb > LAST_REVERB && !holds(Module::RevFx, reverb - LAST_REVERB - 1) {
         put(p, ReverbSubType, R_HALL);
     }
     if p.get(ProgramLevel) > 102 {
@@ -1458,10 +1600,45 @@ fn cohere(p: &mut Program) {
     }
 }
 
-/// `p` after the coherence pass.
-pub fn cohered(mut p: Program) -> Program {
-    cohere(&mut p);
+/// `p` after the coherence pass; it may keep a user slot `held` names.
+pub fn cohered(mut p: Program, held: &[(Module, u8)]) -> Program {
+    cohere(&mut p, held);
     p
+}
+
+/// Every user selection `p` makes, used or not (a user effect switched
+/// off, a user oscillator the mixer mutes): what a variation or a child of
+/// it may keep.
+fn selections(p: &Program) -> Vec<(Module, u8)> {
+    let (delay, reverb) = (p.get(DelaySubType), p.get(ReverbSubType));
+    let mut out = vec![
+        (Module::Osc, p.get(SelectUser) as u8),
+        (Module::ModFx, p.get(ModFxUser) as u8),
+    ];
+    if delay > LAST_DELAY {
+        out.push((Module::DelFx, (delay - LAST_DELAY - 1) as u8));
+    }
+    if reverb > LAST_REVERB {
+        out.push((Module::RevFx, (reverb - LAST_REVERB - 1) as u8));
+    }
+    out
+}
+
+/// What a child of `a` and `b` may keep: either parent's user selections,
+/// each only as that parent made it.
+pub fn held_by(a: &Program, b: &Program) -> Vec<(Module, u8)> {
+    let user = |p: &Program| {
+        let s = selections(p);
+        let (osc, modfx) = (p.get(MultiType) == USER, p.get(ModFxType) == MOD_USER);
+        s.into_iter()
+            .filter(move |(m, _)| match m {
+                Module::Osc => osc,
+                Module::ModFx => modfx,
+                _ => true,
+            })
+            .collect::<Vec<_>>()
+    };
+    [user(a), user(b)].concat()
 }
 
 /// Continuous fields [`vary`] moves, with how far (a share of `amount`):
@@ -1557,7 +1734,12 @@ pub fn vary(base: &Program, amount: f32, seed: u64) -> Program {
         let k = ((to * f32::from(others)) as u16).min(others - 1);
         let v = lo + k;
         let v = if v >= p.get(f) { v + 1 } else { v };
-        p.set(f, v.min(hi)).expect("a built-in value");
+        // A user unit stays as the program chose it.
+        let user = (f == ModFxType && p.get(f) == MOD_USER)
+            || (f == DelaySubType && p.get(f) > LAST_DELAY)
+            || (f == ReverbSubType && p.get(f) > LAST_REVERB);
+        let v = if user { p.get(f) } else { v.min(hi) };
+        p.set(f, v).expect("a built-in value");
         // Another VPM type takes another range of modulation.
         if f == SelectVpm {
             let safe = &VPM_SAFE[usize::from(p.get(SelectVpm))];
@@ -1566,7 +1748,7 @@ pub fn vary(base: &Program, amount: f32, seed: u64) -> Program {
             }
         }
     }
-    cohere(&mut p);
+    cohere(&mut p, &held_by(base, base));
     p
 }
 
@@ -1594,7 +1776,7 @@ pub fn breed(a: &Program, b: &Program, mix: f32, seed: u64) -> Program {
             }
         }
     }
-    cohere(&mut p);
+    cohere(&mut p, &held_by(a, b));
     p
 }
 
@@ -1653,6 +1835,7 @@ mod tests {
             macros: Macros::default(),
             seed,
             keep: Vec::new(),
+            units: Vec::new(),
         }
     }
 

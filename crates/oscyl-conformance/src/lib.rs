@@ -7,7 +7,7 @@ pub mod pump;
 
 use oscyl_driver::{
     Control, Curation, Driver, DriverError, DriverSession, LibProgram, LibraryData, Macros,
-    Mutability, Page, Recipe, SessionEvent, SessionOp, Simulator,
+    Mutability, Page, Palette, Recipe, SessionEvent, SessionOp, Simulator,
 };
 
 use oscyl_driver::sysex::DEVICE_INQUIRY;
@@ -1021,6 +1021,112 @@ pub fn generated_sounds_are_good(d: &dyn Driver, q: &Quality) {
                         ch.id
                     );
                 }
+            }
+        }
+    }
+    generated_sounds_use_units_well(d, q);
+}
+
+/// The palettes the quality gate deals with on a synth that takes user
+/// units: one oscillator (the first kind), then a unit of every kind in
+/// its last slot. The oscillator declares a parameter of each kind.
+fn gate_palettes(d: &dyn Driver) -> Vec<Palette> {
+    use oscyl_driver::{PaletteUnit, UnitParam, UnitParamKind as K};
+    let param = |name: &str, min, max, kind| UnitParam {
+        name: name.into(),
+        min,
+        max,
+        kind,
+    };
+    let unit = |kind: &oscyl_driver::UnitKind, slot| PaletteUnit {
+        kind: *kind,
+        slot,
+        name: format!("Test {}", kind.name),
+        params: Some(vec![
+            param("Wave", 0, 45, K::Choice),
+            param("Mix", 20, 80, K::Percent),
+            param("Tilt", -30, 60, K::Bipolar),
+        ]),
+    };
+    let kinds = d.capabilities().units;
+    let Some(first) = kinds.first() else {
+        return vec![];
+    };
+    vec![
+        Palette {
+            units: vec![unit(first, 0)],
+        },
+        Palette {
+            units: kinds.iter().map(|k| unit(k, k.slots - 1)).collect(),
+        },
+    ]
+}
+
+/// The quality gate with user units: with a palette, every sound is still
+/// valid, audible and capped and relies only on slots the palette names;
+/// with a unit of every kind, every sound uses one; and a variation, a
+/// child or a morph step of such sounds selects no slot the palette lacks.
+fn generated_sounds_use_units_well(d: &dyn Driver, q: &Quality) {
+    let palettes = gate_palettes(d);
+    for (n, palette) in palettes.iter().enumerate() {
+        let named = |p: &[u8], what: &str| {
+            let stray = d.needs(p).into_iter().find(|(kind, slot)| {
+                !palette
+                    .units
+                    .iter()
+                    .any(|u| u.kind == *kind && u.slot == *slot)
+            });
+            check!(
+                d,
+                "quality",
+                stray.is_none(),
+                "{what} needs {stray:?}, which the palette lacks"
+            );
+        };
+        for (character, ch) in d.characters().iter().enumerate() {
+            let make = |seed: u64| {
+                let r = Recipe {
+                    character,
+                    seed,
+                    palette: palette.clone(),
+                    ..Recipe::default()
+                };
+                let what = format!("{} seed {seed} palette {n}", ch.id);
+                let p = valid_generated(d, &what, d.generate(&r, None));
+                check!(d, "quality", (q.audible)(&p), "{what} is not audible");
+                check!(d, "quality", (q.level_capped)(&p), "{what} is too loud");
+                named(&p, &what);
+                check!(
+                    d,
+                    "quality",
+                    d.generate(&r, None).as_ref() == Ok(&p),
+                    "{what} is not deterministic"
+                );
+                p
+            };
+            let mut before: Option<Vec<u8>> = None;
+            for seed in 0..40u64 {
+                let p = make(seed);
+                if n + 1 == palettes.len() {
+                    check!(
+                        d,
+                        "quality",
+                        !d.needs(&p).is_empty(),
+                        "{} seed {seed}: no unit used though every kind is there",
+                        ch.id
+                    );
+                }
+                if let Some(a) = before.filter(|_| seed % 8 == 0) {
+                    for (what, made) in [
+                        ("vary", d.vary(&p, 0.9, seed)),
+                        ("breed", d.breed(&a, &p, 0.5, seed)),
+                        ("morph", d.morph(&a, &p, 0.5, seed)),
+                    ] {
+                        let child = valid_generated(d, what, made);
+                        named(&child, what);
+                    }
+                }
+                before = Some(p);
             }
         }
     }

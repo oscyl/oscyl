@@ -419,6 +419,7 @@ fn generate(
                     },
                     seed,
                     keep: vec![],
+                    palette: Default::default(),
                 }
             }
             (None, None) => bail!(

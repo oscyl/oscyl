@@ -9,7 +9,7 @@
 //! sound again anywhere ([`parse_code`], [`Hands::deal_code`]).
 
 use oscyl_core::generate::{hand, hand_seeded};
-use oscyl_driver::{Driver, DriverError, Macros, Recipe};
+use oscyl_driver::{Driver, DriverError, Macros, Palette, Recipe};
 
 use crate::i18n::tr;
 use crate::state::Program;
@@ -159,6 +159,7 @@ pub fn parse_code(d: &dyn Driver, code: &str) -> Result<Recipe, String> {
         },
         seed,
         keep: vec![],
+        palette: Palette::default(),
     })
 }
 
@@ -307,6 +308,7 @@ impl Hands {
             macros,
             seed: 0,
             keep: keep.to_vec(),
+            palette: Palette::default(),
         };
         let Ok(dealt) = deal(d, &recipe, base, seed, first, HAND) else {
             return false;
@@ -688,6 +690,7 @@ mod tests {
             },
             seed: u64::MAX,
             keep: vec![],
+            palette: Palette::default(),
         };
         let code = code(d, &r).unwrap();
         assert_eq!(parse_code(d, &code).unwrap(), r, "a 64-bit seed");

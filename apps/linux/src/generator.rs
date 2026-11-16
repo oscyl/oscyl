@@ -1310,6 +1310,7 @@ mod tests {
                         },
                         seed: s,
                         keep: vec![],
+                        units: vec![],
                     })
                 });
                 let now = hand(XD, c, seed, HAND, |s| {
@@ -1319,6 +1320,7 @@ mod tests {
                             macros,
                             seed: s,
                             keep: vec![],
+                            palette: Default::default(),
                         },
                         None,
                     )

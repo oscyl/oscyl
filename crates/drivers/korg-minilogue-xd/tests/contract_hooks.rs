@@ -224,6 +224,7 @@ fn hand_matches_the_generate_module() {
             macros: generate::Macros::default(),
             seed: s,
             keep: vec![],
+            units: vec![],
         })
     });
     let theirs: Vec<Vec<u8>> = theirs.iter().map(|p| p.as_bytes().to_vec()).collect();
@@ -236,6 +237,100 @@ fn hand_matches_the_generate_module() {
         for b in &dealt[i + 1..] {
             assert_ne!(a, b);
             assert_ne!(DRIVER.name(a), DRIVER.name(b));
+        }
+    }
+}
+
+/// With a palette, a sound that takes the user oscillator stores each
+/// declared parameter inside its range, as its type stores it, and notes
+/// the types; a variation keeps the selection, and a child of it and a
+/// plain sound never selects another slot.
+#[test]
+fn a_palette_oscillator_is_used_within_its_parameters() {
+    use oscyl_driver::{Palette, PaletteUnit, UnitParam, UnitParamKind as K};
+    let get = |p: &[u8], name: &str| {
+        let i = DRIVER.fields().iter().position(|f| f.name == name).unwrap();
+        DRIVER.get(p, i).unwrap()
+    };
+    let osc = DRIVER.capabilities().units[0];
+    assert_eq!(osc.name, "osc");
+    let param = |min, max, kind| UnitParam {
+        name: "P".into(),
+        min,
+        max,
+        kind,
+    };
+    let palette = Palette {
+        units: vec![PaletteUnit {
+            kind: osc,
+            slot: 5,
+            name: "waves".into(),
+            params: Some(vec![
+                param(0, 45, K::Choice),
+                param(10, 90, K::Percent),
+                param(-50, 20, K::Bipolar),
+            ]),
+        }],
+    };
+    let pad = DRIVER
+        .characters()
+        .iter()
+        .position(|c| c.id == "pad")
+        .unwrap();
+    let wind = DRIVER
+        .characters()
+        .iter()
+        .position(|c| c.id == "wind")
+        .unwrap();
+    let recipe = |character, seed, palette: &Palette| Recipe {
+        character,
+        seed,
+        palette: palette.clone(),
+        ..Recipe::default()
+    };
+    for seed in 0..50 {
+        let p = DRIVER.generate(&recipe(pad, seed, &palette), None).unwrap();
+        assert_eq!(DRIVER.needs(&p), [(osc, 5)], "seed {seed}");
+        assert_eq!(get(&p, "Multi Type"), 2);
+        assert!(get(&p, "Multi Level") >= 450);
+        assert!(get(&p, "User Param 1") <= 45);
+        assert!((10..=90).contains(&get(&p, "User Param 2")));
+        assert!(
+            (50..=120).contains(&get(&p, "User Param 3")),
+            "bipolar is stored plus 100"
+        );
+        let types = [
+            "User Param 1 Type",
+            "User Param 2 Type",
+            "User Param 3 Type",
+        ];
+        assert_eq!(types.map(|t| get(&p, t)), [2, 0, 1]);
+        // Wind is noise alone: it leaves an oscillator be.
+        let w = DRIVER
+            .generate(&recipe(wind, seed, &palette), None)
+            .unwrap();
+        assert!(DRIVER.needs(&w).is_empty());
+        // No palette, no unit; the same recipe otherwise.
+        let plain = DRIVER
+            .generate(&recipe(pad, seed, &Palette::default()), None)
+            .unwrap();
+        assert!(DRIVER.needs(&plain).is_empty());
+        // A variation keeps the oscillator; children select slot 5 or none.
+        let v = DRIVER.vary(&p, 0.9, seed).unwrap();
+        assert_eq!(get(&v, "Multi Type"), 2);
+        assert_eq!(get(&v, "Select User"), 5);
+        for (a, b) in [(&p, &plain), (&plain, &p)] {
+            for child in [DRIVER.breed(a, b, 0.5, seed), DRIVER.morph(a, b, 0.5, seed)] {
+                let child = child.unwrap();
+                assert!(DRIVER.needs(&child).iter().all(|n| *n == (osc, 5)));
+                if get(&child, "Multi Type") == 2 {
+                    assert_eq!(
+                        types.map(|t| get(&child, t)),
+                        [2, 0, 1],
+                        "types travel with it"
+                    );
+                }
+            }
         }
     }
 }

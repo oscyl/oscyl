@@ -283,6 +283,28 @@ fn copy_field(dst: &mut [u8], src: &[u8], f: Field) {
 /// `bytes` as a program with every out-of-range field clamped into
 /// range, so the `generate` module (which expects legal values) can work
 /// on it. The contract methods copy non-free fields back raw afterwards.
+/// A child that took `b`'s user oscillator takes the types `b` notes for
+/// its parameters with it (they are fixed fields, otherwise `a`'s).
+fn keep_param_types(out: &mut [u8], a: &[u8], b: &[u8]) {
+    use Field::*;
+    let user = |p: &[u8]| {
+        let p = Program::from_bytes(p).ok()?;
+        (p.get(MultiType) == 2).then(|| p.get(SelectUser))
+    };
+    if user(out).is_some() && user(out) == user(b) && user(out) != user(a) {
+        for f in [
+            UserParam1Type,
+            UserParam2Type,
+            UserParam3Type,
+            UserParam4Type,
+            UserParam5Type,
+            UserParam6Type,
+        ] {
+            copy_field(out, b, f);
+        }
+    }
+}
+
 fn in_range(bytes: &[u8]) -> Result<Program, DriverError> {
     let mut p = program(bytes)?;
     for &f in Field::ALL {
@@ -600,6 +622,7 @@ impl Driver for MinilogueXd {
             },
             seed: recipe.seed,
             keep,
+            units: oscyl_logue::unit::user_units(&recipe.palette),
         };
         let mut out = bytes(generate::generate(&r));
         if let Some(base) = base {
@@ -609,6 +632,13 @@ impl Driver for MinilogueXd {
                 for &f in stage.sections().iter().flat_map(|s| s.fields) {
                     copy_field(&mut out, base, f);
                 }
+            }
+            // The base's fixed fields came back; a user oscillator the
+            // recipe chose still needs its own parameter types.
+            if r.keep.is_empty() {
+                let mut p = program(&out)?;
+                generate::note_param_types(&mut p, &r.units);
+                out = bytes(p);
             }
         }
         Ok(out)
@@ -623,15 +653,33 @@ impl Driver for MinilogueXd {
     fn breed(&self, a: &[u8], b: &[u8], mix: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
         let mut out = bytes(generate::breed(&in_range(a)?, &in_range(b)?, mix, seed));
         self.keep_non_free(&mut out, a);
+        keep_param_types(&mut out, a, b);
         Ok(out)
     }
 
     fn morph(&self, a: &[u8], b: &[u8], t: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
-        let mixed =
-            oscyl_driver::morph_fields(self, &bytes(in_range(a)?), &bytes(in_range(b)?), t, seed)?;
-        let mut out = bytes(generate::cohered(program(&mixed)?));
+        let (pa, pb) = (in_range(a)?, in_range(b)?);
+        let held = generate::held_by(&pa, &pb);
+        let mixed = oscyl_driver::morph_fields(self, &bytes(pa), &bytes(pb), t, seed)?;
+        let mut out = bytes(generate::cohered(program(&mixed)?, &held));
         self.keep_non_free(&mut out, a);
+        keep_param_types(&mut out, a, b);
         Ok(out)
+    }
+
+    fn needs(&self, p: &[u8]) -> Vec<(UnitKind, u8)> {
+        let Ok(p) = program(p) else { return vec![] };
+        generate::needs(&p)
+            .into_iter()
+            .filter_map(|(m, slot)| {
+                let kind = self
+                    .capabilities()
+                    .units
+                    .iter()
+                    .find(|k| k.name == m.name())?;
+                Some((*kind, slot))
+            })
+            .collect()
     }
 
     fn live_messages(&self, bytes: &[u8], i: usize, channel: u8) -> Option<Vec<Vec<u8>>> {
@@ -874,6 +922,7 @@ mod tests {
             macros: generate::Macros::default(),
             seed: 7,
             keep: vec![],
+            units: vec![],
         });
         assert_eq!(DRIVER.generate(&r, None).unwrap(), want.as_bytes().to_vec());
         assert_eq!(DRIVER.characters()[3].title, Character::ALL[3].title());

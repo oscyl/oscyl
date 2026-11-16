@@ -1,7 +1,7 @@
 //! Curation and generation data a driver gives the apps: editor pages,
 //! controls, help, generation recipes. Platform-neutral; apps render it.
 
-use crate::contract::{DriverError, FieldInfo};
+use crate::contract::{DriverError, FieldInfo, UnitKind};
 
 /// A titled group of fields on a [`Page`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -278,6 +278,46 @@ impl Default for Macros {
     }
 }
 
+/// How a user unit's parameter reads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UnitParamKind {
+    /// A percentage.
+    Percent,
+    /// A percentage either side of zero.
+    Bipolar,
+    /// A plain number: one of a list of choices.
+    Choice,
+}
+
+/// A parameter a user unit declares, in its own values.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnitParam {
+    pub name: String,
+    pub min: i16,
+    pub max: i16,
+    pub kind: UnitParamKind,
+}
+
+/// A user unit (a loaded oscillator or effect) a synth holds, as a source
+/// generation may use.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PaletteUnit {
+    /// Which of [`Capabilities::units`](crate::Capabilities::units) it is.
+    pub kind: UnitKind,
+    /// Its slot, from 0.
+    pub slot: u8,
+    pub name: String,
+    /// Its parameters, in order; `None` when they are not known (then
+    /// generation leaves them alone).
+    pub params: Option<Vec<UnitParam>>,
+}
+
+/// The extra sources a synth holds right now, beyond its built-in engines.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Palette {
+    pub units: Vec<PaletteUnit>,
+}
+
 /// What to generate.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Recipe {
@@ -288,6 +328,13 @@ pub struct Recipe {
     /// Indices into [`Curation::pages`] whose fields are copied from the
     /// base program as they are.
     pub keep: Vec<usize>,
+    /// User units the program may select. Empty: none is used. Not empty:
+    /// the driver uses one (or an oscillator and an effect) wherever the
+    /// character can take it, with each parameter inside its declared
+    /// range, so a caller decides which sounds of a hand get units by
+    /// which recipes carry a palette. A program never selects a unit the
+    /// palette lacks.
+    pub palette: Palette,
 }
 
 /// SplitMix64's output step.

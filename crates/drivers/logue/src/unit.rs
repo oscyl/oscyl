@@ -149,6 +149,88 @@ impl UnitInfo {
     }
 }
 
+/// A user unit a logue generator may select: its slot and, when they are
+/// known, what a program stores for each of its parameters.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UserUnit {
+    pub module: Module,
+    pub slot: u8,
+    /// Per parameter: the lowest and highest stored value, and the type a
+    /// program notes for it (0 percent, 1 bipolar, 2 select).
+    pub params: Option<Vec<(u8, u8, u8)>>,
+}
+
+/// The module a contract unit kind names ([`Module::name`]).
+pub fn module_of(kind: &oscyl_driver::UnitKind) -> Option<Module> {
+    Module::ALL.into_iter().find(|m| m.name() == kind.name)
+}
+
+/// The units of `palette` a logue synth can select: those of a known
+/// section, in a slot the section has.
+pub fn user_units(palette: &oscyl_driver::Palette) -> Vec<UserUnit> {
+    use oscyl_driver::UnitParamKind as K;
+    palette
+        .units
+        .iter()
+        .filter_map(|u| {
+            let module = module_of(&u.kind).filter(|m| u.slot < m.slots())?;
+            let params = u.params.as_ref().map(|ps| {
+                ps.iter()
+                    .take(MAX_PARAMS)
+                    .map(|p| {
+                        let (kind, code) = match p.kind {
+                            K::Percent => (ParamKind::Percent, 0),
+                            K::Bipolar => (ParamKind::Bipolar, 1),
+                            K::Choice => (ParamKind::Select, 2),
+                        };
+                        let (lo, hi) = UnitParam {
+                            name: String::new(),
+                            min: p.min.clamp(-100, 100) as i8,
+                            max: p.max.clamp(-100, 100) as i8,
+                            kind,
+                        }
+                        .stored();
+                        (lo, hi, code)
+                    })
+                    .collect()
+            });
+            Some(UserUnit {
+                module,
+                slot: u.slot,
+                params,
+            })
+        })
+        .collect()
+}
+
+/// `info`, in slot `slot`, as the contract's palette names a unit.
+pub fn palette_unit(
+    kind: oscyl_driver::UnitKind,
+    slot: u8,
+    info: &UnitInfo,
+) -> oscyl_driver::PaletteUnit {
+    use oscyl_driver::UnitParamKind as K;
+    oscyl_driver::PaletteUnit {
+        kind,
+        slot,
+        name: info.name.clone(),
+        params: info.params.as_ref().map(|ps| {
+            ps.iter()
+                .map(|p| oscyl_driver::UnitParam {
+                    name: p.name.clone(),
+                    min: p.min.into(),
+                    max: p.max.into(),
+                    kind: match p.kind {
+                        ParamKind::Percent => K::Percent,
+                        ParamKind::Bipolar => K::Bipolar,
+                        ParamKind::Select => K::Choice,
+                    },
+                })
+                .collect()
+        }),
+    }
+}
+
 fn bad(msg: impl Into<String>) -> Error {
     Error::NotALibrary(msg.into())
 }

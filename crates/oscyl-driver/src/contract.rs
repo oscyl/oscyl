@@ -256,6 +256,13 @@ pub trait Driver: Send + Sync {
     fn breed(&self, _a: &[u8], _b: &[u8], _mix: f32, _seed: u64) -> Result<Vec<u8>, DriverError> {
         Err(no_generation())
     }
+    /// The user unit slots `program` relies on (a user oscillator its
+    /// mixer lets through, a user effect that is on), by kind. `vary`,
+    /// `breed` and `morph` never make a program select a slot none of its
+    /// parents selected.
+    fn needs(&self, _program: &[u8]) -> Vec<(UnitKind, u8)> {
+        vec![]
+    }
     /// Step `t` (`0.0..=1.0`) of the way from `a` to `b`: 0 is `a`, 1 is
     /// `b`'s sound, and steps in between never turn back, so a row of them
     /// goes smoothly from one to the other. Same inputs, same bytes; `seed`

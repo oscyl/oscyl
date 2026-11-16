@@ -228,6 +228,7 @@ fn generated_programs_audition_exactly() {
             macros: Macros::default(),
             seed: 2026,
             keep: Vec::new(),
+            units: Vec::new(),
         });
         port.run_xd(Op::Audition(Box::new(p.clone())), |_| {})
             .unwrap();
