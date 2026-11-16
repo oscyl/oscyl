@@ -50,7 +50,37 @@ fn chooser(name: &str) -> gtk::DropDown {
     dd.update_property(&[gtk::accessible::Property::Label(
         &tr("Choose for {name}").replace("{name}", name),
     )]);
+    // The chosen parameter gives way with an ellipsis on a phone-width
+    // page; the list of them keeps whole names.
+    dd.set_factory(Some(&names(true)));
+    dd.set_list_factory(Some(&names(false)));
     dd
+}
+
+/// A dropdown's names, ellipsized at the end or whole.
+fn names(ellipsize: bool) -> gtk::SignalListItemFactory {
+    let f = gtk::SignalListItemFactory::new();
+    f.connect_setup(move |_, item| {
+        let label = gtk::Label::builder().xalign(0.0).build();
+        if ellipsize {
+            label.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        }
+        if let Some(item) = item.downcast_ref::<gtk::ListItem>() {
+            item.set_child(Some(&label));
+        }
+    });
+    f.connect_bind(|_, item| {
+        let Some(item) = item.downcast_ref::<gtk::ListItem>() else {
+            return;
+        };
+        if let (Some(l), Some(s)) = (
+            item.child().and_downcast::<gtk::Label>(),
+            item.item().and_downcast::<gtk::StringObject>(),
+        ) {
+            l.set_label(&s.string());
+        }
+    });
+    f
 }
 
 fn legend(text: &str) -> gtk::Label {

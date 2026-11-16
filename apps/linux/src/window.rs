@@ -167,6 +167,22 @@ impl OscylWindow {
         })
     }
 
+    /// Once the window is phone-width (one pane at a time), `header`
+    /// keeps only the close control, on the side the desktop puts it:
+    /// minimize and maximize mean nothing on a phone, and the bar needs
+    /// their room.
+    fn phone_controls(&self, header: &adw::HeaderBar) {
+        // ponytail: read once; a layout changed while running applies on the next start.
+        let layout = gtk::Settings::default()
+            .and_then(|s| s.gtk_decoration_layout())
+            .map_or_else(|| ":close".to_owned(), |l| l.to_string());
+        self.narrow.add_setter(
+            header,
+            "decoration-layout",
+            Some(&phone_layout(&layout).to_value()),
+        );
+    }
+
     /// Fill the three panes: header bars, the sources sidebar, the program
     /// list and the editor (with `editor_title` in its bar). Returns the
     /// primary (Sync/Save) action's parts.
@@ -199,11 +215,13 @@ impl OscylWindow {
             .tooltip_text(tr("Main menu"))
             .build();
         header.pack_end(&menu_button);
+        self.phone_controls(&header);
         self.sidebar_page.add_top_bar(&header);
         self.sidebar_page.set_content(Some(sidebar));
 
         let list_view = adw::ToolbarView::new();
         let list_header = adw::HeaderBar::new();
+        self.phone_controls(&list_header);
         let toggle = gtk::ToggleButton::builder()
             .icon_name("sidebar-show-symbolic")
             .tooltip_text(tr("Show sources (F9)"))
@@ -239,6 +257,7 @@ impl OscylWindow {
 
         let editor_view = adw::ToolbarView::new();
         let editor_header = adw::HeaderBar::new();
+        self.phone_controls(&editor_header);
         // The program name is the page's big title; the bar carries the slot.
         editor_header.set_title_widget(Some(editor_title));
         let undo = gtk::Button::builder()
@@ -431,5 +450,31 @@ impl OscylWindow {
         });
         self.zoom_toast.replace(Some(t.clone()));
         self.show_toast(t);
+    }
+}
+
+/// `layout` (a GTK decoration layout) without minimize and maximize.
+fn phone_layout(layout: &str) -> String {
+    layout
+        .split(':')
+        .map(|side| {
+            side.split(',')
+                .filter(|b| !matches!(b.trim(), "minimize" | "maximize"))
+                .collect::<Vec<_>>()
+                .join(",")
+        })
+        .collect::<Vec<_>>()
+        .join(":")
+}
+
+#[cfg(test)]
+mod phone_layout_tests {
+    #[test]
+    fn a_phone_keeps_close_where_it_was() {
+        assert_eq!(
+            super::phone_layout("appmenu:minimize,maximize,close"),
+            "appmenu:close"
+        );
+        assert_eq!(super::phone_layout("close,minimize:icon"), "close:icon");
     }
 }

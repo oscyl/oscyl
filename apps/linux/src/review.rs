@@ -40,7 +40,11 @@ pub struct Review {
 
 impl Review {
     pub fn new() -> Rc<Review> {
-        let count = gtk::Label::builder().xalign(0.0).build();
+        // On a phone-width page the count gives way with an ellipsis.
+        let count = gtk::Label::builder()
+            .xalign(0.0)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
         count.add_css_class("review-count");
         // The per-stage chips scroll sideways when they outrun the bar
         // (wheel, touch or keys), with faded edges saying there is more;

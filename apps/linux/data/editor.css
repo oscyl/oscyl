@@ -88,6 +88,12 @@ graph.stage-graph {
   transition: opacity var(--oscyl-base) var(--oscyl-ease);
 }
 .comparing .compare-tag { opacity: 1; }
+/* On a phone-width page the tag stands over the pencil and Perform,
+ * which step back while Compare is held. */
+.editor.narrow .rename,
+.editor.narrow .perform-open { transition: opacity var(--oscyl-base) var(--oscyl-ease); }
+.comparing .editor.narrow .rename,
+.comparing .editor.narrow .perform-open { opacity: 0; }
 
 /* The docked scope: raised enamel hanging from the top edge while the
  * stage graph is scrolled away; the same live shape, small. */

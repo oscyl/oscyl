@@ -200,6 +200,16 @@ impl Editor {
             ));
             page.add_controller(keys);
         }
+        // A long name gives way with an ellipsis when the page is narrow.
+        let children =
+            |w: &gtk::Widget| std::iter::successors(w.first_child(), |c| c.next_sibling());
+        let label = children(title.upcast_ref())
+            .filter(|c| c.is::<gtk::Stack>())
+            .flat_map(|stack| children(&stack).collect::<Vec<_>>())
+            .find_map(|c| c.downcast::<gtk::Label>().ok());
+        if let Some(l) = label {
+            l.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        }
         let title_row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
         title_row.append(&title);
         title_row.append(&rename);
@@ -215,7 +225,8 @@ impl Editor {
         // The Perform page: the program played on a pad and four knobs.
         let perform_content = gtk::Box::new(gtk::Orientation::Horizontal, 6);
         perform_content.append(&gtk::Image::from_icon_name("oscyl-pad-symbolic"));
-        perform_content.append(&gtk::Label::new(Some(&tr("Perform"))));
+        let perform_label = gtk::Label::new(Some(&tr("Perform")));
+        perform_content.append(&perform_label);
         let perform = gtk::Button::builder()
             .child(&perform_content)
             .action_name("win.perform")
@@ -227,9 +238,26 @@ impl Editor {
                 "Perform this program on an XY pad and four knobs (Ctrl+P)",
             ))
             .build();
-        perform.update_property(&[gtk::accessible::Property::KeyShortcuts("Control+P")]);
+        perform.update_property(&[
+            gtk::accessible::Property::Label(&tr("Perform")),
+            gtk::accessible::Property::KeyShortcuts("Control+P"),
+        ]);
         title_row.append(&perform);
-        head.append(&title_row);
+        // On a phone-width page the row has no room to keep the tag's
+        // place: there it shows over the row's end instead (over the
+        // pencil and Perform, which wait while Compare is held).
+        let tag_over = gtk::Label::builder()
+            .label(tr("Saved version"))
+            .halign(gtk::Align::End)
+            .valign(gtk::Align::Center)
+            .can_target(false)
+            .visible(false)
+            .css_classes(["compare-tag"])
+            .accessible_role(gtk::AccessibleRole::Presentation)
+            .build();
+        let title_over = gtk::Overlay::builder().child(&title_row).build();
+        title_over.add_overlay(&tag_over);
+        head.append(&title_over);
         head.append(&note);
         page.append(&head);
 
@@ -376,6 +404,11 @@ impl Editor {
             bp.add_setter(&dock_switch, "visible", Some(&false.to_value()));
             bp.add_setter(&header_title, "visible", Some(&false.to_value()));
             bp.add_setter(&review.chips, "visible", Some(&false.to_value()));
+            // Perform keeps its glyph and loses its word, as the header's
+            // keys do.
+            bp.add_setter(&perform_label, "visible", Some(&false.to_value()));
+            bp.add_setter(&tag, "visible", Some(&false.to_value()));
+            bp.add_setter(&tag_over, "visible", Some(&true.to_value()));
         };
         let classes = |bp: &adw::Breakpoint, names: &'static [&'static str]| {
             let p = page.clone();
