@@ -22,7 +22,11 @@ fn table(samples: &[f32]) -> Table {
     let raw: Vec<f32> = (0..TABLE_LEN).map(at).collect();
     let dc = raw.iter().sum::<f32>() / TABLE_LEN as f32;
     let peak = raw.iter().fold(0.0f32, |m, x| m.max((x - dc).abs()));
-    let scale = if peak > 1e-6 { 0.95 * 32767.0 / peak } else { 0.0 };
+    let scale = if peak > 1e-6 {
+        0.95 * 32767.0 / peak
+    } else {
+        0.0
+    };
     std::array::from_fn(|i| ((raw[i] - dc) * scale).round() as i16)
 }
 
@@ -68,7 +72,9 @@ pub fn wav(bytes: &[u8]) -> Result<Table, Error> {
         }
         at += 8 + len + (len & 1);
     }
-    let (format, data) = format.zip(data).ok_or_else(|| bad("a WAV file without sound"))?;
+    let (format, data) = format
+        .zip(data)
+        .ok_or_else(|| bad("a WAV file without sound"))?;
     let tag = u16::from_le_bytes([format[0], format[1]]);
     let channels = usize::from(u16::from_le_bytes([format[2], format[3]])).max(1);
     let bits = u16::from_le_bytes([format[14], format[15]]);
@@ -81,7 +87,9 @@ pub fn wav(bytes: &[u8]) -> Result<Table, Error> {
             (3, 32) => f32::from_le_bytes(b.try_into().ok()?),
             (1 | 0xFFFE, 8) => (f32::from(b[0]) - 128.0) / 128.0,
             (1 | 0xFFFE, 16) => f32::from(i16::from_le_bytes([b[0], b[1]])) / 32768.0,
-            (1 | 0xFFFE, 24) => (i32::from_le_bytes([0, b[0], b[1], b[2]]) >> 8) as f32 / 8_388_608.0,
+            (1 | 0xFFFE, 24) => {
+                (i32::from_le_bytes([0, b[0], b[1], b[2]]) >> 8) as f32 / 8_388_608.0
+            }
             (1 | 0xFFFE, 32) => i32::from_le_bytes(b.try_into().ok()?) as f32 / 2_147_483_648.0,
             _ => return None,
         })
@@ -103,7 +111,13 @@ pub fn wav(bytes: &[u8]) -> Result<Table, Error> {
 pub fn family(seed: u64, n: usize) -> Vec<Table> {
     let mut r = super::make::Rng::new(seed ^ 0x7761_7665);
     let n = n.clamp(1, 8);
-    let at = |i: usize| if n == 1 { 0.0 } else { i as f32 / (n - 1) as f32 };
+    let at = |i: usize| {
+        if n == 1 {
+            0.0
+        } else {
+            i as f32 / (n - 1) as f32
+        }
+    };
     match r.below(4) {
         0 => {
             let spectrum = |r: &mut super::make::Rng| -> Vec<f32> {
@@ -231,7 +245,9 @@ mod tests {
             b.extend_from_slice(&data);
             b
         }
-        let square: Vec<i16> = (0..600).map(|i| if i < 300 { 9000 } else { -9000 }).collect();
+        let square: Vec<i16> = (0..600)
+            .map(|i| if i < 300 { 9000 } else { -9000 })
+            .collect();
         let t = wav(&wav16(&square)).unwrap();
         assert!(t[10] > 30000 && t[200] < -30000);
         assert!(wav(b"RIFF....WAVE").is_err());

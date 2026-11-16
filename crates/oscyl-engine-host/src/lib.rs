@@ -167,7 +167,11 @@ mod tests {
         ]
         .map(|f| format!("units/oscyl-engine/{f}"));
         let mut all = vec![];
-        for f in sources.iter().map(String::as_str).chain(["scripts/build-units.sh"]) {
+        for f in sources
+            .iter()
+            .map(String::as_str)
+            .chain(["scripts/build-units.sh"])
+        {
             all.extend(std::fs::read(root.join(f)).unwrap());
         }
         let committed =

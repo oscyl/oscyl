@@ -2,8 +2,8 @@
 //! messages, the flash commit planner, Librarian and unit files, and, per
 //! model, the constants that differ ([`Model`]).
 
-mod error;
 pub mod engine;
+mod error;
 pub mod kinds;
 pub mod lag;
 pub mod library;

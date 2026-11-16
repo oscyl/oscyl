@@ -216,7 +216,10 @@ fn wavetable(r: &mut Rng, seed: u64, d: &mut Draft) {
         d.m(Source::ShiftShape, b, 0, amount(r, 16, 48, false));
         d.knob("Sync", b, 0, 40);
     }
-    let w = d.block(Kind::Wavetable, [r.k(0.0, 0.3), r.k(0.7, 1.0), 0, 0, 0, 0, 0]);
+    let w = d.block(
+        Kind::Wavetable,
+        [r.k(0.0, 0.3), r.k(0.7, 1.0), 0, 0, 0, 0, 0],
+    );
     d.m(Source::Shape, w, 0, 64);
     motion(r, d, w, 0);
     if r.chance(0.3) && d.fits(Kind::Fold) {
@@ -228,7 +231,15 @@ fn wavetable(r: &mut Rng, seed: u64, d: &mut Draft) {
 fn fm(r: &mut Rng, d: &mut Draft) {
     let b = d.block(
         Kind::Fm,
-        [r.k(0.0, 1.0), r.k(0.0, 0.4), r.k(0.0, 0.5), r.k(0.7, 1.0), 0, 0, 0],
+        [
+            r.k(0.0, 1.0),
+            r.k(0.0, 0.4),
+            r.k(0.0, 0.5),
+            r.k(0.7, 1.0),
+            0,
+            0,
+            0,
+        ],
     );
     d.m(Source::Shape, b, 1, amount(r, 32, 56, false));
     d.m(Source::ShiftShape, b, 2, amount(r, 24, 56, false));
@@ -271,7 +282,10 @@ fn fold(r: &mut Rng, d: &mut Draft) {
 
 fn formant(r: &mut Rng, d: &mut Draft) {
     if r.chance(0.35) {
-        d.block(Kind::Supersaw, [r.k(0.1, 0.6), r.k(0.6, 0.9), 0, 0, 0, 0, 0]);
+        d.block(
+            Kind::Supersaw,
+            [r.k(0.1, 0.6), r.k(0.6, 0.9), 0, 0, 0, 0, 0],
+        );
     } else {
         d.block(Kind::Saw, [r.k(0.6, 0.9), 0, 0, 0, 0, 0, 0]);
         if r.chance(0.4) {
@@ -308,7 +322,15 @@ fn noise(r: &mut Rng, d: &mut Draft) {
     if r.chance(0.5) {
         let f = d.block(
             Kind::Formant,
-            [r.k(0.0, 1.0), r.k(0.3, 0.9), r.k(0.5, 1.0), r.k(0.3, 0.7), 0, 0, 0],
+            [
+                r.k(0.0, 1.0),
+                r.k(0.3, 0.9),
+                r.k(0.5, 1.0),
+                r.k(0.3, 0.7),
+                0,
+                0,
+                0,
+            ],
         );
         d.m(Source::ShiftShape, f, 0, 64);
         motion(r, d, f, 0);
@@ -389,7 +411,12 @@ fn hybrid(r: &mut Rng, seed: u64, d: &mut Draft) {
             ],
         );
         let p = if kind == Kind::Lowpass { 0 } else { 2 };
-        d.knob(names[knob], b, p, if kind == Kind::Lowpass { -40 } else { 48 });
+        d.knob(
+            names[knob],
+            b,
+            p,
+            if kind == Kind::Lowpass { -40 } else { 48 },
+        );
         knob += 1;
         if r.chance(0.5) {
             d.m(Source::Shape, b, 0, amount(r, 16, 48, true));

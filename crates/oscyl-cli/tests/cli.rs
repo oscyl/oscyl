@@ -449,12 +449,34 @@ fn units_make_shows_writes_and_loads_an_oscillator() {
     std::fs::create_dir_all(&dir).unwrap();
     let data = dir.join("data");
     let made = stdout(&["units", "make", "--family", "fm", "--seed", "7"]);
-    assert_eq!(made, stdout(&["units", "make", "--family", "fm", "--seed", "7"]));
-    let name = made.lines().next().unwrap().split_whitespace().nth(1).unwrap().to_string();
-    assert!(made.contains("fm oscillator, seed 7") && made.contains("0 % to 100 %"), "{made}");
+    assert_eq!(
+        made,
+        stdout(&["units", "make", "--family", "fm", "--seed", "7"])
+    );
+    let name = made
+        .lines()
+        .next()
+        .unwrap()
+        .split_whitespace()
+        .nth(1)
+        .unwrap()
+        .to_string();
+    assert!(
+        made.contains("fm oscillator, seed 7") && made.contains("0 % to 100 %"),
+        "{made}"
+    );
     // Written as a unit file, it reads back as itself.
     let file = dir.join("new.mnlgxdunit");
-    stdout(&["units", "make", "--family", "fm", "--seed", "7", "--out", file.to_str().unwrap()]);
+    stdout(&[
+        "units",
+        "make",
+        "--family",
+        "fm",
+        "--seed",
+        "7",
+        "--out",
+        file.to_str().unwrap(),
+    ]);
     let info = stdout(&["units", "info", file.to_str().unwrap()]);
     assert!(info.starts_with(&format!("osc    {name}")), "{info}");
     // Kept: on the shelf and in the simulated synth's first free slot.
@@ -468,9 +490,13 @@ fn units_make_shows_writes_and_loads_an_oscillator() {
         .clone();
     assert!(String::from_utf8(kept).unwrap().contains("into osc slot"));
     assert_eq!(
-        std::fs::read_dir(data.join("oscyl/units/minilogue-xd")).unwrap().count(),
+        std::fs::read_dir(data.join("oscyl/units/minilogue-xd"))
+            .unwrap()
+            .count(),
         1
     );
-    assert!(failure(&["--synth", "sequential-prophet-rev2", "units", "make"]).contains("cannot play"));
+    assert!(
+        failure(&["--synth", "sequential-prophet-rev2", "units", "make"]).contains("cannot play")
+    );
     std::fs::remove_dir_all(&dir).unwrap();
 }

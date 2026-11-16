@@ -1973,7 +1973,10 @@ mod tests {
             assert!(!g.osc_deal_with.is_sensitive());
             g.set_connected(true);
             g.deal_with_new_oscillator();
-            assert!(matches!(asks.borrow().last(), Some(Ask::KeepOscillator(..))));
+            assert!(matches!(
+                asks.borrow().last(),
+                Some(Ask::KeepOscillator(..))
+            ));
             assert!(g.osc_status.is_visible());
             // The synth could not take it (slots full, a failed upload):
             // nothing waits on it any more.
