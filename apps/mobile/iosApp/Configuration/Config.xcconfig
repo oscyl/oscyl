@@ -3,9 +3,9 @@ BUNDLE_ID=io.github.oscyl
 APP_NAME=Oscyl
 
 // The release version's numeric part (scripts/version.sh; checked by scripts/release-check.sh).
-MARKETING_VERSION=0.4.0
+MARKETING_VERSION=0.5.0
 // The build number, the same as Android's versionCode (scripts/version.sh).
-CURRENT_PROJECT_VERSION=40099
+CURRENT_PROJECT_VERSION=50099
 // The lowest iOS Kotlin/Native 2.4 (and so Compose Multiplatform 1.12) supports.
 IPHONEOS_DEPLOYMENT_TARGET=15.0
 // The Kotlin framework and the Rust core exist for arm64 only (iosArm64,

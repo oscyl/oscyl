@@ -6,6 +6,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-16
+
+Generate goes deeper, your units become part of it, Oscyl makes
+oscillators of its own, and the desktop app comes to Windows and macOS.
+
 ### Added
 - **The desktop app on Windows and macOS.** Each release carries the
   GTK app as a zipped folder for Windows (x86_64) and as `Oscyl.app`
@@ -34,7 +39,21 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   use a new one in one tap. Also `oscyl units make`. Not yet heard on a
   real synth; testers are welcome.
 
+### Changed
+- **One look on every screen.** The desktop app now speaks the phone
+  app's design language: section names engraved into their frames, a
+  stage header with a live summary, the saved value above each dial,
+  segment ticks, Generate's chips and sound pictures, the phone's empty
+  states and toasts. It fits a window down to 360 px.
+- **The Android app is signed** with Oscyl's release key.
+- With Live on, a knob turned on the synth moves in the app at once, as
+  fast as a finger on the screen; only big jumps still glide.
+
 ### Fixed
+- Android finds a minilogue xd or prologue whose USB ports have no names,
+  and talks to its sound port rather than the simulator.
+- A knob turned on the synth while the phone's screen is off lands in the
+  program it was turned on, and is saved.
 - On Linux, a unit bigger than about 4 KB now reaches the synth: the ALSA
   sequencer dropped it, so the upload timed out. Oscyl writes to the
   synth's rawmidi device instead.
@@ -221,5 +240,6 @@ Rev2.
 - Avoids and detects a firmware 2.10 fault where reading during a flash save
   leaves the synth answering every request with the previous request's data.
 
-[Unreleased]: https://github.com/oscyl/oscyl/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/oscyl/oscyl/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/oscyl/oscyl/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/oscyl/oscyl/releases/tag/v0.4.0

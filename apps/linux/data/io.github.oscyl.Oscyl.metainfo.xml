@@ -51,6 +51,11 @@
   <!-- TODO: add <screenshots> once the UI is stable (light and dark, 16:9). -->
 
   <releases>
+    <release version="0.5.0" date="2026-11-16" type="development">
+      <description>
+        <p>Generate goes deeper and uses the units in your synth, Oscyl makes oscillators of its own for logue synths, the desktop app shares the phone app's look, and it now runs on Windows and macOS too.</p>
+      </description>
+    </release>
     <release version="0.4.0" date="2026-11-13" type="development">
       <description>
         <p>Android app, an iOS app ready for its first build, and two more synths: the KORG prologue and the Sequential Prophet Rev2. Several synths at once, Generate, and safer libraries in Oscyl's own format.</p>

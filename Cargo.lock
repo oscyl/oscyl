@@ -1275,7 +1275,7 @@ checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
 name = "oscyl-app"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "async-channel",
  "oscyl-core",
@@ -1290,7 +1290,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-cli"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1307,7 +1307,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-conformance"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-core",
  "oscyl-driver",
@@ -1315,7 +1315,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-driver",
  "serde",
@@ -1326,14 +1326,14 @@ dependencies = [
 
 [[package]]
 name = "oscyl-driver"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "thiserror 2.0.21",
 ]
 
 [[package]]
 name = "oscyl-engine-host"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "cc",
  "oscyl-logue",
@@ -1341,7 +1341,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-ffi"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "async-channel",
  "oscyl-app",
@@ -1355,7 +1355,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-gtk"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "gettext-rs",
  "glib-build-tools",
@@ -1376,7 +1376,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-korg-prologue"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-conformance",
  "oscyl-driver",
@@ -1387,7 +1387,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-logue"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-driver",
  "quick-xml",
@@ -1398,7 +1398,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-midi"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "alsa",
  "midir",
@@ -1412,7 +1412,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-minilogue-xd"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-conformance",
  "oscyl-core",
@@ -1426,7 +1426,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-prophet-rev2"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-conformance",
  "oscyl-driver",
