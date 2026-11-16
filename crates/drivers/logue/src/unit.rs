@@ -41,6 +41,114 @@ pub struct Unit {
     pub payload: Vec<u8>,
 }
 
+/// How a unit parameter's value reads, and how a program stores it
+/// (`userprg.h`'s `k_user_prg_param_type_*`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParamKind {
+    /// 0 to 100 %.
+    Percent,
+    /// -100 to +100 %.
+    Bipolar,
+    /// A plain number ("typeless"): a choice. The synth shows it one
+    /// higher (0-9 reads 1-10).
+    Select,
+}
+
+/// One of a unit's up to six parameters, as its header declares it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnitParam {
+    pub name: String,
+    pub min: i8,
+    pub max: i8,
+    pub kind: ParamKind,
+}
+
+impl UnitParam {
+    /// The values a program stores for this parameter, lowest and highest.
+    /// A program stores what the unit is handed (`userosc.h`, on
+    /// `OSC_PARAM`'s value: "0-200 for bipolar percent parameters. 0% at
+    /// 100, -100% at 0. 0-100 for unipolar percent and typeless
+    /// parameters"; the minilogue xd's MIDI implementation, note P24, gives
+    /// the program's bytes the same three ranges): the value itself, or
+    /// the value plus 100 when bipolar.
+    pub fn stored(&self) -> (u8, u8) {
+        let at = |v: i8| match self.kind {
+            ParamKind::Bipolar => (i16::from(v) + 100).clamp(0, 200) as u8,
+            ParamKind::Percent | ParamKind::Select => v.clamp(0, 100) as u8,
+        };
+        let (lo, hi) = (at(self.min), at(self.max));
+        (lo.min(hi), hi.max(lo))
+    }
+}
+
+/// What a unit says about itself: the inverse of [`build_header`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnitInfo {
+    pub module: Module,
+    /// The SDK platform id ([`Platform::id`]).
+    pub platform: u8,
+    pub name: String,
+    /// The developer's id, the unit's own and its version (`M << 16 | m <<
+    /// 8 | p`): together with the name, which unit this is.
+    pub dev_id: u32,
+    pub prg_id: u32,
+    pub version: u32,
+    /// Its parameters, when the bytes read held them: a whole header does,
+    /// a slot's status record (its first 32 bytes) does not.
+    pub params: Option<Vec<UnitParam>>,
+}
+
+impl UnitInfo {
+    /// From a unit's header (`user_prg_header_t`, [`HEADER_LEN`] bytes: the
+    /// start of a slot's blob), or from a slot's status record, which is
+    /// the header's first 32 bytes and so names no parameters.
+    pub fn from_header(h: &[u8]) -> Result<UnitInfo, Error> {
+        if h.len() < 32 {
+            return Err(bad("a unit header is at least 32 bytes"));
+        }
+        let u32_at = |o: usize| u32::from_le_bytes([h[o], h[o + 1], h[o + 2], h[o + 3]]);
+        let text = |raw: &[u8]| {
+            let end = raw.iter().position(|b| *b == 0).unwrap_or(raw.len());
+            String::from_utf8_lossy(&raw[..end]).into_owned()
+        };
+        let params = (h.len() >= 36 + MAX_PARAMS * 16).then(|| {
+            let n = (u32_at(32) as usize).min(MAX_PARAMS);
+            (0..n)
+                .map(|i| {
+                    let o = 36 + i * 16;
+                    UnitParam {
+                        name: text(&h[o + 3..o + 3 + PARAM_NAME_LEN]),
+                        min: h[o] as i8,
+                        max: h[o + 1] as i8,
+                        kind: match h[o + 2] {
+                            0 => ParamKind::Percent,
+                            1 => ParamKind::Bipolar,
+                            _ => ParamKind::Select,
+                        },
+                    }
+                })
+                .collect()
+        });
+        Ok(UnitInfo {
+            module: Module::from_id(h[0])?,
+            platform: h[1],
+            name: text(&h[18..18 + NAME_LEN]),
+            dev_id: u32_at(6),
+            prg_id: u32_at(10),
+            version: u32_at(14),
+            params,
+        })
+    }
+
+    /// Whether `other` is this unit (a slot's status against a file's
+    /// header, say): the same section, platform, name, ids and version.
+    pub fn same_unit(&self, other: &UnitInfo) -> bool {
+        (self.module, self.platform, &self.name) == (other.module, other.platform, &other.name)
+            && (self.dev_id, self.prg_id, self.version)
+                == (other.dev_id, other.prg_id, other.version)
+    }
+}
+
 fn bad(msg: impl Into<String>) -> Error {
     Error::NotALibrary(msg.into())
 }
@@ -178,6 +286,11 @@ impl Unit {
         })
     }
 
+    /// What the unit says about itself, parameters included.
+    pub fn info(&self) -> UnitInfo {
+        UnitInfo::from_header(&self.header).expect("a header this module built")
+    }
+
     /// The blob the synth stores: header, payload, zeroed signature area.
     pub fn blob(&self) -> Vec<u8> {
         blob(&self.header, &self.payload)
@@ -241,5 +354,61 @@ mod tests {
                 "unit is for \"minilogue-xd\", not prologue".into()
             ))
         );
+    }
+
+    #[test]
+    fn a_header_reads_back_as_its_manifest() {
+        let m = json!({"header": {
+            "platform": "prologue", "module": "osc", "api": "1.1-0",
+            "dev_id": 0x4B4F5247u32, "prg_id": 7, "version": "1.2-3", "name": "waves",
+            "params": [
+                ["Wave A", 0, 45, ""],
+                ["Sub Mix", 0, 100, "%"],
+                ["Tilt", -100, 100, "%"],
+                ["Twelve chars", 2, 9, ""]
+            ]
+        }});
+        let (_, _, h) = build_header(&PROLOGUE, &m, 64).unwrap();
+        let info = UnitInfo::from_header(&h).unwrap();
+        assert_eq!(
+            (info.module, info.platform, &*info.name),
+            (Module::Osc, 1, "waves")
+        );
+        assert_eq!(
+            (info.dev_id, info.prg_id, info.version),
+            (0x4B4F_5247, 7, 0x01_02_03)
+        );
+        let p = |name: &str, min, max, kind| UnitParam {
+            name: name.into(),
+            min,
+            max,
+            kind,
+        };
+        let params = info.params.clone().unwrap();
+        assert_eq!(
+            params,
+            [
+                p("Wave A", 0, 45, ParamKind::Select),
+                p("Sub Mix", 0, 100, ParamKind::Percent),
+                p("Tilt", -100, 100, ParamKind::Bipolar),
+                p("Twelve chars", 2, 9, ParamKind::Select),
+            ]
+        );
+        // What a program stores: the value, or the value plus 100 when bipolar.
+        let stored: Vec<_> = params.iter().map(UnitParam::stored).collect();
+        assert_eq!(stored, [(0, 45), (0, 100), (0, 200), (2, 9)]);
+        // A slot's status record is the header's start: the same unit, no parameters.
+        let status = UnitInfo::from_header(&h[..32]).unwrap();
+        assert_eq!(status.params, None);
+        assert!(status.same_unit(&info));
+        let unit = Unit {
+            module: Module::Osc,
+            name: "waves".into(),
+            header: h,
+            payload: b"UOSC".to_vec(),
+        };
+        assert_eq!(unit.info(), info);
+        assert!(UnitInfo::from_header(&[0; 31]).is_err());
+        assert!(UnitInfo::from_header(&[9; 64]).is_err(), "no module 9");
     }
 }
