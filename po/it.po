@@ -129,6 +129,9 @@ msgstr "1/8"
 msgid "8th."
 msgstr "1/8."
 
+msgid "A fast zap"
+msgstr "Uno zap veloce"
+
 msgid "A little noise under the VCOs adds breath to the attack."
 msgstr "Un po' di rumore sotto i VCO aggiunge respiro all'attacco."
 
@@ -160,6 +163,9 @@ msgstr "AMOLED usa il nero assoluto, per schermi OLED e studi bui"
 msgid "About Oscyl"
 msgstr "Informazioni su Oscyl"
 
+msgid "Acid"
+msgstr "Acid"
+
 msgid "Across"
 msgstr "In orizzontale"
 
@@ -177,6 +183,9 @@ msgstr "Air 1"
 
 msgid "Air 2"
 msgstr "Air 2"
+
+msgid "Alarm"
+msgstr "Allarme"
 
 msgid "All"
 msgstr "Tutti"
@@ -318,6 +327,9 @@ msgstr "Equilibrio tra il suono originale e il riverbero."
 msgid "Bass"
 msgstr "Bassi"
 
+msgid "Bass drum: a pitch drop"
+msgstr "Grancassa: l'intonazione cade"
+
 msgid "Bell"
 msgstr "Campane"
 
@@ -342,8 +354,17 @@ msgstr "Black"
 msgid "Blend toward the edit"
 msgstr "Sfumatura verso la modifica"
 
+msgid "Bold swell with a filter blat"
+msgstr "Crescendo deciso con colpo di filtro"
+
 msgid "Boosts frequencies around the cutoff."
 msgstr "Enfatizza le frequenze attorno al cutoff."
+
+msgid "Bowed ensemble"
+msgstr "Ensemble d'archi"
+
+msgid "Brass"
+msgstr "Ottoni"
 
 msgid "Breed With…"
 msgstr "Incrocia con…"
@@ -414,6 +435,9 @@ msgstr "Carattere"
 msgid "Children of “{a}” and “{b}”"
 msgstr "Incroci di «{a}» e «{b}»"
 
+msgid "Chiptune"
+msgstr "Chiptune"
+
 msgid "Choose for {name}"
 msgstr "Scegli per: {name}"
 
@@ -435,6 +459,9 @@ msgstr "Chorus"
 
 msgid "Chorus flavour, from Light and Deep to Triphase and Vibrato."
 msgstr "Variante del chorus, da Light e Deep a Triphase e Vibrato."
+
+msgid "Clean weight below"
+msgstr "Peso pulito in basso"
 
 msgid "Clear Search and Filters"
 msgstr "Azzera ricerca e filtri"
@@ -726,6 +753,9 @@ msgstr ""
 "Escursione del pitch bend verso il basso, in semitoni, quando spingi il "
 "joystick a sinistra."
 
+msgid "Drawbars, straight on and off"
+msgstr "Drawbar, attacco e stacco netti"
+
 msgid "Drive"
 msgstr "Drive"
 
@@ -850,6 +880,12 @@ msgstr "Esporta libreria"
 msgid "Export…"
 msgstr "Esporta…"
 
+msgid "FM Bass"
+msgstr "Basso FM"
+
+msgid "FM Glass"
+msgstr "Vetro FM"
+
 msgid "FX"
 msgstr "FX"
 
@@ -914,6 +950,9 @@ msgstr "Formant"
 msgid "From the Synth"
 msgstr "Dal synth"
 
+msgid "From “{a}” to “{b}”"
+msgstr "Da «{a}» a «{b}»"
+
 msgid "Fuzz Bass"
 msgstr "Basso fuzz"
 
@@ -968,6 +1007,9 @@ msgstr "Primi passi"
 msgid "Gig set"
 msgstr "Scaletta del concerto"
 
+msgid "Glassy digital keys"
+msgstr "Tastiere digitali cristalline"
+
 msgid "Glide time between notes."
 msgstr "Tempo di glide tra le note."
 
@@ -982,6 +1024,9 @@ msgstr "Guida"
 
 msgid "Hall"
 msgstr "Hall"
+
+msgid "Hard sync sweep"
+msgstr "Sweep in hard sync"
 
 msgid "Harmonic"
 msgstr "Harmonic"
@@ -1105,6 +1150,12 @@ msgstr ""
 msgid "How the four voices are used: Poly, Unison, Chord or Arp/Latch."
 msgstr "Come vengono usate le quattro voci: Poly, Unison, Chord o Arp/Latch."
 
+msgid "Huge low hit with a tail"
+msgstr "Colpo basso enorme con coda"
+
+msgid "Impact"
+msgstr "Impatto"
+
 msgid "Import File"
 msgstr "Importa file"
 
@@ -1207,8 +1258,14 @@ msgstr "Scorciatoie da tastiera"
 msgid "Keys"
 msgstr "Tastiere"
 
+msgid "Kick"
+msgstr "Cassa"
+
 msgid "Knob {n}"
 msgstr "Manopola {n}"
+
+msgid "Knocking digital bass"
+msgstr "Basso digitale percussivo"
 
 msgid "LFO"
 msgstr "LFO"
@@ -1248,6 +1305,9 @@ msgstr "LFO, intensità dell'inviluppo ed effetto di modulazione"
 
 msgid "Larger interface"
 msgstr "Interfaccia più grande"
+
+msgid "Laser"
+msgstr "Laser"
 
 msgid "Later stages"
 msgstr "Stadi successivi"
@@ -1611,6 +1671,9 @@ msgstr "Shift rumore"
 msgid "Noise Type"
 msgstr "Tipo rumore"
 
+msgid "Noise crack with a body"
+msgstr "Schiocco di rumore con corpo"
+
 msgid "Noise type: High, Low, Peak or Decim."
 msgstr "Tipo di rumore: High, Low, Peak o Decim."
 
@@ -1650,6 +1713,9 @@ msgstr "Off lascia muovere ogni voce per conto suo."
 msgid "Offline. Connect the synth to hear each sound as you pick it."
 msgstr ""
 "Non connesso. Collega il synth per ascoltare ogni suono appena lo scegli."
+
+msgid "Old game console pulse"
+msgstr "Impulso da vecchia console"
 
 msgid "On"
 msgstr "Attivo"
@@ -1716,6 +1782,9 @@ msgstr "Apre di più il filtro per le note acute: 0%, 50% o 100%."
 
 msgid "Orange"
 msgstr "Orange"
+
+msgid "Organ"
+msgstr "Organo"
 
 msgid "Organise my library"
 msgstr "Organizzare la libreria"
@@ -2188,6 +2257,9 @@ msgstr "Tempo di salita dell'EG dopo la pressione di un tasto."
 msgid "Riser"
 msgstr "Riser"
 
+msgid "Rising and falling wail"
+msgstr "Lamento che sale e scende"
+
 msgid "Roll {stage}"
 msgstr "Genera a caso: {stage}"
 
@@ -2394,6 +2466,9 @@ msgstr "Sin 3"
 msgid "Sin 4"
 msgstr "Sin 4"
 
+msgid "Siren"
+msgstr "Sirena"
+
 msgid "Sirens, lasers, alien air"
 msgstr "Sirene, laser, atmosfere aliene"
 
@@ -2445,6 +2520,9 @@ msgstr "Istantanea {letter} sostituita"
 msgid "Snapshots"
 msgstr "Istantanee"
 
+msgid "Snare"
+msgstr "Rullante"
+
 msgid "Something went wrong talking to the synth. Try again."
 msgstr "Qualcosa è andato storto nella comunicazione con il synth. Riprova."
 
@@ -2471,6 +2549,9 @@ msgstr "Squ 2"
 
 msgid "Square"
 msgstr "Square"
+
+msgid "Squelching, sliding line"
+msgstr "Linea acida che scivola"
 
 msgid "Stages"
 msgstr "Stadi"
@@ -2517,11 +2598,17 @@ msgstr "Memorizza: {snapshot}"
 msgid "Stored"
 msgstr "Memorizzata"
 
+msgid "Strings"
+msgstr "Archi"
+
 msgid "Studio"
 msgstr "Studio"
 
 msgid "Style"
 msgstr "Stile"
+
+msgid "Sub Bass"
+msgstr "Sub basso"
 
 msgid "Submarine"
 msgstr "Submarine"
@@ -2575,6 +2662,9 @@ msgstr ""
 "modifiche; per annullare una sincronizzazione, annulla e sincronizza di "
 "nuovo."
 
+msgid "Sync Lead"
+msgstr "Lead sync"
+
 msgid "Synced"
 msgstr "Sincronizzato"
 
@@ -2620,6 +2710,12 @@ msgstr "Osc dest."
 
 msgid "Tempo-locked wobble"
 msgstr "Wobble a tempo"
+
+msgid "That code has a typing mistake"
+msgstr "Quel codice ha un errore di battitura"
+
+msgid "That is not a recipe code"
+msgstr "Non è un codice ricetta"
 
 msgid "That library is for another synth."
 msgstr "Quella libreria è per un altro synth."
@@ -2713,8 +2809,14 @@ msgstr "Questa libreria è piena: una libreria contiene fino a {max} programmi."
 msgid "This slot is read-only (a factory bank)."
 msgstr "Questo slot è di sola lettura (un banco di fabbrica)."
 
+msgid "This synth deals no sounds"
+msgstr "Questo synth non genera suoni"
+
 msgid "This synth has no user units."
 msgstr "Questo synth non ha unità utente."
+
+msgid "This synth has no “{name}” sounds"
+msgstr "Questo synth non ha suoni «{name}»"
 
 msgid "Throat"
 msgstr "Throat"
@@ -2774,6 +2876,9 @@ msgstr ""
 
 msgid "Twinkle"
 msgstr "Twinkle"
+
+msgid "Two-tone warning"
+msgstr "Avviso a due toni"
 
 msgid "Type"
 msgstr "Tipo"
@@ -3089,8 +3194,14 @@ msgstr "Sorgenti su cui agisce l'LFO: All, VCO 1+2, VCO 2 o Multi."
 msgid "Which synth to show and sync with"
 msgstr "Quale synth mostrare e con cui sincronizzare"
 
+msgid "Whistling air the keys play"
+msgstr "Aria che fischia, suonata dai tasti"
+
 msgid "Wild"
 msgstr "Estreme"
+
+msgid "Wind"
+msgstr "Vento"
 
 msgid "With Sync on, sweep this for the classic sync sound."
 msgstr "Con Sync attivo, muovilo per il classico suono sync."
