@@ -312,6 +312,20 @@ pub fn morph_fields<D: crate::Driver + ?Sized>(
     t: f32,
     seed: u64,
 ) -> Result<Vec<u8>, DriverError> {
+    morph_fields_by(d, a, b, t, seed, |i| d.control(a, i) == Control::Continuous)
+}
+
+/// [`morph_fields`] for a driver that knows better than its controls
+/// which fields are dials (`dial`, by field index): a number that names
+/// something (a destination) must switch, not slide.
+pub fn morph_fields_by<D: crate::Driver + ?Sized>(
+    d: &D,
+    a: &[u8],
+    b: &[u8],
+    t: f32,
+    seed: u64,
+    dial: impl Fn(usize) -> bool,
+) -> Result<Vec<u8>, DriverError> {
     let t = t.clamp(0.0, 1.0);
     let mut out = a.to_vec();
     for (i, f) in d.fields().iter().enumerate() {
@@ -319,7 +333,7 @@ pub fn morph_fields<D: crate::Driver + ?Sized>(
             continue;
         }
         let (x, y) = (d.get(a, i)?, d.get(b, i)?);
-        let v = if d.control(a, i) == Control::Continuous {
+        let v = if dial(i) {
             (f32::from(x) + (f32::from(y) - f32::from(x)) * t).round() as u16
         } else {
             // FNV-1a of the group's name: one threshold per group.

@@ -15,6 +15,69 @@ pub const VPM_TYPES: &[&str] = &[
     "Sin 1", "Sin 2", "Sin 3", "Sin 4", "Saw 1", "Saw 2", "Squ 1", "Squ 2", "Fat 1", "Fat 2",
     "Air 1", "Air 2", "Decay 1", "Decay 2", "Creep", "Throat",
 ];
+/// What a VPM type takes before it turns harsh or to noise: the ranges a
+/// recipe draws its shape (modulation depth), shift-shape (modulator
+/// ratio) and menu parameters from. The parameters are stored 0-200 for
+/// -100 % to +100 %. Chosen on paper from what each type is (plain sines
+/// take the most modulation, the saw, square and fat types are bright
+/// before any), not by ear on hardware.
+pub struct VpmSafe {
+    pub shape: (u16, u16),
+    pub shift: (u16, u16),
+    /// The most feedback and noise depth; both start from 0 %.
+    pub feedback: u16,
+    pub noise: u16,
+    pub shape_mod: (u16, u16),
+    pub attack: (u16, u16),
+    pub decay: (u16, u16),
+    pub track: (u16, u16),
+}
+
+const fn vpm_safe(
+    shape: (u16, u16),
+    shift: (u16, u16),
+    feedback: u16,
+    noise: u16,
+    shape_mod: (u16, u16),
+) -> VpmSafe {
+    VpmSafe {
+        shape,
+        shift,
+        feedback,
+        noise,
+        shape_mod,
+        attack: (80, 120),
+        decay: (60, 150),
+        track: (80, 130),
+    }
+}
+
+/// By VPM type.
+pub const VPM_SAFE: [VpmSafe; 16] = [
+    // Sin 1-4: a sine carrier, the classic two-operator range.
+    vpm_safe((80, 720), (0, 1023), 150, 115, (60, 170)),
+    vpm_safe((80, 720), (0, 1023), 150, 115, (60, 170)),
+    vpm_safe((80, 680), (0, 1023), 145, 115, (60, 170)),
+    vpm_safe((80, 680), (0, 1023), 145, 115, (60, 170)),
+    // Saw 1-2 and Squ 1-2: bright already.
+    vpm_safe((40, 460), (0, 700), 125, 110, (80, 150)),
+    vpm_safe((40, 460), (0, 700), 125, 110, (80, 150)),
+    vpm_safe((40, 480), (0, 700), 125, 110, (80, 150)),
+    vpm_safe((40, 480), (0, 700), 125, 110, (80, 150)),
+    // Fat 1-2: thick, detuned.
+    vpm_safe((40, 520), (0, 600), 130, 110, (80, 150)),
+    vpm_safe((40, 520), (0, 600), 130, 110, (80, 150)),
+    // Air 1-2: breath is the point.
+    vpm_safe((100, 620), (0, 1023), 120, 140, (70, 150)),
+    vpm_safe((100, 620), (0, 1023), 120, 140, (70, 150)),
+    // Decay 1-2: the modulation falls away by itself.
+    vpm_safe((150, 800), (0, 1023), 140, 110, (100, 190)),
+    vpm_safe((150, 800), (0, 1023), 140, 110, (100, 190)),
+    // Creep and Throat: odd voices, kept to their middle.
+    vpm_safe((100, 560), (200, 800), 120, 110, (80, 140)),
+    vpm_safe((100, 560), (200, 800), 120, 110, (80, 140)),
+];
+
 pub const MULTI_TYPES: &[&str] = &["Noise", "VPM", "User"];
 pub const MULTI_ROUTING: &[&str] = &["Pre VCF", "Post VCF"];
 pub const LFO_TARGETS: &[&str] = &["Cutoff", "Shape", "Pitch"];

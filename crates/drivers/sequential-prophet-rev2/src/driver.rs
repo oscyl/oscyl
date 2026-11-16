@@ -270,7 +270,14 @@ impl Driver for ProphetRev2 {
     }
 
     fn morph(&self, a: &[u8], b: &[u8], t: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
-        generate::cohered(&oscyl_driver::morph_fields(self, a, b, t, seed)?)
+        generate::cohered(&oscyl_driver::morph_fields_by(
+            self,
+            a,
+            b,
+            t,
+            seed,
+            generate::dial,
+        )?)
     }
 
     /// NRPN on `channel`: parameter
