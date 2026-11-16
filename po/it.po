@@ -1739,6 +1739,9 @@ msgstr "Nessun programma corrisponde insieme alla ricerca e ai filtri."
 msgid "No programs yet"
 msgstr "Ancora nessun programma"
 
+msgid "No sound of this synth can use “{name}”."
+msgstr "Nessun suono di questo synth può usare «{name}»."
+
 msgid "No sound. Takes effect the next time you connect"
 msgstr "Nessun suono. Ha effetto alla prossima connessione"
 
@@ -3373,6 +3376,9 @@ msgstr "Vento"
 
 msgid "With Sync on, sweep this for the classic sync sound."
 msgstr "Con Sync attivo, muovilo per il classico suono sync."
+
+msgid "With “{name}”"
+msgstr "Con «{name}»"
 
 msgid "Wobble"
 msgstr "Wobble"

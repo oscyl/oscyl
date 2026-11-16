@@ -767,9 +767,9 @@ private fun NewOscillators(ui: GenerateUi, actions: GenerateActions) {
                 }
             }
         }
-        ui.pending?.let { name ->
+        (ui.pending?.let { stringResource(Res.string.gen_osc_waiting, it) } ?: ui.oscillatorNote)?.let { line ->
             BasicText(
-                stringResource(Res.string.gen_osc_waiting, name),
+                line,
                 Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 style = type.bodySmall.copy(color = c.legend, textDirection = TextDirection.Content),
             )

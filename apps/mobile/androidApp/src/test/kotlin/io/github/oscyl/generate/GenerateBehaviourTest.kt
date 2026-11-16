@@ -203,6 +203,31 @@ class GenerateBehaviourTest {
         assertTrue(java.io.File(shelf).walk().any { it.isFile && it.name.startsWith(kept) })
     }
 
+    @Test
+    fun aNewOscillatorIsLoadedAndSoundsThatUseItAreDealt() {
+        val synth = make(SynthModel::class) { SynthModel(NoMidi, shelfDir = temp.newFolder("units").path) }
+        val library = make(LibraryModel::class) { LibraryModel(temp.newFolder("libraries").path, synth) }
+        val generate = make(GenerateModel::class) { GenerateModel(library, synth, seed = 3) }
+        compose.setContent { OscylTheme(OscylThemeMode.Dark) { GenerateScreen(generate) } }
+        compose.runOnIdle { synth.openDemo(XD) }
+        await { generate.ui.value.connected && generate.ui.value.characters.isNotEmpty() }
+        // A character whose sounds take no user oscillator is chosen: the sounds come from one that does.
+        val riser = generate.ui.value.characters.indexOfFirst { it.title == "Riser" }
+        assertTrue(riser >= 0)
+        compose.runOnIdle { generate.family(null); generate.character(riser) }
+        compose.onNodeWithTag("generate-osc-deal-with").performScrollTo().performClick()
+        // Loaded into the simulated synth, listed, its parameters read: six sounds use it (the simulator is quick:
+        // the "Loading" line may come and go between two looks).
+        await {
+            val sounds = generate.ui.value.hand?.sounds.orEmpty()
+            generate.ui.value.pending == null && sounds.size == 6 && sounds.all { it.units.size == 1 && it.units == sounds[0].units }
+        }
+        assertTrue(synth.notice.value!!.contains(generate.ui.value.hand!!.sounds[0].units.single()))
+        val ui = generate.ui.value
+        assertTrue(ui.character != riser)
+        assertNull(ui.oscillatorNote)
+    }
+
     private companion object {
         const val TIMEOUT_MS = 30_000L
         const val XD = "korg-minilogue-xd"

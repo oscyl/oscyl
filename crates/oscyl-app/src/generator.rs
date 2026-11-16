@@ -383,6 +383,55 @@ impl Hands {
         self.push_coded(programs, codes, units, character, tr(title))
     }
 
+    /// Six sounds that all use `unit` (a new oscillator just loaded),
+    /// shaped by `macros`: of `character` when its sounds can take the
+    /// unit, else of the first character whose sounds can. The character
+    /// dealt, for the page to show, or why not, in words, when none can.
+    pub fn deal_with_unit(
+        &mut self,
+        d: &dyn Driver,
+        character: usize,
+        macros: Macros,
+        unit: oscyl_driver::PaletteUnit,
+    ) -> Result<usize, String> {
+        let palette = Palette { units: vec![unit] };
+        let name = palette.units[0].name.clone();
+        let others = (0..d.characters().len()).filter(|&c| c != character);
+        for c in std::iter::once(character).chain(others) {
+            let recipe = Recipe {
+                character: c,
+                macros: stepped(macros),
+                seed: 0,
+                keep: vec![],
+                palette: palette.clone(),
+            };
+            let seed = self.next_seed();
+            let Ok(dealt) = hand_seeded(d, c, seed, SEED_MASK, None, HAND, |seed| {
+                d.generate(
+                    &Recipe {
+                        seed,
+                        ..recipe.clone()
+                    },
+                    None,
+                )
+            }) else {
+                continue;
+            };
+            if !dealt.iter().all(|(p, _)| !d.needs(p).is_empty()) {
+                continue;
+            }
+            let programs: Vec<Program> = dealt.into_iter().map(|(p, _)| p).collect();
+            let units = programs
+                .iter()
+                .map(|p| crate::palette::unit_names(d, p, &palette))
+                .collect();
+            let origin = tr("With “{name}”").replace("{name}", &name);
+            self.push_coded(programs, vec![None; HAND], units, c, origin);
+            return Ok(c);
+        }
+        Err(tr("No sound of this synth can use “{name}”.").replace("{name}", &name))
+    }
+
     /// A random character and dials (at steps of five), dealt; what it
     /// chose, for the page to show. `None` when the driver deals nothing.
     pub fn surprise(&mut self, d: &dyn Driver) -> Option<(usize, Macros)> {
@@ -967,5 +1016,44 @@ mod tests {
             a.deal(d, 1, Macros::default(), &[], None);
         }
         assert_eq!(a.position().1, HISTORY);
+    }
+
+    #[test]
+    fn a_new_unit_is_dealt_with_a_character_that_takes_it() {
+        let d = oscyl_midi::driver("korg-minilogue-xd").unwrap();
+        let unit = oscyl_driver::PaletteUnit {
+            kind: d
+                .capabilities()
+                .units
+                .iter()
+                .find(|k| k.name == "osc")
+                .copied()
+                .unwrap(),
+            slot: 4,
+            name: "Cekotin".into(),
+            params: Some(vec![]),
+        };
+        // Every character in turn: the hand uses the unit throughout, of
+        // that character when it can take one.
+        let takes: Vec<bool> = (0..d.characters().len())
+            .map(|c| {
+                let mut h = Hands::new(c as u64);
+                let dealt = h
+                    .deal_with_unit(d, c, Macros::default(), unit.clone())
+                    .expect("some character takes a unit");
+                let hand = h.current().unwrap();
+                assert_eq!(hand.character, dealt);
+                assert!(
+                    hand.units.iter().all(|u| u == &["Cekotin"]),
+                    "{:?}",
+                    hand.units
+                );
+                assert!(hand.codes.iter().all(Option::is_none));
+                assert!(hand.origin.contains("Cekotin"));
+                dealt == c
+            })
+            .collect();
+        assert!(takes.iter().any(|t| *t), "some characters take it");
+        assert!(takes.iter().any(|t| !*t), "others hand over: {takes:?}");
     }
 }

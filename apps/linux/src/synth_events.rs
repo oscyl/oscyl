@@ -310,6 +310,10 @@ impl App {
                 self.error_dialog(&tr("Couldn't connect to the synth"), &e);
             }
             Ev::Disconnected(id) => {
+                // A new oscillator waiting to be listed will not be.
+                if let Some(g) = self.generator.get() {
+                    g.oscillator_failed();
+                }
                 if self.go_offline(id) {
                     return;
                 }
@@ -462,6 +466,10 @@ impl App {
             Ev::Error(id, e) => {
                 if let Some(id) = id {
                     self.restore_status(id);
+                    // A new oscillator waiting to be listed will not be.
+                    if let Some(g) = self.generator.get() {
+                        g.oscillator_failed();
+                    }
                 }
                 self.win.toast(&e.replace('\n', " "));
             }

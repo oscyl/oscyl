@@ -25,7 +25,7 @@ use adw::prelude::*;
 use gtk::glib;
 use oscyl_app::generator::Hands;
 use oscyl_app::oscillators::{Oscillators, family_title};
-use oscyl_driver::{Driver, Family, Macros, Palette, Recipe};
+use oscyl_driver::{Driver, Family, Macros, Recipe};
 use oscyl_logue::engine::{self, Patch};
 
 use crate::callback::Slot;
@@ -961,8 +961,22 @@ impl Generator {
         });
         if let Some(unit) = loaded {
             self.set_pending(None);
-            self.deal_with(Palette { units: vec![unit] });
+            self.deal_with(unit);
         }
+    }
+
+    /// The synth could not take the new oscillator (its slots are full,
+    /// the upload failed, it went): stop waiting for it. The app says why.
+    pub fn oscillator_failed(&self) {
+        if self.pending.borrow().is_some() {
+            self.set_pending(None);
+        }
+    }
+
+    /// Say `text` where the section's status goes.
+    fn say(&self, text: &str) {
+        self.osc_status.set_label(text);
+        self.osc_status.set_visible(true);
     }
 
     /// Wait for oscillator `name` to be listed (or no longer, `None`),
@@ -1288,6 +1302,9 @@ impl Generator {
 
     pub fn set_connected(&self, on: bool) {
         self.connected.set(on);
+        if !on {
+            self.oscillator_failed();
+        }
         self.offline.set_visible(!on);
         self.update_lamps();
         self.osc_deal_with.set_sensitive(on);
@@ -1368,24 +1385,23 @@ impl Generator {
         }
     }
 
-    /// Deal as Generate does, with only `palette`'s units (a new
-    /// oscillator just loaded); later deals use all the units that are on.
-    fn deal_with(&self, palette: Palette) {
-        let d = self.driver.get();
-        let base = self.target.borrow().as_ref().and_then(|t| t.base.clone());
-        let dealt = {
-            let mut hands = self.hands.borrow_mut();
-            hands.set_palette(palette);
-            hands.deal(
-                d,
-                self.character.get(),
-                self.macros.get(),
-                &[],
-                base.as_deref(),
-            )
-        };
-        if dealt {
-            self.show_hand(true, true);
+    /// Six sounds that all use `unit` (a new oscillator just loaded): of
+    /// the chosen character when it can take the unit, else of one that
+    /// can, which the page then shows chosen.
+    fn deal_with(&self, unit: oscyl_driver::PaletteUnit) {
+        let macros = self.macros.get();
+        let dealt = self.hands.borrow_mut().deal_with_unit(
+            self.driver.get(),
+            self.character.get(),
+            macros,
+            unit,
+        );
+        match dealt {
+            Ok(c) => {
+                self.show_recipe(c, macros);
+                self.show_hand(true, true);
+            }
+            Err(why) => self.say(&why),
         }
     }
 
@@ -1957,16 +1973,41 @@ mod tests {
             assert!(!g.osc_deal_with.is_sensitive());
             g.set_connected(true);
             g.deal_with_new_oscillator();
+            assert!(matches!(asks.borrow().last(), Some(Ask::KeepOscillator(..))));
+            assert!(g.osc_status.is_visible());
+            // The synth could not take it (slots full, a failed upload):
+            // nothing waits on it any more.
+            g.oscillator_failed();
+            assert!(!g.osc_status.is_visible() && g.pending.borrow().is_none());
+            g.deal_with_new_oscillator();
             let new = match asks.borrow().last() {
                 Some(Ask::KeepOscillator(_, p)) => p.clone(),
                 _ => panic!("it is kept"),
             };
-            assert!(g.osc_status.is_visible());
-            // Listed, its parameters known: sounds that use it are dealt.
+            // Listed, its parameters known: six sounds that use it are
+            // dealt, of a character that takes it when the chosen one does
+            // not (the page moves to it).
             let info = oscyl_logue::engine::build(&oscyl_midi::logue::platform(XD).unwrap(), &new)
                 .unwrap()
                 .info();
-            g.select_character(XD.characters().iter().position(|c| c.id == "pad").unwrap());
+            let unit = oscyl_driver::PaletteUnit {
+                kind: *XD
+                    .capabilities()
+                    .units
+                    .iter()
+                    .find(|k| k.name == "osc")
+                    .unwrap(),
+                slot: 5,
+                name: new.name.clone(),
+                params: Some(vec![]),
+            };
+            let takes_none = (0..XD.characters().len())
+                .find(|&c| {
+                    Hands::new(1).deal_with_unit(XD, c, Macros::default(), unit.clone()) != Ok(c)
+                })
+                .expect("a character that takes no unit");
+            g.set_family(None);
+            g.select_character(takes_none);
             oscyl_app::palette::shared().listed(
                 XD,
                 &[oscyl_app::synth::SlotInfo {
@@ -1980,10 +2021,12 @@ mod tests {
             assert!(!g.osc_status.is_visible());
             let h = g.hands.borrow().current().unwrap().clone();
             assert!(
-                h.units.iter().any(|u| u == std::slice::from_ref(&new.name)),
+                h.units.iter().all(|u| u == std::slice::from_ref(&new.name)),
                 "{:?}",
                 h.units
             );
+            assert_ne!(h.character, takes_none);
+            assert_eq!(g.character.get(), h.character, "the page shows it");
             oscyl_app::palette::shared().listed(XD, &[]);
         });
     }

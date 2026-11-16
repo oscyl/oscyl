@@ -1649,6 +1649,9 @@ msgstr ""
 msgid "No programs yet"
 msgstr ""
 
+msgid "No sound of this synth can use “{name}”."
+msgstr ""
+
 msgid "No sound. Takes effect the next time you connect"
 msgstr ""
 
@@ -3135,6 +3138,9 @@ msgid "Wind"
 msgstr ""
 
 msgid "With Sync on, sweep this for the classic sync sound."
+msgstr ""
+
+msgid "With “{name}”"
 msgstr ""
 
 msgid "Wobble"

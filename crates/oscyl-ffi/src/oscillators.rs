@@ -185,6 +185,9 @@ mod tests {
         let _ = std::fs::remove_dir_all(dir);
         // Sounds with a unit the synth does not hold yet: none dealt.
         let g = crate::generator::Generator::new("korg-minilogue-xd".into(), 1).unwrap();
-        assert!(!g.deal_with_unit(0, vec![0.5; 4], "nowhere".into()));
+        assert_eq!(
+            g.deal_with_unit(0, vec![0.5; 4], "nowhere".into()).unwrap(),
+            None
+        );
     }
 }

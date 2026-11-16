@@ -555,6 +555,11 @@ class SynthModel(
     /** The synth whose error the notice shows. */
     private var errorFor: ULong? = null
 
+    private val _failed = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** A synth reported an error or went (the notice says why): whatever waited on it will not come. */
+    val failed: SharedFlow<Unit> = _failed.asSharedFlow()
+
     private suspend fun on(event: SynthEvent) {
         when (event) {
             is SynthEvent.Connected -> connected(event)
@@ -565,6 +570,7 @@ class SynthModel(
             is SynthEvent.Error -> {
                 _notice.value = event.message
                 errorFor = event.id?.let(::cardOf)
+                if (event.id != null) _failed.tryEmit(Unit)
             }
             else -> {
                 // Events of a connection already let go mean nothing now.
@@ -643,6 +649,7 @@ class SynthModel(
                 _programs.value++
             }
             is SynthEvent.Disconnected -> {
+                _failed.tryEmit(Unit)
                 links.remove(id)
                 // A write cut short stored nothing it can vouch for (no reason: the synth went).
                 if (writing.remove(id) != null) _writes.update { it + (id to WriteState.Failed("")) }

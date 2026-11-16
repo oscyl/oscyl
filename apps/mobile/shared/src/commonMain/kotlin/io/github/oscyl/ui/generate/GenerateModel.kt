@@ -71,6 +71,8 @@ data class GenerateUi(
     val connected: Boolean = false,
     /** The new oscillator loading for Deal with a new oscillator: its sounds follow once the synth lists it. */
     val pending: String? = null,
+    /** Why the sounds of a new oscillator were not dealt, in the core's words. */
+    val oscillatorNote: String? = null,
 )
 
 /** The families [characters] come in, in the core's order. */
@@ -149,6 +151,8 @@ class GenerateModel(
         }
         // A synth listed its slots: "My units" follows (the core keeps each synth's units).
         viewModelScope.launch { synth.units.collect { refreshUnits() } }
+        // A synth failed or went: a new oscillator waiting to be listed will not be (the notice says why).
+        viewModelScope.launch { synth.failed.collect { _ui.update { it.copy(pending = null) } } }
     }
 
     /** Generate for [id]'s synth from now on, with its own hands (each synth its own seed). */
@@ -183,10 +187,39 @@ class GenerateModel(
     private fun refreshUnits() {
         val g = generator ?: return
         _ui.update { it.copy(units = g.units()) }
-        // The new oscillator is in a slot with its parameters known: deal sounds that use it.
+        dealPending()
+    }
+
+    /** A listing came while a deal ran: the new oscillator's deal waits for that one to end. */
+    private var listedWhileBusy = false
+
+    /** The new oscillator is in a slot with its parameters known: deal six sounds that use it (of a character that can, shown chosen). */
+    private fun dealPending() {
         val name = _ui.value.pending ?: return
+        if (_ui.value.busy) {
+            listedWhileBusy = true
+            return
+        }
         val ui = _ui.value
-        dealt { g2 -> g2.dealWithUnit(ui.character.toUInt(), ui.values.map { it / 100f }, name).also { ok -> if (ok) _ui.update { it.copy(pending = null) } } }
+        dealt { g ->
+            try {
+                val d = g.dealWithUnit(ui.character.toUInt(), ui.values.map { it / 100f }, name) ?: return@dealt false
+                chosen(d)
+                _ui.update { it.copy(pending = null) }
+                true
+            } catch (e: FfiException) {
+                _ui.update { it.copy(pending = null, oscillatorNote = e.reason()) }
+                false
+            }
+        }
+    }
+
+    /** A deal ended: one a listing asked for meanwhile runs now. */
+    private fun dealEnded() {
+        if (listedWhileBusy) {
+            listedWhileBusy = false
+            dealPending()
+        }
     }
 
     override fun unitOn(i: Int, on: Boolean) {
@@ -207,6 +240,7 @@ class GenerateModel(
             val ok = withContext(Dispatchers.IO) { work(g) }
             _ui.update { it.copy(busy = false) }
             if (ok) show(play)
+            dealEnded()
         }
     }
 
@@ -337,6 +371,7 @@ class GenerateModel(
         viewModelScope.launch {
             val hand = withContext(Dispatchers.IO) { if (work(oscillators)) oscillators.hand(WAVE_POINTS) else null }
             _ui.update { it.copy(busy = false, oscillators = hand ?: it.oscillators) }
+            dealEnded()
         }
     }
 
@@ -371,7 +406,12 @@ class GenerateModel(
                     o.hand(WAVE_POINTS)?.oscillators?.firstOrNull()
                 }
             } ?: return@launch
-            if (synth.keepOscillator(id, tile.patch) == true) _ui.update { it.copy(pending = tile.name) }
+            _ui.update { it.copy(oscillatorNote = null) }
+            if (synth.keepOscillator(id, tile.patch) == true) {
+                _ui.update { it.copy(pending = tile.name) }
+                // Listed already (a fast synth): deal now.
+                dealPending()
+            }
         }
     }
 

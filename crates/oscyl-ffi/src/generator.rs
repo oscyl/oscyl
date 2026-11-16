@@ -216,28 +216,36 @@ impl Generator {
         )
     }
 
-    /// Six new sounds of `character` shaped by `macros`, as `deal` makes
-    /// them (no pages kept), using only the unit called `name` that the
-    /// synth holds: a new oscillator just loaded. False while the synth has
-    /// not listed it with its parameters yet. Blocks.
-    pub fn deal_with_unit(&self, character: u32, macros: Vec<f32>, name: String) -> bool {
+    /// Six sounds that all use the unit called `name` the synth holds (a
+    /// new oscillator just loaded), shaped by `macros`: of `character` when
+    /// it can take the unit, else of the first character that can (the
+    /// page moves to what was dealt). None while the synth has not listed
+    /// the unit with its parameters yet; refused, in words, when no
+    /// character of the synth can use it. Blocks.
+    pub fn deal_with_unit(
+        &self,
+        character: u32,
+        macros: Vec<f32>,
+        name: String,
+    ) -> Result<Option<Dealt>, FfiError> {
         let unit = oscyl_app::palette::shared()
             .units(self.driver)
             .into_iter()
             .find(|e| e.unit.name == name && e.unit.params.is_some());
-        let Some(e) = unit else { return false };
+        let Some(e) = unit else { return Ok(None) };
         let m = |i: usize| macros.get(i).copied().unwrap_or(0.5).clamp(0.0, 1.0);
-        let macros = Macros {
+        let macros = oscyl_app::generator::stepped(Macros {
             bright: m(0),
             movement: m(1),
             grit: m(2),
             space: m(3),
-        };
-        let mut hands = self.lock();
-        hands.set_palette(oscyl_driver::Palette {
-            units: vec![e.unit],
         });
-        hands.deal(self.driver, character as usize, macros, &[], None)
+        let dealt = self
+            .lock()
+            .deal_with_unit(self.driver, character as usize, macros, e.unit);
+        dealt
+            .map(|c| Some(Dealt::of((c, macros))))
+            .map_err(|reason| FfiError::Refused { reason })
     }
 
     /// Six variations of the selected sound: `amount` 0 subtle, 1 clear,
