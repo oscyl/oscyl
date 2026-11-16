@@ -13,6 +13,7 @@ mod fold;
 mod graph;
 mod pad;
 mod plate;
+mod section_frame;
 mod stage_strip;
 
 pub use dial::Dial;
@@ -25,6 +26,8 @@ pub use graph::{Graph, GraphData, HandlePoint};
 pub use pad::XyPad;
 #[allow(unused_imports)] // The widgets demo example does not use it.
 pub use plate::{Plated, SegmentTrack};
+#[allow(unused_imports)] // The widgets demo example does not use it.
+pub use section_frame::SectionFrame;
 pub use stage_strip::StageStrip;
 
 use std::cell::{Cell, OnceCell};

@@ -21,6 +21,10 @@
 .editor .rename:hover { color: var(--oscyl-ink); }
 
 .stage-heading { font-size: 1.1em; font-weight: 600; }
+/* The stage's live summary beside its heading, small, in the legend. */
+.stage-summary { font-size: 0.846em; color: var(--oscyl-legend); }
+/* The enlarge action, inside the graph frame's top end. */
+button.enlarge-graph { margin: calc(0.4em + 6px) 6px 0 0; }
 .section-heading {
   font-size: 0.846em;
   font-weight: 500;
@@ -28,32 +32,25 @@
   text-transform: uppercase;
   color: var(--oscyl-legend);
 }
-.editor .control-label {
-  font-size: 0.846em;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--oscyl-legend);
-}
+/* A selector's legend: its name in sentence case, as a dial's. */
+.editor .control-label { color: var(--oscyl-legend); }
 /* Sections: each group of controls is a framed panel, like the printed
  * frames that group controls on audio equipment. The legend sits on the
  * frame's top edge, so where a section starts and ends is never in doubt. */
 .editor .controls { margin-top: 0.75em; }
 .editor .chart-section { margin-top: 1.4em; }
 .editor .chart-section:first-child { margin-top: 0.4em; }
-.editor .section-panel {
-  border: 1px solid var(--oscyl-rule-strong);
-  border-radius: var(--oscyl-radius-panel);
-  background-image: linear-gradient(to bottom,
-    color-mix(in srgb, var(--oscyl-ink) 3%, transparent), transparent 45%);
-  padding: 1em 1.1em 1.1em;
-}
+/* The frame, its sheen and the engraved legend are drawn by the
+ * section's frame (sectionframe); the panel only pads its controls. */
+.editor .section-panel { padding: 1em 1.1em 1.1em; }
 
-/* A selector's way back, like a dial's: while edited, an action dot by
- * the legend and a "was" line under the control (undo icon and the saved
- * value, in the action colour); clicking the line restores it. The control
- * keeps the line's space and the dot's, so neither moves the layout. */
-.revertable { margin-bottom: calc(1.45em + 6px); }
+/* A selector's way back, like a dial's: while edited, an action dot after
+ * the legend and a "was" line at the legend row's end (undo icon and the
+ * saved value, in the action colour); clicking the line restores it. The
+ * row keeps the line's space and the dot's, so neither moves the layout.
+ * Under the control, its printed ticks and the saved notch keep theirs. */
+.control-head { min-height: 1.9em; }
+segmenttrack { margin-bottom: 8px; }
 .control-head .edited-dot { transition: opacity var(--oscyl-base) var(--oscyl-ease); }
 .control-head .edited-dot.unlit { opacity: 0; }
 button.revert-one {

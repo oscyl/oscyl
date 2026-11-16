@@ -192,6 +192,8 @@ mod imp {
         pub(super) width: Cell<i32>,
         /// The saved option's index while it is not the chosen one.
         pub(super) saved: Cell<Option<u32>>,
+        /// A program's value: a printed tick under each option.
+        pub(super) printed: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -210,7 +212,7 @@ mod imp {
             self.parent_constructed();
             let _ = self
                 .swatches
-                .set(Swatches::new(&*self.obj(), &["plate", "act", "shadow"]));
+                .set(Swatches::new(&*self.obj(), &["plate", "act", "shadow", "tick", "ink"]));
         }
 
         fn dispose(&self) {
@@ -246,6 +248,29 @@ mod imp {
                 draw_plate(s, &rect, 4.0, &sw.color(0), Some(&sw.color(2)));
             }
             self.parent_snapshot(s);
+            // A program's value prints a tick under each option, outside
+            // the frame: `legend` 1 x 4 px, the chosen one `ink` 1.5 x 6 px;
+            // the saved option, while another is chosen, carries the notch
+            // instead (the phone's segments print the same).
+            if self.printed.get()
+                && let (Some(sw), Some(group)) = (self.swatches.get(), &*self.group.borrow())
+            {
+                let h = self.obj().height() as f32;
+                for i in 0..group.n_toggles() {
+                    if self.saved.get() == Some(i) {
+                        continue;
+                    }
+                    let Some(b) = self.obj().toggle(i).and_then(|t| t.compute_bounds(&*self.obj()))
+                    else {
+                        continue;
+                    };
+                    let chosen = i == group.active();
+                    let (w, len) = if chosen { (1.5, 6.0) } else { (1.0, 4.0) };
+                    let x = (b.x() + b.width() / 2.0 - w / 2.0).round();
+                    let color = sw.color(if chosen { 4 } else { 3 });
+                    s.append_color(&color, &graphene::Rect::new(x, h, w, len));
+                }
+            }
             // The saved option, while another is chosen: a short bar in the
             // action colour under it, outside the frame.
             if let (Some(i), Some(sw)) = (self.saved.get(), self.swatches.get())
@@ -295,6 +320,13 @@ impl SegmentTrack {
         if self.imp().saved.replace(saved) != saved {
             self.queue_draw();
         }
+    }
+
+    /// Print a tick under each option (a program's value; settings have
+    /// none).
+    pub fn set_printed(&self, printed: bool) {
+        self.imp().printed.set(printed);
+        self.queue_draw();
     }
 
     /// The group's `i`th toggle widget (separators excluded).

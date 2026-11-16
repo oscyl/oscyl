@@ -256,6 +256,8 @@ toggle-group > separator { background: none; min-width: 0; }
  * options; the toggle only changes its text colour. */
 segmenttrack > .plate { color: var(--oscyl-plate); }
 segmenttrack > .act { color: var(--oscyl-act); }
+segmenttrack > .tick { color: var(--oscyl-legend); }
+segmenttrack > .ink { color: var(--oscyl-ink); }
 toggle-group.tracked > toggle:checked { background: none; }
 toggle-group.tracked > toggle:checked:hover { background: none; }
 

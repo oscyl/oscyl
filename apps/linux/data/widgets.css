@@ -129,6 +129,9 @@ button.stage-col .stage-count {
 }
 button.stage-col .stage-count.unlit { opacity: 0; }
 fold > .ink { color: var(--oscyl-ink); }
+/* A section's frame: its rule and the ink its sheen is mixed from. */
+sectionframe > .rule { color: var(--oscyl-rule); }
+sectionframe > .ink { color: var(--oscyl-ink); }
 
 /* The Perform page's XY pad: ink point, printed grid, orange edit line. */
 xypad { color: var(--oscyl-ink); border-radius: var(--oscyl-radius-panel); }

@@ -15,7 +15,9 @@ use oscyl_driver::{Control, Curation, Driver};
 
 use crate::callback::Slot;
 use crate::i18n::tr;
-use crate::widgets::{Dial, Dock, Graph, GraphData, HandlePoint, SegmentTrack, StageStrip};
+use crate::widgets::{
+    Dial, Dock, Graph, GraphData, HandlePoint, SectionFrame, SegmentTrack, StageStrip,
+};
 
 /// One generated control, kept so programs can be shown without rebuilding.
 enum Ctl {
@@ -58,6 +60,8 @@ pub struct Editor {
     strip: StageStrip,
     chart: gtk::Box,
     chart_title: gtk::Label,
+    /// The stage's live summary beside its heading ("LP 2-pole · 618").
+    chart_summary: gtk::Label,
     enlarge: gtk::Button,
     /// The dice: roll this stage's values (one undo step).
     roll: gtk::Button,
@@ -238,10 +242,19 @@ impl Editor {
         let chart_col = gtk::Box::new(gtk::Orientation::Vertical, 8);
         chart_col.set_hexpand(true);
         let chart_head = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-        let chart_title = gtk::Label::builder().xalign(0.0).hexpand(true).build();
+        let chart_title = gtk::Label::builder().xalign(0.0).build();
         chart_title.add_css_class("stage-heading");
         chart_title.set_accessible_role(gtk::AccessibleRole::Heading);
         chart_head.append(&chart_title);
+        // The stage's summary beside its heading, on one line: it changes
+        // as values turn, so it gives way with an ellipsis, never wraps.
+        let chart_summary = gtk::Label::builder()
+            .xalign(0.0)
+            .hexpand(true)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .css_classes(["stage-summary", "numeric"])
+            .build();
+        chart_head.append(&chart_summary);
         // The dice roll the stage shown: its fields only, one undo step.
         let roll = gtk::Button::builder()
             .icon_name("oscyl-dice-symbolic")
@@ -256,13 +269,17 @@ impl Editor {
             .build();
         enlarge.add_css_class("flat");
         enlarge.add_css_class("enlarge-graph");
-        chart_head.append(&enlarge);
+        enlarge.set_halign(gtk::Align::End);
+        enlarge.set_valign(gtk::Align::Start);
         chart_col.append(&chart_head);
         // The stage's live picture: redrawn on every change, with the saved
-        // version faint behind it while edited, and handles to drag.
+        // version faint behind it while edited, and handles to drag. Its
+        // enlarge action sits inside its frame's top end, as on the phone.
         let stage_graph = Graph::with_handles();
         stage_graph.add_css_class("stage-graph");
-        chart_col.append(&stage_graph);
+        let graph_frame = gtk::Overlay::builder().child(&stage_graph).build();
+        graph_frame.add_overlay(&enlarge);
+        chart_col.append(&graph_frame);
         let chart = gtk::Box::new(gtk::Orientation::Vertical, 0);
         chart.add_css_class("controls");
         chart_col.append(&chart);
@@ -398,6 +415,7 @@ impl Editor {
             strip,
             chart,
             chart_title,
+            chart_summary,
             enlarge,
             roll: roll.clone(),
             enlarged: Cell::new(false),
@@ -988,13 +1006,6 @@ impl Editor {
         for (s, section) in page.sections.iter().enumerate() {
             let group = gtk::Box::new(gtk::Orientation::Vertical, 8);
             group.add_css_class("chart-section");
-            // A section named like its stage needs no second heading.
-            if let Some(heading) = oscyl_app::editor::section_heading(&page, s) {
-                let h = gtk::Label::builder().label(tr(heading)).xalign(0.0).build();
-                h.add_css_class("section-heading");
-                h.set_accessible_role(gtk::AccessibleRole::Heading);
-                group.append(&h);
-            }
             // The dials lead; the selectors (wave, octave, on/off) stack in
             // a column beside them, and the two wrap one under the other
             // when the panel is too narrow for both.
@@ -1012,23 +1023,25 @@ impl Editor {
             for &field in &section.fields {
                 let kind = self.driver().control(&program, field);
                 let (widget, ctl) = self.make_control(field, kind, &program);
-                // A selector's "was" line: under the control, in space the
-                // control keeps for it, so it never moves the layout, with
-                // the edited dot by its legend. Dials draw their own.
-                let widget = if !matches!(&ctl, Ctl::Dial(_))
+                // A selector's edited dot follows its legend and its "was"
+                // line stands at the legend row's end, in space the row
+                // always keeps, so editing never moves the layout. Dials
+                // draw their own.
+                if !matches!(&ctl, Ctl::Dial(_))
                     && let Some(head) = widget.first_child().and_downcast::<gtk::Box>()
                 {
                     let revert = self.revert_line(field);
                     head.append(&revert.dot);
-                    widget.add_css_class("revertable");
-                    let over = gtk::Overlay::builder().child(&widget).build();
-                    over.add_overlay(&revert.line);
+                    head.append(&revert.line);
                     self.reverts.borrow_mut().insert(field, revert);
-                    over.upcast()
+                }
+                // Selectors fill their column, their options in equal
+                // shares, as on the phone.
+                widget.set_halign(if matches!(&ctl, Ctl::Dial(_)) {
+                    gtk::Align::Start
                 } else {
-                    widget
-                };
-                widget.set_halign(gtk::Align::Start);
+                    gtk::Align::Fill
+                });
                 // Dials of both sizes centre on one line, so their value
                 // numerals share it.
                 // Selectors align at the top, so their legends share one
@@ -1048,8 +1061,10 @@ impl Editor {
                 }
                 controls.insert(field, (ctl, fb, kind));
             }
-            // The controls sit in a framed panel under the legend, so a
-            // section's start and end are always visible.
+            // The controls sit in a framed panel with the legend engraved
+            // into its top rule (a section named like its stage needs no
+            // second heading), so a section's start and end are always
+            // visible.
             let panel = gtk::Box::new(gtk::Orientation::Vertical, 16);
             panel.add_css_class("section-panel");
             // The panel takes the column's width, never its content's, so
@@ -1079,7 +1094,8 @@ impl Editor {
                 row.append(&column);
             }
             panel.append(&row);
-            group.append(&panel);
+            let heading = oscyl_app::editor::section_heading(&page, s).map(tr);
+            group.append(&SectionFrame::new(heading.as_deref(), &panel));
             into.append(&group);
             self.sections
                 .borrow_mut()
@@ -1117,8 +1133,9 @@ impl Editor {
             .child(&b)
             .transition_type(gtk::RevealerTransitionType::Crossfade)
             .transition_duration(150)
-            .halign(gtk::Align::Start)
-            .valign(gtk::Align::End)
+            .hexpand(true)
+            .halign(gtk::Align::End)
+            .valign(gtk::Align::Center)
             .build();
         let dot = gtk::Box::builder()
             .css_classes(["edited-dot", "unlit"])
@@ -1232,8 +1249,9 @@ impl Editor {
                                     .build(),
                             );
                         }
+                        g.set_homogeneous(true);
                         g.connect_active_notify(move |g| pick(g.active()));
-                        (SegmentTrack::new(&g).upcast(), Ctl::Choice(g))
+                        (printed(&g).upcast(), Ctl::Choice(g))
                     }
                     Widget::Menu(names) => {
                         let translated: Vec<String> = names.iter().map(|n| tr(n)).collect();
@@ -1247,9 +1265,9 @@ impl Editor {
                         for (i, n) in [tr("Off"), tr("On")].into_iter().enumerate() {
                             g.add(adw::Toggle::builder().label(n).name(i.to_string()).build());
                         }
-                        g.set_halign(gtk::Align::Start);
+                        g.set_homogeneous(true);
                         g.connect_active_notify(move |g| pick(g.active()));
-                        (SegmentTrack::new(&g).upcast(), Ctl::Toggle(g))
+                        (printed(&g).upcast(), Ctl::Toggle(g))
                     }
                 }
             }
@@ -1391,6 +1409,7 @@ impl Editor {
                 }
                 self.dock_title.set_label(&tr(page.title));
                 self.dock_summary.set_label(&text);
+                self.chart_summary.set_label(&text);
                 self.stage_graph.set_description(
                     &tr("{stage} graph: {summary}")
                         .replace("{stage}", &tr(page.title))
@@ -1519,6 +1538,14 @@ fn apply_values(d: &dyn Driver, controls: &Controls, p: &[u8], base: &[u8]) {
     }
 }
 
+/// A program value's segments: the sliding plate, with a printed tick
+/// under each option.
+fn printed(g: &adw::ToggleGroup) -> SegmentTrack {
+    let track = SegmentTrack::new(g);
+    track.set_printed(true);
+    track
+}
+
 /// Show which of a selector's options is the saved one, under it.
 fn mark_saved(g: &adw::ToggleGroup, saved: Option<u32>) {
     if let Some(track) = g.parent().and_downcast::<SegmentTrack>() {
@@ -1606,12 +1633,14 @@ pub fn set_page(stack: &gtk::Stack, name: &str, page: &impl IsA<gtk::Widget>) {
     stack.set_visible_child_name(name);
 }
 
-/// A control with its label above it.
 /// A control with its legend above it; the legend row also holds the
-/// control's revert button.
+/// control's edited dot and its "was" line.
 fn labelled(label: &str, widget: &gtk::Widget, tooltip: &str) -> gtk::Box {
     let b = gtk::Box::new(gtk::Orientation::Vertical, 6);
-    let head = gtk::Box::new(gtk::Orientation::Horizontal, 4);
+    // The "was" line pushes to the row's end inside; the selector itself
+    // keeps its natural width in the panel.
+    b.set_hexpand(false);
+    let head = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     head.add_css_class("control-head");
     let l = gtk::Label::builder().label(label).xalign(0.0).build();
     l.add_css_class("control-label");

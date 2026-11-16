@@ -5,11 +5,12 @@
 //! ends and 5 above its top (`.tick` swatch); an enamel disc (`.disc`, lighter at the
 //! top) with a 1 px rim (`.rim`) and a soft shadow (`.shadow`); an ink
 //! index running in from the rim; under it the formatted value in tabular
-//! numerals, the label and, only while edited, a caption ("was 560").
+//! numerals and, only while edited, a caption ("was 560") over the value
+//! and the label.
 //!
 //! The saved value never leaves the scale: while edited, a dotted ghost
 //! index marks it and an arc in the action colour runs from it to the
-//! current value, ending in a dot; another dot sits before the label. The
+//! current value, ending in a dot; another dot follows the label. The
 //! "was" line carries an undo icon and restores the saved value when
 //! clicked (or with Backspace); the accessible description says "edited".
 //! The index glides to a new value on the frame clock (about 90 ms, or
@@ -424,7 +425,7 @@ impl Dial {
         let line = layout(self, "0", 1.1, pango::Weight::Semibold)
             .pixel_size()
             .1 as f32;
-        graphene::Rect::new(0.0, slot + 0.25 * em, self.width() as f32, line)
+        graphene::Rect::new(0.0, value_y(slot, em), self.width() as f32, line)
     }
 
     /// Whether a value can be typed (every value it shows is a number).
@@ -589,10 +590,19 @@ impl Dial {
     }
 }
 
-/// Height of the label and caption lines under the ring, in px.
-/// Value, label and caption lines under the disc.
+/// Height of the "was" line, value and label under the disc, in px.
 fn text_block(em: f32) -> f32 {
-    0.25 * em + 1.45 * em + 1.3 * em + 1.2 * em
+    WAS_TOP_EM * em + WAS_EM * em + 1.45 * em + 1.3 * em
+}
+
+/// The "was" line's gap under the scale's slot, and the room it always
+/// keeps (an edit never moves the value), in ems.
+const WAS_TOP_EM: f32 = 0.1;
+const WAS_EM: f32 = 1.2;
+
+/// Where the value line starts: under the "was" line's room.
+fn value_y(slot: f32, em: f32) -> f32 {
+    slot + (WAS_TOP_EM + WAS_EM) * em
 }
 
 fn install_controllers(dial: &Dial) {
@@ -895,8 +905,48 @@ fn draw(dial: &Dial, s: &gtk::Snapshot) {
         l.set_ellipsize(pango::EllipsizeMode::End);
     };
 
-    // Value, then label (with the action dot while edited), then caption.
-    let mut y = slot + 0.25 * em;
+    // While edited, the "was" line under the disc, then the value, then
+    // the label with the action dot after it (DESIGN.md "Dial"; the phone
+    // draws the same order). The "was" line is also the way back: an undo
+    // icon and the saved value, in the action colour; clicking it (or
+    // Backspace) restores the saved value. Its room is always kept.
+    let y = slot + WAS_TOP_EM * em;
+    if edited {
+        let act = sw.color(ACT);
+        let cap = layout(dial, &dial.caption(), 0.85, pango::Weight::Medium);
+        let (cw, ch) = cap.pixel_size();
+        let icon = (ch as f32 * 0.8).round();
+        let gap = 0.25 * em;
+        fit(&cap, w - icon - gap);
+        let cw = (cw as f32).min(w - icon - gap);
+        let total = (icon + gap + cw).min(w);
+        let x = ((w - total) / 2.0).max(0.0).round();
+        let iy = (y + (ch as f32 - icon) / 2.0).round();
+        let theme = gtk::IconTheme::for_display(&dial.display());
+        let paintable = theme.lookup_icon(
+            "edit-undo-symbolic",
+            &[],
+            icon as i32,
+            dial.scale_factor(),
+            gtk::TextDirection::None,
+            gtk::IconLookupFlags::empty(),
+        );
+        s.save();
+        s.translate(&graphene::Point::new(x, iy));
+        paintable.snapshot_symbolic(s, f64::from(icon), f64::from(icon), &[act]);
+        s.restore();
+        place(s, &cap, x + icon + gap, y, &act);
+        imp.caption_at.set(Some(graphene::Rect::new(
+            x - 4.0,
+            y - 2.0,
+            total + 8.0,
+            ch as f32 + 4.0,
+        )));
+    } else {
+        imp.caption_at.set(None);
+    }
+
+    let mut y = value_y(slot, em);
     // While the index glides, the value rolls with it.
     let rolling = if imp.glide.get().is_some() {
         let f = imp.shown.get();
@@ -927,48 +977,14 @@ fn draw(dial: &Dial, s: &gtk::Snapshot) {
     fit(&label, w - dot_gap);
     let (lw, lh) = label.pixel_size();
     let x0 = ((w - lw as f32 - dot_gap) / 2.0).max(0.0);
+    place(s, &label, x0, y, &sw.color(MUTED));
     if edited {
         let dot = gsk::PathBuilder::new();
-        dot.add_circle(&graphene::Point::new(x0 + 3.0, y + lh as f32 / 2.0), 3.0);
-        s.append_fill(&dot.to_path(), gsk::FillRule::Winding, &sw.color(ACT));
-    }
-    place(s, &label, x0 + dot_gap, y, &sw.color(MUTED));
-    y += lh as f32;
-
-    // While edited, the "was" line is also the way back: an undo icon and
-    // the saved value, in the action colour; clicking it (or Backspace)
-    // restores the saved value.
-    if edited {
-        let act = sw.color(ACT);
-        let cap = layout(dial, &dial.caption(), 0.85, pango::Weight::Medium);
-        let (cw, ch) = cap.pixel_size();
-        let icon = (ch as f32 * 0.8).round();
-        let gap = 0.25 * em;
-        let total = (icon + gap + cw as f32).min(w);
-        let x = ((w - total) / 2.0).max(0.0).round();
-        let iy = (y + (ch as f32 - icon) / 2.0).round();
-        let theme = gtk::IconTheme::for_display(&dial.display());
-        let paintable = theme.lookup_icon(
-            "edit-undo-symbolic",
-            &[],
-            icon as i32,
-            dial.scale_factor(),
-            gtk::TextDirection::None,
-            gtk::IconLookupFlags::empty(),
+        dot.add_circle(
+            &graphene::Point::new(x0 + lw as f32 + 0.45 * em + 3.0, y + lh as f32 / 2.0),
+            3.0,
         );
-        s.save();
-        s.translate(&graphene::Point::new(x, iy));
-        paintable.snapshot_symbolic(s, f64::from(icon), f64::from(icon), &[act]);
-        s.restore();
-        place(s, &cap, x + icon + gap, y, &act);
-        imp.caption_at.set(Some(graphene::Rect::new(
-            x - 4.0,
-            y - 2.0,
-            total + 8.0,
-            ch as f32 + 4.0,
-        )));
-    } else {
-        imp.caption_at.set(None);
+        s.append_fill(&dot.to_path(), gsk::FillRule::Winding, &sw.color(ACT));
     }
 }
 /// The number at the start of `s` ("+40 c" is 40, "-2.4 dB" is -2.4, a
