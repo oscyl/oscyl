@@ -60,10 +60,26 @@ pub enum Character {
     SpaceFx,
     ArpPulse,
     Bell,
+    Brass,
+    Strings,
+    Organ,
+    SubBass,
+    Acid,
+    SyncLead,
+    FmGlass,
+    FmBass,
+    Chiptune,
+    Kick,
+    Snare,
+    Laser,
+    Siren,
+    Wind,
+    Impact,
+    Alarm,
 }
 
 impl Character {
-    pub const ALL: [Character; 12] = [
+    pub const ALL: [Character; 28] = [
         Character::PowerChord,
         Character::FuzzBass,
         Character::ScreamLead,
@@ -76,6 +92,22 @@ impl Character {
         Character::SpaceFx,
         Character::ArpPulse,
         Character::Bell,
+        Character::Brass,
+        Character::Strings,
+        Character::Organ,
+        Character::SubBass,
+        Character::Acid,
+        Character::SyncLead,
+        Character::FmGlass,
+        Character::FmBass,
+        Character::Chiptune,
+        Character::Kick,
+        Character::Snare,
+        Character::Laser,
+        Character::Siren,
+        Character::Wind,
+        Character::Impact,
+        Character::Alarm,
     ];
 
     pub fn title(self) -> &'static str {
@@ -92,6 +124,22 @@ impl Character {
             Character::SpaceFx => "Space FX",
             Character::ArpPulse => "Arp Pulse",
             Character::Bell => "Bell",
+            Character::Brass => "Brass",
+            Character::Strings => "Strings",
+            Character::Organ => "Organ",
+            Character::SubBass => "Sub Bass",
+            Character::Acid => "Acid",
+            Character::SyncLead => "Sync Lead",
+            Character::FmGlass => "FM Glass",
+            Character::FmBass => "FM Bass",
+            Character::Chiptune => "Chiptune",
+            Character::Kick => "Kick",
+            Character::Snare => "Snare",
+            Character::Laser => "Laser",
+            Character::Siren => "Siren",
+            Character::Wind => "Wind",
+            Character::Impact => "Impact",
+            Character::Alarm => "Alarm",
         }
     }
 
@@ -110,33 +158,54 @@ impl Character {
             Character::SpaceFx => "Sirens, lasers, alien air",
             Character::ArpPulse => "A self-running pattern",
             Character::Bell => "Metallic ring, long decay",
+            Character::Brass => "Bold swell with a filter blat",
+            Character::Strings => "Bowed ensemble",
+            Character::Organ => "Drawbars, straight on and off",
+            Character::SubBass => "Clean weight below",
+            Character::Acid => "Squelching, sliding line",
+            Character::SyncLead => "Hard sync sweep",
+            Character::FmGlass => "Glassy digital keys",
+            Character::FmBass => "Knocking digital bass",
+            Character::Chiptune => "Old game console pulse",
+            Character::Kick => "Bass drum: a pitch drop",
+            Character::Snare => "Noise crack with a body",
+            Character::Laser => "A fast zap",
+            Character::Siren => "Rising and falling wail",
+            Character::Wind => "Whistling air the keys play",
+            Character::Impact => "Huge low hit with a tail",
+            Character::Alarm => "Two-tone warning",
         }
     }
 
     /// What it is for.
     pub fn family(self) -> Family {
+        use Character::*;
         match self {
-            Character::Keys | Character::Pluck | Character::Bell => Family::Keys,
-            Character::FuzzBass | Character::Wobble => Family::Bass,
-            Character::PowerChord | Character::ScreamLead => Family::Lead,
-            Character::Pad | Character::Drone => Family::Pad,
-            Character::ArpPulse => Family::Rhythm,
-            Character::Riser | Character::SpaceFx => Family::Effect,
+            Keys | Pluck | Bell | Organ | FmGlass => Family::Keys,
+            FuzzBass | Wobble | SubBass | Acid | FmBass => Family::Bass,
+            PowerChord | ScreamLead | Brass | SyncLead | Chiptune => Family::Lead,
+            Pad | Drone | Strings => Family::Pad,
+            ArpPulse | Kick | Snare => Family::Rhythm,
+            Riser | SpaceFx | Laser | Siren | Wind | Impact | Alarm => Family::Effect,
         }
     }
 
     /// The category [`present::category`] gives its programs.
     pub fn category(self) -> Category {
+        use Character::*;
         match self {
-            Character::PowerChord | Character::ScreamLead => Category::Lead,
-            Character::FuzzBass => Category::Bass,
-            Character::Riser | Character::Wobble | Character::SpaceFx => Category::Fx,
-            Character::Pad => Category::Pad,
-            Character::Pluck => Category::Pluck,
-            Character::Keys => Category::Keys,
-            Character::Drone => Category::Drone,
-            Character::ArpPulse => Category::Arp,
-            Character::Bell => Category::Bell,
+            PowerChord | ScreamLead | Brass | SyncLead | Chiptune => Category::Lead,
+            FuzzBass | SubBass | Acid | FmBass => Category::Bass,
+            // Drums and effects alike: a pitch drop or noise alone.
+            Riser | Wobble | SpaceFx | Kick | Snare | Laser | Siren | Wind | Impact | Alarm => {
+                Category::Fx
+            }
+            Pad | Strings => Category::Pad,
+            Pluck => Category::Pluck,
+            Keys | Organ | FmGlass => Category::Keys,
+            Drone => Category::Drone,
+            ArpPulse => Category::Arp,
+            Bell => Category::Bell,
         }
     }
 
@@ -201,6 +270,76 @@ impl Character {
                 &["Glass", "Tin", "Ice", "Silver", "Temple", "Clear", "Cold"],
                 &["Bell", "Chime", "Tine", "Ring", "Gong", "Toll"],
             ),
+            Character::Brass => (
+                &[
+                    "Brass", "Gold", "Royal", "Bold", "Hot", "Big", "Horn", "Regal",
+                ],
+                &[
+                    "Brass", "Horns", "Fanfare", "Stab", "Section", "Blare", "Swell",
+                ],
+            ),
+            Character::Strings => (
+                &["Silk", "Slow", "Wide", "Grand", "Soft", "Autumn", "Old"],
+                &[
+                    "Strings", "Bows", "Ensemble", "Section", "Quartet", "Legato",
+                ],
+            ),
+            Character::Organ => (
+                &["Chapel", "Rock", "Dusty", "Full", "Soul", "Night", "Pipe"],
+                &["Organ", "Drawbar", "Stops", "Rotor", "Gospel", "Reed"],
+            ),
+            Character::SubBass => (
+                &["Sub", "Deep", "Low", "Round", "Dark", "Floor", "Pure"],
+                &["Sub", "Bass", "Boom", "Weight", "Floor", "Depth"],
+            ),
+            Character::Acid => (
+                &["Acid", "Squelch", "Silver", "Sour", "Rubber", "Wet", "Lime"],
+                &["Acid", "Line", "Squelch", "Bite", "Box", "Worm"],
+            ),
+            Character::SyncLead => (
+                &["Sync", "Hard", "Tear", "Vocal", "Sharp", "Neon", "Chrome"],
+                &["Sync", "Lead", "Sweep", "Rip", "Cry", "Edge"],
+            ),
+            Character::FmGlass => (
+                &["Glass", "Crystal", "Clear", "Frost", "Mint", "Tine", "Opal"],
+                &["Glass", "Keys", "Tines", "EP", "Chime", "Prism"],
+            ),
+            Character::FmBass => (
+                &["FM", "Knock", "Rubber", "Solid", "Punch", "Slap", "Hard"],
+                &["Bass", "Knock", "Thump", "Pluck", "Donk", "Low"],
+            ),
+            Character::Chiptune => (
+                &["Chip", "8-Bit", "Pixel", "Arcade", "Tiny", "Retro", "Coin"],
+                &["Lead", "Blip", "Pulse", "Square", "Tune", "Jump"],
+            ),
+            Character::Kick => (
+                &["Deep", "Hard", "Round", "Short", "Club", "Dry", "Big"],
+                &["Kick", "Thump", "Boom", "Punch", "Drum", "Knock"],
+            ),
+            Character::Snare => (
+                &["Tight", "Crisp", "Dry", "Fat", "Tin", "Snap", "Hot"],
+                &["Snare", "Crack", "Hit", "Rim", "Clap", "Slap"],
+            ),
+            Character::Laser => (
+                &["Laser", "Zap", "Photon", "Ray", "Plasma", "Blaster", "Pew"],
+                &["Zap", "Shot", "Beam", "Bolt", "Gun", "Blast"],
+            ),
+            Character::Siren => (
+                &["Air", "Raid", "Night", "Slow", "Red", "City", "Dub"],
+                &["Siren", "Wail", "Whoop", "Alert", "Howl", "Call"],
+            ),
+            Character::Wind => (
+                &["North", "Cold", "Night", "Desert", "Ghost", "High", "Storm"],
+                &["Wind", "Gale", "Breeze", "Howl", "Draft", "Whistle"],
+            ),
+            Character::Impact => (
+                &["Big", "Deep", "Heavy", "Dark", "Giant", "Trailer", "Doom"],
+                &["Impact", "Hit", "Boom", "Slam", "Crash", "Quake"],
+            ),
+            Character::Alarm => (
+                &["Red", "Loud", "Panic", "Clock", "Fire", "Urgent", "Code"],
+                &["Alarm", "Alert", "Beep", "Buzzer", "Warning", "Bleep"],
+            ),
         }
     }
 }
@@ -249,6 +388,11 @@ const SAW: u16 = 2;
 const FT16: u16 = 0;
 const FT8: u16 = 1;
 const FT4: u16 = 2;
+const FT2: u16 = 3;
+const N_HIGH: u16 = 0;
+const N_LOW: u16 = 1;
+const N_PEAK: u16 = 2;
+const N_DECIM: u16 = 3;
 const NOISE: u16 = 0;
 const VPM: u16 = 1;
 const ARP: u16 = 1;
@@ -259,6 +403,7 @@ const TO_CUTOFF: u16 = 0;
 const TO_SHAPE: u16 = 1;
 const TO_PITCH: u16 = 2;
 const EG_PITCH2: u16 = 1;
+const LFO_ONE_SHOT: u16 = 0;
 const LFO_BPM: u16 = 2;
 const CHORUS: u16 = 1;
 const ENSEMBLE: u16 = 2;
@@ -287,6 +432,69 @@ const R_HORROR: u16 = 9;
 /// The last built-in delay and reverb types; above them are user slots.
 const LAST_DELAY: u16 = 11;
 const LAST_REVERB: u16 = 9;
+
+/// What a VPM type takes before it turns harsh or to noise: the ranges a
+/// recipe draws its shape (modulation depth), shift-shape (modulator
+/// ratio) and menu parameters from. The parameters are stored 0-200 for
+/// -100 % to +100 %. Chosen on paper from what each type is (plain sines
+/// take the most modulation, the saw, square and fat types are bright
+/// before any), not by ear on hardware.
+struct VpmSafe {
+    shape: (u16, u16),
+    shift: (u16, u16),
+    /// The most feedback and noise depth; both start from 0 %.
+    feedback: u16,
+    noise: u16,
+    shape_mod: (u16, u16),
+    attack: (u16, u16),
+    decay: (u16, u16),
+    track: (u16, u16),
+}
+
+const fn vpm_safe(
+    shape: (u16, u16),
+    shift: (u16, u16),
+    feedback: u16,
+    noise: u16,
+    shape_mod: (u16, u16),
+) -> VpmSafe {
+    VpmSafe {
+        shape,
+        shift,
+        feedback,
+        noise,
+        shape_mod,
+        attack: (80, 120),
+        decay: (60, 150),
+        track: (80, 130),
+    }
+}
+
+/// By [`SelectVpm`] value.
+const VPM_SAFE: [VpmSafe; 16] = [
+    // Sin 1-4: a sine carrier, the classic two-operator range.
+    vpm_safe((80, 720), (0, 1023), 150, 115, (60, 170)),
+    vpm_safe((80, 720), (0, 1023), 150, 115, (60, 170)),
+    vpm_safe((80, 680), (0, 1023), 145, 115, (60, 170)),
+    vpm_safe((80, 680), (0, 1023), 145, 115, (60, 170)),
+    // Saw 1-2 and Squ 1-2: bright already.
+    vpm_safe((40, 460), (0, 700), 125, 110, (80, 150)),
+    vpm_safe((40, 460), (0, 700), 125, 110, (80, 150)),
+    vpm_safe((40, 480), (0, 700), 125, 110, (80, 150)),
+    vpm_safe((40, 480), (0, 700), 125, 110, (80, 150)),
+    // Fat 1-2: thick, detuned.
+    vpm_safe((40, 520), (0, 600), 130, 110, (80, 150)),
+    vpm_safe((40, 520), (0, 600), 130, 110, (80, 150)),
+    // Air 1-2: breath is the point.
+    vpm_safe((100, 620), (0, 1023), 120, 140, (70, 150)),
+    vpm_safe((100, 620), (0, 1023), 120, 140, (70, 150)),
+    // Decay 1-2: the modulation falls away by itself.
+    vpm_safe((150, 800), (0, 1023), 140, 110, (100, 190)),
+    vpm_safe((150, 800), (0, 1023), 140, 110, (100, 190)),
+    // Creep and Throat: odd voices, kept to their middle.
+    vpm_safe((100, 560), (200, 800), 120, 110, (80, 140)),
+    vpm_safe((100, 560), (200, 800), 120, 110, (80, 140)),
+];
 
 /// A program being made: every random number is keyed by field, so
 /// macros never shift another field's draws.
@@ -445,6 +653,66 @@ impl Make {
         self.int(EgDecay, d.0, d.1);
     }
 
+    /// The multi engine as VPM: one of `types` at `level`, its modulation
+    /// depth `t` of the way through what the type takes ([`VPM_SAFE`]),
+    /// feedback and noise by grit, the modulation envelope's reach by
+    /// movement.
+    fn vpm(&mut self, types: &[u16], t: f32, level: (u16, u16)) {
+        self.set(MultiType, VPM);
+        self.pick(SelectVpm, types);
+        let v = &VPM_SAFE[usize::from(self.p.get(SelectVpm))];
+        let (g, mv) = (self.m.grit, self.m.movement);
+        self.mac(ShapeVpm, v.shape.0, v.shape.1, t, 40);
+        self.int(ShiftShapeVpm, v.shift.0, v.shift.1);
+        self.mac(VpmParam1, 100, v.feedback, g, 4);
+        self.mac(VpmParam2, 100, v.noise, g, 2);
+        self.mac(VpmParam3, v.shape_mod.0, v.shape_mod.1, mv, 5);
+        self.int(VpmParam4, v.attack.0, v.attack.1);
+        self.int(VpmParam5, v.decay.0, v.decay.1);
+        self.int(VpmParam6, v.track.0, v.track.1);
+        self.int(MultiLevel, level.0, level.1);
+    }
+
+    /// The multi engine as noise: one of `types`, coloured within `shape`.
+    /// The caller sets its level.
+    fn noise(&mut self, types: &[u16], shape: (u16, u16)) {
+        self.set(MultiType, NOISE);
+        self.pick(SelectNoise, types);
+        self.int(ShapeNoise, shape.0, shape.1);
+    }
+
+    /// Where the multi engine sits: one of `octaves`, and after the filter
+    /// instead of before it with chance `post`.
+    fn multi_at(&mut self, octaves: &[u16], post: f32) {
+        self.pick(MultiOctave, octaves);
+        self.set(MultiRouting, u16::from(self.chance(MultiRouting, post)));
+    }
+
+    /// The LFO locked to the tempo: one of `bands` (KORG's note values,
+    /// longest first), shorter with movement.
+    fn lfo_bpm(&mut self, bands: &[u16]) {
+        let last = (bands.len() - 1) as f32;
+        let i = (self.m.movement * last + self.roll(LfoRate, 4) - 0.5)
+            .round()
+            .clamp(0.0, last) as usize;
+        self.set(LfoMode, LFO_BPM);
+        self.set(LfoRate, bands[i] * 64 + 32);
+    }
+
+    /// The LFO as one cycle per note, an extra envelope.
+    fn lfo_once(&mut self, waves: &[u16], rate: (u16, u16)) {
+        self.set(LfoMode, LFO_ONE_SHOT);
+        self.pick(LfoWave, waves);
+        self.int(LfoRate, rate.0, rate.1);
+    }
+
+    /// The EG on the whole pitch: the note starts `int` away (above 512 is
+    /// up; further with movement) and lands over `decay`. Drums and zaps.
+    fn sweep(&mut self, decay: (u16, u16), int: (u16, u16)) {
+        self.eg(TO_PITCH, (0, 0), decay);
+        self.mac(EgInt, int.0, int.1, self.m.movement, 10);
+    }
+
     /// A voice mode depth entry (chord or arp pattern) from `entries`.
     fn depth_entry(&mut self, mode: u16, entries: &[u16]) {
         self.set(VoiceModeType, mode);
@@ -553,11 +821,6 @@ fn wobble(s: &mut Make) {
     s.grit(1, 300, true);
     s.bright((200, 650), (350, 700));
     s.amp((0, 10), (600, 600), (850, 1023), (60, 200));
-    let mv = s.m.movement;
-    // Tempo-locked: 1/2, 1/4, 1/8 or 1/16, faster with movement.
-    let band = (mv * 3.0 + s.roll(LfoRate, 4) - 0.5)
-        .round()
-        .clamp(0.0, 3.0) as usize;
     if s.chance(LfoTarget, 0.5) {
         // The pitch wobbles.
         s.movement(TO_PITCH, (360, 760), (512, 512), &[]);
@@ -570,8 +833,8 @@ fn wobble(s: &mut Make) {
         let depth = 180.0 + s.roll(EgInt, 5) * 150.0;
         s.put(EgInt, 512.0 + dive * depth);
     }
-    s.set(LfoMode, LFO_BPM);
-    s.set(LfoRate, [4, 7, 10, 12][band] * 64 + 32);
+    // Tempo-locked: 1/2, 1/4, 1/8 or 1/16.
+    s.lfo_bpm(&[4, 7, 10, 12]);
     s.space(-0.2, &[D_STEREO_BPM, D_MONO_BPM], &[R_ROOM, R_PLATE]);
 }
 
@@ -582,6 +845,11 @@ fn pad(s: &mut Make) {
     s.int(Vco2Pitch, 538, 560);
     s.vco2_octave(&[FT8]);
     s.grit(0, 350, false);
+    // Sometimes a digital layer under the analogue pair: fat or breathy.
+    if s.chance(MultiType, 0.4) {
+        s.vpm(&[8, 9, 10, 11, 0], s.m.bright * 0.5, (180, 420));
+        s.multi_at(&[FT8, FT4], 0.2);
+    }
     s.bright((280, 780), (0, 300));
     s.amp((350, 750), (600, 900), (820, 980), (450, 880));
     s.eg(TO_CUTOFF, (400, 800), (600, 1000));
@@ -601,6 +869,11 @@ fn pluck(s: &mut Make) {
     s.oscillators(&[SAW, SQR, TRI], &[SAW, SQR]);
     s.vco2_octave(&[FT8]);
     s.grit(0, 300, false);
+    // Sometimes a digital pick on top, its modulation falling away.
+    if s.chance(MultiType, 0.3) {
+        s.vpm(&[12, 13, 2, 3], s.m.bright, (250, 550));
+        s.multi_at(&[FT8, FT4], 0.3);
+    }
     s.bright((160, 520), (100, 480));
     s.amp((0, 0), (150, 420), (0, 120), (120, 320));
     s.eg(TO_CUTOFF, (0, 0), (100, 320));
@@ -618,6 +891,11 @@ fn keys(s: &mut Make) {
     s.vco2_octave(&[FT8]);
     s.int(Vco2Level, 400, 750);
     s.grit(0, 200, false);
+    // Sometimes an electric-piano tine from the VPM engine.
+    if s.chance(MultiType, 0.35) {
+        s.vpm(&[0, 1, 12, 13], s.m.bright * 0.6, (220, 480));
+        s.multi_at(&[FT8, FT4], 0.3);
+    }
     s.bright((380, 820), (0, 260));
     s.amp((0, 15), (450, 800), (300, 680), (220, 450));
     s.eg(TO_CUTOFF, (0, 10), (300, 600));
@@ -632,10 +910,8 @@ fn drone(s: &mut Make) {
     s.oscillators(&[SAW, SQR], &[SAW, SQR, TRI]);
     s.pick(Vco1Octave, &[FT16, FT8]);
     s.grit(0, 700, false);
-    s.set(MultiType, VPM);
-    s.pick(SelectVpm, &[0, 4, 8, 10, 14, 15]);
-    s.int(ShapeVpm, 200, 800);
-    s.int(MultiLevel, 300, 650);
+    s.vpm(&[0, 4, 8, 10, 14, 15], s.m.grit, (300, 650));
+    s.multi_at(&[FT16, FT8], 0.0);
     s.bright((220, 650), (150, 600));
     s.amp((450, 900), (800, 800), (1023, 1023), (900, 1023));
     s.eg(TO_CUTOFF, (500, 1000), (800, 1023));
@@ -717,14 +993,431 @@ fn bell(s: &mut Make) {
     } else {
         s.int(CrossModDepth, 380, 750);
     }
-    s.set(MultiType, VPM);
-    s.pick(SelectVpm, &[0, 1, 2, 3, 12, 13]);
-    s.int(MultiLevel, 300, 600);
+    s.vpm(&[0, 1, 2, 3, 12, 13], s.m.bright, (300, 600));
+    s.multi_at(&[FT8, FT4, FT2], 0.3);
     s.bright((450, 950), (0, 300));
     s.amp((0, 0), (780, 1000), (0, 180), (500, 850));
     s.eg(TO_CUTOFF, (0, 10), (600, 900));
     s.movement(TO_SHAPE, (0, 300), (560, 700), &[CHORUS, ENSEMBLE]);
     s.space(0.15, &[D_STEREO, D_PING], &[R_PLATE, R_HALL, R_SMOOTH]);
+}
+
+fn brass(s: &mut Make) {
+    s.set(VoiceModeType, POLY);
+    // A little glide into each note, as lips do.
+    s.int(Portamento, 3, 12);
+    s.oscillators(&[SAW], &[SAW, SAW, SQR]);
+    s.int(Vco2Pitch, 534, 548);
+    s.pick(Vco2Octave, &[FT8, FT8, FT16]);
+    s.grit(0, 150, false);
+    s.bright((230, 640), (0, 260));
+    s.int(CutoffVelocity, 50, 110);
+    s.amp((20, 110), (500, 800), (700, 900), (150, 340));
+    // The blat: the filter opens just after the note starts.
+    s.eg(TO_CUTOFF, (60, 220), (350, 650));
+    // Vibrato, never a siren.
+    s.movement(TO_PITCH, (0, 130), (680, 880), &[ENSEMBLE, CHORUS]);
+    s.set(LfoWave, TRI);
+    s.space(0.0, &[D_STEREO, D_TAPE], &[R_HALL, R_ARENA, R_ROOM]);
+}
+
+fn strings(s: &mut Make) {
+    s.set(VoiceModeType, POLY);
+    s.oscillators(&[SAW], &[SAW, SAW, SQR]);
+    s.int(Vco2Pitch, 538, 562);
+    s.vco2_octave(&[FT8]);
+    s.grit(0, 120, false);
+    s.bright((400, 900), (0, 200));
+    s.amp((320, 600), (600, 900), (820, 980), (400, 800));
+    s.eg(TO_CUTOFF, (300, 700), (500, 900));
+    // Bowing: the shapes drift slowly, and the ensemble is always on.
+    s.movement(
+        TO_SHAPE,
+        (120, 520),
+        (530, 620),
+        &[ENSEMBLE, ENSEMBLE, CHORUS],
+    );
+    s.set(ModFxOn, 1);
+    s.set(LfoWave, TRI);
+    s.mac(LfoRate, 80, 380, s.m.movement, 40);
+    s.space(0.2, &[D_STEREO, D_TAPE], &[R_HALL, R_SMOOTH, R_ARENA]);
+}
+
+fn organ(s: &mut Make) {
+    s.set(VoiceModeType, POLY);
+    // Drawbars: a fundamental, a stop one or two octaves above it in
+    // tune, and a sine from the VPM engine below or between.
+    s.oscillators(&[SQR, TRI], &[TRI, SQR]);
+    s.set(Vco1Octave, FT8);
+    s.pick(Vco2Octave, &[FT4, FT4, FT2]);
+    s.int(Vco2Pitch, 505, 519);
+    s.int(Vco1Shape, 0, 120);
+    s.int(Vco2Shape, 0, 120);
+    s.int(Vco2Level, 350, 800);
+    s.grit(0, 0, false);
+    s.vpm(&[0], 0.0, (250, 600));
+    s.multi_at(&[FT16, FT8, FT4], 0.0);
+    s.bright((480, 960), (0, 120));
+    // No touch response, and gone when the key is.
+    s.set(CutoffKeyTrack, 2);
+    s.int(AmpVelocity, 0, 20);
+    s.int(CutoffVelocity, 0, 15);
+    s.amp((0, 6), (600, 600), (1023, 1023), (15, 90));
+    // Key click.
+    s.eg(TO_CUTOFF, (0, 0), (60, 200));
+    // A rotary speaker's shimmer: fast, shallow vibrato and a mod effect.
+    s.movement(TO_PITCH, (0, 90), (512, 600), &[CHORUS, PHASER, ENSEMBLE]);
+    s.set(ModFxOn, u16::from(s.m.movement >= 0.3));
+    s.set(LfoWave, TRI);
+    s.mac(LfoRate, 600, 820, s.m.movement, 30);
+    s.space(-0.1, &[D_STEREO, D_TAPE], &[R_ROOM, R_HALL, R_PLATE]);
+}
+
+fn sub_bass(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.int(VoiceModeDepth, 0, 25);
+    s.set(Octave, 1);
+    s.int(Portamento, 0, 25);
+    // Close to a sine; a quiet triangle an octave up gives it a pitch on
+    // small speakers.
+    s.oscillators(&[TRI, TRI, SQR], &[TRI]);
+    s.pick(Vco1Octave, &[FT16, FT8]);
+    s.set(Vco2Octave, FT8);
+    s.int(Vco2Pitch, 506, 518);
+    s.int(Vco1Shape, 0, 80);
+    s.int(Vco1Level, 950, 1023);
+    s.int(Vco2Level, 0, 320);
+    s.grit(0, 0, false);
+    s.bright((140, 470), (0, 160));
+    s.amp((0, 12), (400, 700), (800, 1023), (40, 160));
+    s.eg(TO_CUTOFF, (0, 10), (150, 400));
+    s.movement(TO_CUTOFF, (0, 120), (512, 640), &[]);
+    s.space(-0.5, &[D_MONO], &[R_ROOM]);
+}
+
+fn acid(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.set(VoiceModeDepth, 0);
+    s.set(Octave, 1);
+    // One oscillator, sliding between notes.
+    s.int(Portamento, 18, 60);
+    s.oscillators(&[SAW, SQR], &[SAW]);
+    s.set(Vco1Octave, FT8);
+    s.int(Vco1Shape, 0, 300);
+    s.int(Vco1Level, 900, 1023);
+    s.set(Vco2Level, 0);
+    s.grit(0, 0, false);
+    s.set(Ring, 0);
+    s.set(Sync, 0);
+    // The squelch: resonance near the edge, and the EG snaps the filter
+    // open on every note, harder on a hard one.
+    s.bright((110, 520), (520, 840));
+    s.pick(CutoffKeyTrack, &[0, 1]);
+    s.int(CutoffVelocity, 70, 127);
+    s.amp((0, 4), (300, 520), (650, 1000), (25, 100));
+    s.eg(TO_CUTOFF, (0, 0), (110, 380));
+    s.movement(TO_CUTOFF, (0, 140), (700, 960), &[]);
+    s.space(
+        -0.15,
+        &[D_MONO_BPM, D_STEREO_BPM, D_PING_BPM],
+        &[R_ROOM, R_PLATE],
+    );
+}
+
+fn sync_lead(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.int(VoiceModeDepth, 80, 360);
+    s.pick(Octave, &[2, 3]);
+    s.int(Portamento, 12, 60);
+    s.oscillators(&[SAW, SQR], &[SAW, SAW, SQR]);
+    s.pick(Vco2Octave, &[FT8, FT4]);
+    s.grit(1, 0, false);
+    // Hard sync, the second oscillator tuned well above the first, and
+    // the EG pulling it through its harmonics.
+    s.set(Sync, 1);
+    s.set(Ring, 0);
+    s.int(Vco2Pitch, 620, 960);
+    s.bright((520, 1000), (80, 420));
+    s.amp((0, 25), (500, 800), (800, 1000), (150, 380));
+    s.eg(EG_PITCH2, (0, 160), (350, 820));
+    s.movement(TO_PITCH, (20, 140), (650, 900), &[FLANGER, PHASER, CHORUS]);
+    s.set(LfoWave, TRI);
+    // Now and then the sweep runs the other way.
+    if s.chance(EgInt, 0.25) {
+        s.set(EgInt, 1024 - s.p.get(EgInt));
+    }
+    s.space(
+        0.05,
+        &[D_PING, D_STEREO, D_TAPE],
+        &[R_HALL, R_PLATE, R_ARENA],
+    );
+}
+
+fn fm_glass(s: &mut Make) {
+    s.set(VoiceModeType, POLY);
+    s.pick(Octave, &[2, 2, 3]);
+    // The VPM engine leads; a soft triangle may sit under it.
+    s.oscillators(&[TRI], &[TRI]);
+    s.int(Vco1Level, 0, 360);
+    s.set(Vco2Level, 0);
+    s.grit(0, 0, false);
+    s.vpm(&[0, 1, 2, 3, 12, 13], s.m.bright, (820, 1000));
+    s.multi_at(&[FT8, FT8, FT4], 0.3);
+    s.bright((520, 1000), (0, 200));
+    // Struck, then ringing down: longer than a pluck, shorter than a bell.
+    s.amp((0, 0), (520, 750), (0, 200), (350, 700));
+    s.eg(TO_CUTOFF, (0, 0), (300, 600));
+    s.movement(TO_SHAPE, (0, 260), (540, 680), &[CHORUS, ENSEMBLE, PHASER]);
+    s.space(0.12, &[D_STEREO, D_PING], &[R_PLATE, R_HALL, R_SMOOTH]);
+}
+
+fn fm_bass(s: &mut Make) {
+    s.pick(VoiceModeType, &[UNISON, POLY]);
+    s.int(VoiceModeDepth, 0, 40);
+    s.set(Octave, 1);
+    // A triangle sub under the VPM engine.
+    s.oscillators(&[TRI, SQR], &[TRI]);
+    s.set(Vco1Octave, FT16);
+    s.int(Vco1Level, 0, 420);
+    s.set(Vco2Level, 0);
+    s.grit(0, 0, false);
+    let depth = s.m.bright * 0.6 + s.m.grit * 0.4;
+    s.vpm(&[0, 1, 4, 5, 6, 7, 8, 9], depth, (850, 1023));
+    // The knock: the modulation envelope hits hard and is gone at once.
+    s.mac(VpmParam3, 125, 185, s.m.movement, 6);
+    s.int(VpmParam5, 45, 95);
+    s.multi_at(&[FT16, FT8, FT8], 0.25);
+    s.bright((330, 880), (0, 240));
+    s.amp((0, 6), (280, 600), (300, 800), (40, 150));
+    s.eg(TO_CUTOFF, (0, 0), (150, 400));
+    s.movement(TO_CUTOFF, (0, 160), (560, 780), &[]);
+    s.space(-0.3, &[D_MONO, D_ONE_TAP, D_MONO_BPM], &[R_ROOM, R_PLATE]);
+}
+
+fn chiptune(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.set(VoiceModeDepth, 0);
+    s.pick(Octave, &[2, 3]);
+    // Two pulse channels, from square to thin.
+    s.oscillators(&[SQR], &[SQR]);
+    s.pick(Vco1Shape, &[0, 380, 700, 900]);
+    s.pick(Vco2Shape, &[0, 380, 700, 900]);
+    // The second channel: an octave up, a fifth up, or resting.
+    match (s.roll(Vco2Level, 6) * 3.0) as u8 {
+        0 => {
+            s.set(Vco2Octave, FT4);
+            s.set(Vco2Pitch, 512);
+        }
+        1 => {
+            s.set(Vco2Octave, FT8);
+            s.set(Vco2Pitch, 834);
+        }
+        _ => s.set(Vco2Level, 0),
+    }
+    s.grit(0, 0, false);
+    // The noise channel, crushed.
+    s.noise(&[N_DECIM], (300, 900));
+    s.mac(MultiLevel, 0, 420, (s.m.grit - 0.3) / 0.7, 20);
+    s.bright((720, 1023), (0, 150));
+    s.set(CutoffKeyTrack, 2);
+    s.int(AmpVelocity, 0, 30);
+    // On and off like a gate.
+    s.amp((0, 0), (300, 620), (650, 1023), (0, 70));
+    // A blip of pitch on each note; the LFO sweeps the pulse width,
+    // trills, or plays one grace note.
+    s.eg(TO_PITCH, (0, 0), (30, 120));
+    match (s.roll(LfoTarget, 6) * 3.0) as u8 {
+        0 => {
+            s.movement(TO_SHAPE, (200, 800), (512, 620), &[]);
+            s.set(LfoWave, TRI);
+        }
+        1 => {
+            s.movement(TO_PITCH, (150, 275), (512, 620), &[]);
+            s.set(LfoWave, SQR);
+            s.mac(LfoRate, 500, 850, s.m.movement, 40);
+        }
+        _ => {
+            s.movement(TO_PITCH, (180, 275), (512, 620), &[]);
+            s.lfo_once(&[SQR], (300, 700));
+        }
+    }
+    s.space(
+        -0.2,
+        &[D_MONO_BPM, D_PING_BPM, D_STEREO_BPM],
+        &[R_ROOM, R_PLATE],
+    );
+}
+
+fn kick(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.int(VoiceModeDepth, 0, 30);
+    s.set(Octave, 1);
+    // One round oscillator; the keys do not move the filter.
+    s.oscillators(&[TRI, TRI, SQR], &[TRI]);
+    s.pick(Vco1Octave, &[FT16, FT8]);
+    s.int(Vco1Shape, 0, 60);
+    s.int(Vco1Level, 950, 1023);
+    s.set(Vco2Level, 0);
+    s.set(CutoffKeyTrack, 0);
+    s.int(AmpVelocity, 70, 127);
+    s.grit(0, 0, false);
+    // The beater: a touch of noise, more with grit.
+    s.noise(&[N_LOW, N_HIGH, N_DECIM], (200, 700));
+    s.mac(MultiLevel, 0, 260, s.m.grit, 20);
+    s.bright((230, 700), (0, 200));
+    s.amp((0, 0), (190, 470), (0, 0), (120, 400));
+    s.movement(TO_CUTOFF, (0, 200), (512, 512), &[]);
+    s.lfo_once(&[SAW, TRI], (300, 800));
+    // The thump: the pitch falls fast into the note.
+    s.sweep((60, 210), (760, 900));
+    s.space(-0.3, &[D_MONO, D_ONE_TAP], &[R_ROOM, R_PLATE, R_ARENA]);
+}
+
+fn snare(s: &mut Make) {
+    s.set(VoiceModeType, POLY);
+    // The shell: two oscillators out of tune with each other, as a
+    // drum's modes are.
+    s.oscillators(&[TRI, SQR], &[TRI]);
+    s.set(Vco1Octave, FT8);
+    s.int(Vco2Pitch, 700, 900);
+    s.int(Vco1Level, 380, 700);
+    s.int(Vco2Level, 0, 450);
+    s.set(CutoffKeyTrack, 0);
+    s.int(AmpVelocity, 70, 127);
+    s.grit(0, 0, false);
+    // The wires: noise, louder than the shell, before or after the filter.
+    s.noise(&[N_HIGH, N_PEAK, N_HIGH, N_DECIM], (300, 900));
+    s.int(MultiLevel, 720, 1023);
+    s.multi_at(&[FT8], 0.5);
+    s.bright((380, 900), (0, 260));
+    s.amp((0, 0), (140, 400), (0, 0), (110, 380));
+    s.movement(TO_CUTOFF, (0, 180), (512, 512), &[]);
+    s.sweep((40, 150), (690, 800));
+    s.space(-0.1, &[D_MONO, D_ONE_TAP], &[R_ROOM, R_PLATE, R_ARENA]);
+}
+
+fn laser(s: &mut Make) {
+    s.set(VoiceModeType, POLY);
+    s.pick(Octave, &[2, 3]);
+    s.oscillators(&[SAW, SQR], &[SAW, SQR, TRI]);
+    s.grit(0, 500, false);
+    s.bright((380, 950), (250, 700));
+    s.amp((0, 0), (220, 600), (0, 0), (200, 600));
+    // A fast LFO makes the beam shimmer.
+    s.movement(TO_CUTOFF, (0, 600), (512, 512), &[FLANGER, PHASER]);
+    s.mac(LfoRate, 450, 1000, s.m.movement, 60);
+    // The zap: the pitch falls a long way; now and then it rises.
+    s.sweep((120, 520), (840, 1013));
+    if s.chance(EgInt, 0.25) {
+        s.set(EgInt, 1024 - s.p.get(EgInt));
+    }
+    s.space(
+        0.2,
+        &[D_PING, D_STEREO, D_PING_BPM],
+        &[R_SPACE, R_HALL, R_PLATE],
+    );
+}
+
+fn siren(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.int(VoiceModeDepth, 0, 80);
+    s.pick(Octave, &[2, 3]);
+    s.oscillators(&[SAW, SQR], &[SAW, SQR]);
+    s.int(Vco2Level, 0, 500);
+    s.grit(0, 250, false);
+    s.bright((450, 950), (100, 500));
+    s.amp((0, 80), (700, 700), (950, 1023), (150, 600));
+    s.eg(TO_CUTOFF, (0, 100), (400, 800));
+    // The wail: a slow LFO carries the pitch up and down, restarting
+    // with each key.
+    s.movement(TO_PITCH, (420, 820), (512, 600), &[PHASER, FLANGER]);
+    s.pick(LfoWave, &[TRI, TRI, SAW]);
+    s.mac(LfoRate, 60, 420, s.m.movement, 40);
+    s.set(LfoKeySync, 1);
+    s.space(
+        0.15,
+        &[D_STEREO, D_TAPE, D_PING],
+        &[R_HALL, R_ARENA, R_SPACE],
+    );
+}
+
+fn wind(s: &mut Make) {
+    s.set(VoiceModeType, POLY);
+    // Noise alone.
+    s.set(Vco1Level, 0);
+    s.set(Vco2Level, 0);
+    s.grit(0, 0, false);
+    s.noise(&[N_HIGH, N_LOW, N_PEAK, N_PEAK], (150, 900));
+    s.int(MultiLevel, 750, 1023);
+    // The whistle: resonance sings where the cutoff sits, and the keys
+    // move it.
+    s.bright((260, 760), (350, 760));
+    s.set(CutoffKeyTrack, 2);
+    s.int(CutoffVelocity, 0, 50);
+    s.int(AmpVelocity, 30, 90);
+    s.amp((280, 700), (700, 700), (850, 1023), (500, 950));
+    s.eg(TO_CUTOFF, (300, 800), (600, 1000));
+    // Gusts.
+    s.movement(TO_CUTOFF, (220, 720), (512, 640), &[FLANGER, PHASER]);
+    s.set(LfoWave, TRI);
+    s.mac(LfoRate, 20, 300, s.m.movement, 30);
+    s.space(
+        0.3,
+        &[D_TAPE, D_STEREO],
+        &[R_SPACE, R_HALL, R_SUBMARINE, R_HORROR],
+    );
+}
+
+fn impact(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.int(VoiceModeDepth, 100, 500);
+    s.pick(Octave, &[0, 1]);
+    s.oscillators(&[SQR, SAW, TRI], &[SAW, SQR]);
+    s.pick(Vco1Octave, &[FT16, FT8]);
+    s.pick(Vco2Octave, &[FT16, FT8]);
+    s.grit(1, 600, false);
+    // Debris.
+    s.noise(&[N_LOW, N_DECIM, N_HIGH], (100, 700));
+    s.int(MultiLevel, 450, 900);
+    s.bright((200, 700), (0, 300));
+    s.amp((0, 0), (600, 950), (0, 0), (600, 950));
+    // The filter closes once over the hit.
+    s.movement(TO_CUTOFF, (0, 400), (512, 512), &[FLANGER, PHASER]);
+    s.lfo_once(&[SAW, TRI], (60, 300));
+    // The boom: a slow fall of the pitch.
+    s.sweep((250, 750), (690, 860));
+    s.space(
+        0.45,
+        &[D_TAPE, D_STEREO],
+        &[R_ARENA, R_HALL, R_SPACE, R_SUBMARINE],
+    );
+}
+
+fn alarm(s: &mut Make) {
+    s.set(VoiceModeType, UNISON);
+    s.int(VoiceModeDepth, 0, 60);
+    s.pick(Octave, &[2, 3]);
+    s.oscillators(&[SQR, SQR, SAW], &[SQR, SAW]);
+    s.int(Vco2Level, 0, 450);
+    s.grit(0, 300, false);
+    s.bright((550, 1000), (0, 350));
+    s.amp((0, 0), (700, 700), (1023, 1023), (20, 160));
+    s.eg(TO_CUTOFF, (0, 0), (200, 500));
+    // Two tones: a square LFO switches the pitch, sometimes in time
+    // with the tempo (1/4, 1/8 or 1/16).
+    s.movement(TO_PITCH, (340, 700), (512, 560), &[]);
+    s.set(LfoWave, SQR);
+    s.set(LfoKeySync, 1);
+    if s.chance(LfoMode, 0.4) {
+        s.lfo_bpm(&[7, 10, 12]);
+    } else {
+        s.mac(LfoRate, 350, 850, s.m.movement, 50);
+    }
+    s.space(
+        -0.05,
+        &[D_MONO, D_STEREO, D_PING],
+        &[R_ROOM, R_PLATE, R_ARENA],
+    );
 }
 
 /// Make a new program from `recipe` (its `keep` is ignored: see
@@ -748,6 +1441,22 @@ pub fn generate(recipe: &Recipe) -> Program {
         Character::SpaceFx => space_fx(&mut s),
         Character::ArpPulse => arp_pulse(&mut s),
         Character::Bell => bell(&mut s),
+        Character::Brass => brass(&mut s),
+        Character::Strings => strings(&mut s),
+        Character::Organ => organ(&mut s),
+        Character::SubBass => sub_bass(&mut s),
+        Character::Acid => acid(&mut s),
+        Character::SyncLead => sync_lead(&mut s),
+        Character::FmGlass => fm_glass(&mut s),
+        Character::FmBass => fm_bass(&mut s),
+        Character::Chiptune => chiptune(&mut s),
+        Character::Kick => kick(&mut s),
+        Character::Snare => snare(&mut s),
+        Character::Laser => laser(&mut s),
+        Character::Siren => siren(&mut s),
+        Character::Wind => wind(&mut s),
+        Character::Impact => impact(&mut s),
+        Character::Alarm => alarm(&mut s),
     }
     let mut p = s.p;
     cohere(&mut p);
@@ -825,6 +1534,7 @@ const MOVES: &[(Field, f32)] = &[
     (Vco2Pitch, 0.08),
     (CrossModDepth, 0.5),
     (ShapeNoise, 0.8),
+    (ShiftShapeNoise, 0.5),
     (ShapeVpm, 0.8),
     (ShiftShapeVpm, 0.5),
     (Vco1Level, 0.4),
@@ -850,6 +1560,15 @@ const MOVES: &[(Field, f32)] = &[
     (ReverbDepth, 0.6),
     (ReverbDryWet, 0.5),
     (VoiceModeDepth, 0.3),
+    (VpmParam1, 0.3),
+    (VpmParam2, 0.2),
+    (VpmParam3, 0.4),
+    (VpmParam4, 0.3),
+    (VpmParam5, 0.4),
+    (VpmParam6, 0.3),
+    (Portamento, 0.1),
+    (CutoffVelocity, 0.3),
+    (AmpVelocity, 0.3),
 ];
 
 /// Selectors [`vary`] may flip, with their built-in values.
@@ -865,6 +1584,13 @@ const FLIPS: &[(Field, u16, u16)] = &[
     (ModFxType, 1, 4),
     (DelaySubType, 0, LAST_DELAY),
     (ReverbSubType, 0, LAST_REVERB),
+    (SelectNoise, 0, 3),
+    (SelectVpm, 0, 15),
+    (MultiOctave, 0, 3),
+    (MultiRouting, 0, 1),
+    (CutoffKeyTrack, 0, 2),
+    (LfoMode, 0, 2),
+    (LfoKeySync, 0, 1),
 ];
 
 /// A mutation of `base`: continuous fields move by up to `amount` of
@@ -894,6 +1620,13 @@ pub fn vary(base: &Program, amount: f32, seed: u64) -> Program {
         let v = lo + k;
         let v = if v >= p.get(f) { v + 1 } else { v };
         p.set(f, v.min(hi)).expect("a built-in value");
+        // Another VPM type takes another range of modulation.
+        if f == SelectVpm {
+            let safe = &VPM_SAFE[usize::from(p.get(SelectVpm))];
+            for (f, (lo, hi)) in [(ShapeVpm, safe.shape), (ShiftShapeVpm, safe.shift)] {
+                p.set(f, p.get(f).clamp(lo, hi)).expect("within the range");
+            }
+        }
     }
     cohere(&mut p);
     p
@@ -1070,7 +1803,10 @@ mod tests {
                 let g = generate(&r);
                 check(&g);
                 check(&vary(&g, (seed % 11) as f32 / 10.0, seed));
-                let other = generate(&recipe(Character::ALL[seed as usize % 12], seed + 7));
+                let other = generate(&recipe(
+                    Character::ALL[seed as usize % Character::ALL.len()],
+                    seed + 7,
+                ));
                 check(&breed(&g, &other, (seed % 5) as f32 / 4.0, seed));
             }
         }

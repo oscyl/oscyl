@@ -184,10 +184,11 @@ fn signature(c: generate::Character) -> Stage {
     use generate::Character::*;
     match c {
         PowerChord | Keys | ArpPulse => Stage::Voice,
-        FuzzBass | ScreamLead | Drone => Stage::Oscillators,
-        Wobble => Stage::Filter,
-        SpaceFx => Stage::Effects,
-        Riser | Pad | Pluck | Bell => Stage::Envelopes,
+        FuzzBass | ScreamLead | Drone | Organ | SubBass | SyncLead | FmGlass | FmBass
+        | Chiptune => Stage::Oscillators,
+        Wobble | Brass | Acid | Wind => Stage::Filter,
+        SpaceFx | Siren | Alarm => Stage::Effects,
+        Riser | Pad | Pluck | Bell | Strings | Kick | Snare | Laser | Impact => Stage::Envelopes,
     }
 }
 
