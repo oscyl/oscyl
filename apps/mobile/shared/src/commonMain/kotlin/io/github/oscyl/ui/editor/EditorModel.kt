@@ -282,43 +282,44 @@ class EditorModel(
         }
         viewModelScope.launch { synth.selected.collect { (card, slot) -> follow(card, slot) } }
         viewModelScope.launch {
+            // Each turn lands in the open program at once (cheap), frame clock or not,
+            // so it can never reach another program; the stages redraw once a frame.
             synth.knobs.collect { (card, controls) ->
-                turnedOnPanel += card to controls
-                panelTurned.trySend(Unit)
+                if (followKnobs(card, controls)) panelTurned.trySend(Unit)
             }
         }
     }
 
-    /** What the synths' panels sent since the last frame, in order. */
-    private val turnedOnPanel = mutableListOf<Pair<ULong, List<io.github.oscyl.core.ControlChange>>>()
+    /** The panel changed the program since the stages were last drawn. */
+    private var panelUndrawn = false
     private val panelTurned = Channel<Unit>(Channel.CONFLATED)
 
     /**
-     * Follow the synths' panels, once per frame: a knob turned fast sends a step every
-     * few milliseconds, faster than a frame, and taking them one by one (each redrawing
-     * the stages) fell seconds behind. Each frame takes everything sent since the last
-     * one and redraws the stages once, so the value shown is the knob's, in the next
-     * frame. As with a finger, the library hears of it once the knob rests: a frame
-     * with nothing new from the panel. Run by the composition, which has the frame clock.
+     * Draw what the synths' panels turn, once per frame: a knob turned fast sends a step
+     * every few milliseconds, faster than a frame, and redrawing the stages for each fell
+     * seconds behind. The turns are already in the program; each frame redraws the stages
+     * once, so the value shown is the knob's, in the next frame. As with a finger, the
+     * library hears of it once the knob rests: a frame with nothing new from the panel.
+     * Run by the composition, which has the frame clock; [panelRested] also runs before
+     * another program opens, when Live goes off, and when the app stops (no frames come).
      */
     suspend fun followPanels() {
         for (turned in panelTurned) {
-            while (withFrameNanos { takePanels() }) Unit
+            while (withFrameNanos { drawPanels() }) Unit
             panelRested()
         }
     }
 
-    /** Everything the panels sent since the last frame, applied; false when nothing came. */
-    private fun takePanels(): Boolean {
-        if (turnedOnPanel.isEmpty()) return false
-        val batch = turnedOnPanel.toList()
-        turnedOnPanel.clear()
-        batch.groupBy({ it.first }, { it.second }).forEach { (card, sent) -> followKnobs(card, sent.flatten()) }
+    /** The stages redrawn for the panel's turns since the last frame; false when none came. */
+    private fun drawPanels(): Boolean {
+        if (!panelUndrawn) return false
+        panelUndrawn = false
+        editor?.let { panel?.update(it, following = true) }
         return true
     }
 
     /** The panel's knob rests: the library shows and saves the change, as at a finger's release. */
-    private fun panelRested() {
+    fun panelRested() {
         if (!panelMoved) return
         panelMoved = false
         midGesture = false
@@ -340,14 +341,14 @@ class EditorModel(
      * open program's values, as edits not sent back (the synth has them). One undo step
      * per control turned. Otherwise its decoder starts afresh next time.
      */
-    private fun followKnobs(card: ULong, controls: List<io.github.oscyl.core.ControlChange>) {
+    private fun followKnobs(card: ULong, controls: List<io.github.oscyl.core.ControlChange>): Boolean {
         val open = opened
         val e = editor
         if (!live || open == null || e == null || open.synthId != card || !e.loaded()) {
             decoders.remove(card)?.close()
-            return
+            return false
         }
-        val decoder = decoders.getOrPut(card) { io.github.oscyl.core.panelDecoder(open.document.driverId()) } ?: return
+        val decoder = decoders.getOrPut(card) { io.github.oscyl.core.panelDecoder(open.document.driverId()) } ?: return false
         var changed = false
         for (c in controls) {
             val change = decoder.control(c.cc, c.value, e) ?: continue
@@ -356,9 +357,10 @@ class EditorModel(
             changed = edit(turning = change.field, send = false, show = false) { it.set(change.field, change.raw) } || changed
         }
         if (changed) {
-            panel?.update(e, following = true)
+            panelUndrawn = true
             panelMoved = true
         }
+        return changed
     }
 
     /** The row the synth's panel just picked, opened by following it. */
@@ -370,6 +372,8 @@ class EditorModel(
      * stored version: nothing is sent unless the app holds unsynced edits to it.
      */
     private fun follow(card: ULong, slot: UShort) {
+        // What the panel turned on this program is saved before another opens.
+        panelRested()
         val open = opened ?: return
         if (!live || open.synthId != card || library.ui.value.programs?.source != open.source) return
         val index = open.document.slotIndex(slot)?.toInt() ?: return
@@ -383,6 +387,7 @@ class EditorModel(
 
     private fun show(open: OpenProgram?, cards: List<SynthCard>) {
         val same = open != null && opened?.document === open.document && opened?.index == open.index && opened?.arranged == open.arranged
+        if (!same) panelRested()
         opened = open
         if (open == null) {
             close()
@@ -567,6 +572,7 @@ class EditorModel(
     override fun redo() = library.redoOpen()
 
     override fun toggleLive() {
+        if (live) panelRested()
         live = !live
         refreshHead()
         editor?.let { if (live && it.loaded()) play(Audition.Program(it.program())) }
