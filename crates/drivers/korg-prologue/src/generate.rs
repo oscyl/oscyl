@@ -16,8 +16,8 @@
 //! VPM (a user oscillator may not be loaded), and an effect that is on has
 //! a type that is not a user slot.
 //!
-//! Each character says what it needs of a field ([`special`]); the rest
-//! comes from ranges all share ([`common`]).
+//! Each character says what it needs of a field (`special`); the rest
+//! comes from ranges all share (`common`).
 
 use oscyl_driver::{
     Character, Control, DriverError, Family, MacroInfo, Macros, Mutability, Recipe,

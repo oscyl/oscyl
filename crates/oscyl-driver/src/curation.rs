@@ -299,7 +299,7 @@ fn mix64(mut z: u64) -> u64 {
 }
 
 /// Step `t` (`0.0..=1.0`) of the way from `a` to `b`, over the free fields
-/// ([`Driver::morph`]'s default): a dial ([`Control::Continuous`] in `a`)
+/// ([`Driver::morph`](crate::Driver::morph)'s default): a dial ([`Control::Continuous`] in `a`)
 /// interpolates; every other free field is `a`'s until `t` reaches its
 /// group's threshold (from `seed`, within 0.15..0.85), then `b`'s. So 0 is
 /// `a`, 1 is `b`'s sound, and a field never turns back on the way.
