@@ -46,6 +46,7 @@ inputs() {
         'apps/mobile/gradle.properties' 'apps/mobile/gradle/libs.versions.toml' \
         'crates/*.rs' 'crates/*Cargo.toml' 'Cargo.toml' 'Cargo.lock' 'po/*.po' \
         'design/tokens.json' 'apps/linux/data/fonts' 'LICENSE-MIT' 'LICENSE-APACHE' \
+        'units/*/payload/*' 'units/*/sdk/LICENSE' \
         | sed 's|^|$(SRCROOT)/../../../|'
 }
 xcfilelist=apps/mobile/iosApp/Configuration/KotlinInputs.xcfilelist

@@ -204,6 +204,10 @@ $(SRCROOT)/../../../crates/drivers/korg-prologue/src/viz.rs
 $(SRCROOT)/../../../crates/drivers/korg-prologue/tests/conformance.rs
 $(SRCROOT)/../../../crates/drivers/korg-prologue/tests/factory_file.rs
 $(SRCROOT)/../../../crates/drivers/logue/Cargo.toml
+$(SRCROOT)/../../../crates/drivers/logue/src/engine.rs
+$(SRCROOT)/../../../crates/drivers/logue/src/engine/make.rs
+$(SRCROOT)/../../../crates/drivers/logue/src/engine/render.rs
+$(SRCROOT)/../../../crates/drivers/logue/src/engine/waves.rs
 $(SRCROOT)/../../../crates/drivers/logue/src/error.rs
 $(SRCROOT)/../../../crates/drivers/logue/src/kinds.rs
 $(SRCROOT)/../../../crates/drivers/logue/src/lag.rs
@@ -237,6 +241,7 @@ $(SRCROOT)/../../../crates/oscyl-app/src/generator.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/i18n.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/lib.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/libraries.rs
+$(SRCROOT)/../../../crates/oscyl-app/src/oscillators.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/palette.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/panel.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/program_menu.rs
@@ -266,12 +271,16 @@ $(SRCROOT)/../../../crates/oscyl-driver/src/engine.rs
 $(SRCROOT)/../../../crates/oscyl-driver/src/lib.rs
 $(SRCROOT)/../../../crates/oscyl-driver/src/pack.rs
 $(SRCROOT)/../../../crates/oscyl-driver/src/sysex.rs
+$(SRCROOT)/../../../crates/oscyl-engine-host/Cargo.toml
+$(SRCROOT)/../../../crates/oscyl-engine-host/build.rs
+$(SRCROOT)/../../../crates/oscyl-engine-host/src/lib.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/Cargo.toml
 $(SRCROOT)/../../../crates/oscyl-ffi/src/document.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/src/editor.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/src/generator.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/src/lib.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/src/library.rs
+$(SRCROOT)/../../../crates/oscyl-ffi/src/oscillators.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/src/settings.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/src/synth.rs
 $(SRCROOT)/../../../crates/oscyl-ffi/src/units.rs
@@ -293,3 +302,7 @@ $(SRCROOT)/../../../crates/oscyl-midi/tests/hardware.rs
 $(SRCROOT)/../../../crates/oscyl-midi/tests/simulated.rs
 $(SRCROOT)/../../../design/tokens.json
 $(SRCROOT)/../../../po/it.po
+$(SRCROOT)/../../../units/oscyl-engine/payload/SOURCE
+$(SRCROOT)/../../../units/oscyl-engine/payload/minilogue-xd.bin
+$(SRCROOT)/../../../units/oscyl-engine/payload/prologue.bin
+$(SRCROOT)/../../../units/oscyl-engine/sdk/LICENSE
