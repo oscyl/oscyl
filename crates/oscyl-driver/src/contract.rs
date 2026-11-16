@@ -256,6 +256,18 @@ pub trait Driver: Send + Sync {
     fn breed(&self, _a: &[u8], _b: &[u8], _mix: f32, _seed: u64) -> Result<Vec<u8>, DriverError> {
         Err(no_generation())
     }
+    /// Step `t` (`0.0..=1.0`) of the way from `a` to `b`: 0 is `a`, 1 is
+    /// `b`'s sound, and steps in between never turn back, so a row of them
+    /// goes smoothly from one to the other. Same inputs, same bytes; `seed`
+    /// decides where along the way each group of selectors switches.
+    /// Restricted and fixed fields are `a`'s. By default
+    /// [`morph_fields`]; a driver with coherence rules applies them on top.
+    fn morph(&self, a: &[u8], b: &[u8], t: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
+        if self.characters().is_empty() {
+            return Err(no_generation());
+        }
+        morph_fields(self, a, b, t, seed)
+    }
 
     /// The MIDI messages that set `field` to its value in `program` on the
     /// sounding voices, in order, one complete message per inner `Vec`: a

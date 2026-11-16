@@ -848,6 +848,49 @@ pub fn generation_is_deterministic_and_valid(d: &dyn Driver) {
             );
         }
         generation_keeps_the_base(d, character, &pages, b);
+        morph_goes_from_a_to_b(d, a, b);
+    }
+}
+
+/// A morph is valid and deterministic, starts at `a`, ends at `b`'s free
+/// fields, and no field turns back on the way.
+fn morph_goes_from_a_to_b(d: &dyn Driver, a: &[u8], b: &[u8]) {
+    let n = d.fields().len();
+    let values = |p: &[u8]| -> Vec<Option<u16>> { (0..n).map(|i| d.get(p, i).ok()).collect() };
+    let steps: Vec<Vec<Option<u16>>> = (0..=10)
+        .map(|k| {
+            let t = k as f32 / 10.0;
+            let p = valid_generated(d, "morph", d.morph(a, b, t, 5));
+            check!(
+                d,
+                "generation",
+                d.morph(a, b, t, 5).as_ref() == Ok(&p),
+                "morph is not deterministic"
+            );
+            values(&p)
+        })
+        .collect();
+    check!(
+        d,
+        "generation",
+        steps[0] == values(a),
+        "morph at 0 is not a"
+    );
+    let end = values(b);
+    for i in 0..n {
+        let name = d.fields()[i].name;
+        if d.mutability(i) == Mutability::Free {
+            check!(
+                d,
+                "generation",
+                steps[10][i] == end[i],
+                "morph at 1: {name} is not b's"
+            );
+        }
+        let (up, down) = steps.windows(2).fold((false, false), |(up, down), w| {
+            (up || w[1][i] > w[0][i], down || w[1][i] < w[0][i])
+        });
+        check!(d, "generation", !(up && down), "morph: {name} turns back");
     }
 }
 

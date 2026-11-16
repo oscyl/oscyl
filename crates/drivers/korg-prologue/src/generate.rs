@@ -16,7 +16,9 @@
 //! not be loaded), and an effect that is on has a type that is not a user
 //! slot.
 
-use oscyl_driver::{Character, Control, DriverError, MacroInfo, Macros, Mutability, Recipe};
+use oscyl_driver::{
+    Character, Control, DriverError, Family, MacroInfo, Macros, Mutability, Recipe,
+};
 
 use crate::Program;
 use crate::curate::{CURATION, ENVELOPES, OSCILLATORS, control};
@@ -27,30 +29,35 @@ pub const CHARACTERS: &[Character] = &[
         id: "pad",
         title: "Pad",
         hint: "Slow swell, long release",
+        family: Family::Pad,
         signature_page: Some(ENVELOPES),
     },
     Character {
         id: "pluck",
         title: "Pluck",
         hint: "Short and percussive",
+        family: Family::Keys,
         signature_page: Some(ENVELOPES),
     },
     Character {
         id: "bass",
         title: "Bass",
         hint: "Low and tight",
+        family: Family::Bass,
         signature_page: Some(OSCILLATORS),
     },
     Character {
         id: "lead",
         title: "Lead",
         hint: "Bright, sustained solo voice",
+        family: Family::Lead,
         signature_page: Some(OSCILLATORS),
     },
     Character {
         id: "keys",
         title: "Keys",
         hint: "Decaying, playable chords",
+        family: Family::Keys,
         signature_page: Some(ENVELOPES),
     },
 ];
@@ -212,6 +219,13 @@ fn cohere(p: &mut Program) {
     if p.get(field("Main Amp EG Sustain")) < 100 {
         clamp(p, "Main Amp EG Decay", 200, 1023);
     }
+}
+
+/// `bytes` after the coherence pass.
+pub fn cohered(bytes: &[u8]) -> Result<Vec<u8>, DriverError> {
+    let mut p = program(bytes)?;
+    cohere(&mut p);
+    Ok(p.as_bytes().to_vec())
 }
 
 fn program(bytes: &[u8]) -> Result<Program, DriverError> {

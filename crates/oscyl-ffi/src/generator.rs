@@ -18,6 +18,9 @@ pub struct CharacterInfo {
     pub title: String,
     /// One line on what it sounds like.
     pub hint: String,
+    /// What it is for, to group by: "keys", "bass", "lead", "pad",
+    /// "rhythm" or "effect".
+    pub family: String,
 }
 
 /// One of the four macro dials: its name and what it changes.
@@ -83,6 +86,7 @@ impl Generator {
             .map(|c| CharacterInfo {
                 title: tr(c.title),
                 hint: tr(c.hint),
+                family: c.family.id().into(),
             })
             .collect()
     }

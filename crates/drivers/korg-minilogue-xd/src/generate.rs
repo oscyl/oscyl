@@ -17,6 +17,7 @@
 use crate::present::{self, Category, Control, Stage, depth_choices, depth_raw};
 use crate::{Field, Program};
 use Field::*;
+use oscyl_driver::Family;
 
 /// SplitMix64: tiny, fast, and good enough to make sounds.
 struct Rng(u64);
@@ -109,6 +110,18 @@ impl Character {
             Character::SpaceFx => "Sirens, lasers, alien air",
             Character::ArpPulse => "A self-running pattern",
             Character::Bell => "Metallic ring, long decay",
+        }
+    }
+
+    /// What it is for.
+    pub fn family(self) -> Family {
+        match self {
+            Character::Keys | Character::Pluck | Character::Bell => Family::Keys,
+            Character::FuzzBass | Character::Wobble => Family::Bass,
+            Character::PowerChord | Character::ScreamLead => Family::Lead,
+            Character::Pad | Character::Drone => Family::Pad,
+            Character::ArpPulse => Family::Rhythm,
+            Character::Riser | Character::SpaceFx => Family::Effect,
         }
     }
 
@@ -796,6 +809,12 @@ fn cohere(p: &mut Program) {
     if p.get(ProgramLevel) > 102 {
         put(p, ProgramLevel, 102);
     }
+}
+
+/// `p` after the coherence pass.
+pub fn cohered(mut p: Program) -> Program {
+    cohere(&mut p);
+    p
 }
 
 /// Continuous fields [`vary`] moves, with how far (a share of `amount`):

@@ -275,6 +275,10 @@ impl Driver for Prologue {
         generate::breed(a, b, mix, seed)
     }
 
+    fn morph(&self, a: &[u8], b: &[u8], t: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
+        generate::cohered(&oscyl_driver::morph_fields(self, a, b, t, seed)?)
+    }
+
     fn live_messages(&self, bytes: &[u8], i: usize, channel: u8) -> Option<Vec<Vec<u8>>> {
         let (p, f) = program_field(bytes, i)?;
         let status = 0xB0 | (channel & 0x0F);

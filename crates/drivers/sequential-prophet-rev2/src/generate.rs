@@ -17,7 +17,9 @@
 //! whatever their (init) destination is; the effect parameters are drawn
 //! over their whole range because the docs give no meaning for them.
 
-use oscyl_driver::{Character, Control, DriverError, MacroInfo, Macros, Mutability, Recipe};
+use oscyl_driver::{
+    Character, Control, DriverError, Family, MacroInfo, Macros, Mutability, Recipe,
+};
 
 use crate::curate::{CURATION, control, index};
 use crate::{Field, Program, fields};
@@ -27,24 +29,28 @@ pub(crate) const CHARACTERS: &[Character] = &[
         id: "pad",
         title: "Pad",
         hint: "Slow swell, long release",
+        family: Family::Pad,
         signature_page: Some(2), // Envelopes
     },
     Character {
         id: "pluck",
         title: "Pluck",
         hint: "Short and percussive",
+        family: Family::Keys,
         signature_page: Some(2), // Envelopes
     },
     Character {
         id: "bass",
         title: "Bass",
         hint: "Low and tight",
+        family: Family::Bass,
         signature_page: Some(2), // Envelopes
     },
     Character {
         id: "lead",
         title: "Lead",
         hint: "Bright, sustained solo voice",
+        family: Family::Lead,
         signature_page: Some(2), // Envelopes
     },
 ];
@@ -198,6 +204,13 @@ fn cohere(p: &mut Program) {
     if p.get(f("A Amp env sustain")) < 20 {
         clamp(p, "A Amp env decay", 40, 127);
     }
+}
+
+/// `bytes` after the coherence pass.
+pub(crate) fn cohered(bytes: &[u8]) -> Result<Vec<u8>, DriverError> {
+    let mut p = program(bytes)?;
+    cohere(&mut p);
+    Ok(p.as_bytes().to_vec())
 }
 
 fn program(bytes: &[u8]) -> Result<Program, DriverError> {

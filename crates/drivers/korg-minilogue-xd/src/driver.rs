@@ -172,6 +172,7 @@ static CHARACTERS: LazyLock<Vec<Character>> = LazyLock::new(|| {
             id: c.title().to_lowercase().replace(' ', "-").leak(),
             title: c.title(),
             hint: c.hint(),
+            family: c.family(),
             signature_page: Stage::ALL.iter().position(|s| *s == signature(*c)),
         })
         .collect()
@@ -620,6 +621,14 @@ impl Driver for MinilogueXd {
 
     fn breed(&self, a: &[u8], b: &[u8], mix: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
         let mut out = bytes(generate::breed(&in_range(a)?, &in_range(b)?, mix, seed));
+        self.keep_non_free(&mut out, a);
+        Ok(out)
+    }
+
+    fn morph(&self, a: &[u8], b: &[u8], t: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
+        let mixed =
+            oscyl_driver::morph_fields(self, &bytes(in_range(a)?), &bytes(in_range(b)?), t, seed)?;
+        let mut out = bytes(generate::cohered(program(&mixed)?));
         self.keep_non_free(&mut out, a);
         Ok(out)
     }

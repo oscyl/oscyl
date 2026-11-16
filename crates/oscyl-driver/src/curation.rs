@@ -111,6 +111,52 @@ pub enum Mutability {
     Fixed,
 }
 
+/// What a [`Character`] is for; apps group characters by it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Family {
+    Keys,
+    Bass,
+    Lead,
+    Pad,
+    Rhythm,
+    Effect,
+}
+
+impl Family {
+    pub const ALL: [Family; 6] = [
+        Family::Keys,
+        Family::Bass,
+        Family::Lead,
+        Family::Pad,
+        Family::Rhythm,
+        Family::Effect,
+    ];
+
+    /// Stable and lowercase, for bindings and command lines.
+    pub fn id(self) -> &'static str {
+        match self {
+            Family::Keys => "keys",
+            Family::Bass => "bass",
+            Family::Lead => "lead",
+            Family::Pad => "pad",
+            Family::Rhythm => "rhythm",
+            Family::Effect => "effect",
+        }
+    }
+
+    /// For people.
+    pub fn title(self) -> &'static str {
+        match self {
+            Family::Keys => "Keys",
+            Family::Bass => "Bass",
+            Family::Lead => "Lead",
+            Family::Pad => "Pad",
+            Family::Rhythm => "Rhythm",
+            Family::Effect => "Effect",
+        }
+    }
+}
+
 /// A kind of sound a driver can generate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Character {
@@ -119,6 +165,7 @@ pub struct Character {
     pub title: &'static str,
     /// One line on what it sounds like.
     pub hint: &'static str,
+    pub family: Family,
     /// The page whose graphs say most about this character, as an index
     /// into [`Curation::pages`].
     pub signature_page: Option<usize>,
@@ -241,6 +288,50 @@ pub struct Recipe {
     /// Indices into [`Curation::pages`] whose fields are copied from the
     /// base program as they are.
     pub keep: Vec<usize>,
+}
+
+/// SplitMix64's output step.
+fn mix64(mut z: u64) -> u64 {
+    z = z.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+/// Step `t` (`0.0..=1.0`) of the way from `a` to `b`, over the free fields
+/// ([`Driver::morph`]'s default): a dial ([`Control::Continuous`] in `a`)
+/// interpolates; every other free field is `a`'s until `t` reaches its
+/// group's threshold (from `seed`, within 0.15..0.85), then `b`'s. So 0 is
+/// `a`, 1 is `b`'s sound, and a field never turns back on the way.
+/// Non-free fields and the name are `a`'s. Parent values out of range are
+/// clamped; a value the program refuses stays `a`'s.
+pub fn morph_fields<D: crate::Driver + ?Sized>(
+    d: &D,
+    a: &[u8],
+    b: &[u8],
+    t: f32,
+    seed: u64,
+) -> Result<Vec<u8>, DriverError> {
+    let t = t.clamp(0.0, 1.0);
+    let mut out = a.to_vec();
+    for (i, f) in d.fields().iter().enumerate() {
+        if d.mutability(i) != Mutability::Free {
+            continue;
+        }
+        let (x, y) = (d.get(a, i)?, d.get(b, i)?);
+        let v = if d.control(a, i) == Control::Continuous {
+            (f32::from(x) + (f32::from(y) - f32::from(x)) * t).round() as u16
+        } else {
+            // FNV-1a of the group's name: one threshold per group.
+            let h = f.group.bytes().fold(0xCBF2_9CE4_8422_2325u64, |h, c| {
+                (h ^ u64::from(c)).wrapping_mul(0x0100_0000_01B3)
+            });
+            let u = (mix64(seed ^ h) >> 40) as f32 / (1u64 << 24) as f32;
+            if t >= 0.15 + 0.7 * u { y } else { x }
+        };
+        let _ = d.set(&mut out, i, v.clamp(f.min, f.max));
+    }
+    Ok(out)
 }
 
 pub(crate) fn no_generation() -> DriverError {

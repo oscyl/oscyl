@@ -269,6 +269,10 @@ impl Driver for ProphetRev2 {
         generate::breed(a, b, mix, seed)
     }
 
+    fn morph(&self, a: &[u8], b: &[u8], t: f32, seed: u64) -> Result<Vec<u8>, DriverError> {
+        generate::cohered(&oscyl_driver::morph_fields(self, a, b, t, seed)?)
+    }
+
     /// NRPN on `channel`: parameter
     /// MSB/LSB on CC 99/98, value MSB/LSB on CC 6/38. Poly sequencer
     /// velocities below 128 (0 = reset) are outside the Guide's NRPN range
