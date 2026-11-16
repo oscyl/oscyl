@@ -63,7 +63,12 @@ pub struct App {
 
 /// One connected synth as the app sees it.
 pub(crate) struct Synth {
+    /// The worker's id for its connection; a new one each time it
+    /// reattaches.
     pub id: DeviceId,
+    /// The worker has it. A real synth that went away stays, offline,
+    /// with its programs and edits, until it comes back.
+    pub online: bool,
     /// What the sidebar calls it ("minilogue xd", "minilogue xd 2").
     pub name: String,
     pub firmware: Option<String>,
@@ -93,6 +98,26 @@ pub(crate) fn target_of(
     driver: &str,
 ) -> Option<DeviceId> {
     oscyl_app::editor::target_of(synths.iter().copied(), active, driver)
+}
+
+/// The offline entry a synth connecting on `port` comes back to: the real
+/// synth of its model that left from the same port, else the first that
+/// left. Never one for a simulated synth. Entries are (online, simulated,
+/// driver id, port).
+pub(crate) fn reattach_index(
+    entries: &[(bool, bool, &str, &str)],
+    driver: &str,
+    port: &str,
+    simulated: bool,
+) -> Option<usize> {
+    if simulated {
+        return None;
+    }
+    let free = |&(online, sim, d, _): &(bool, bool, &str, &str)| !online && !sim && d == driver;
+    entries
+        .iter()
+        .position(|e| free(e) && e.3 == port)
+        .or_else(|| entries.iter().position(free))
 }
 
 /// A new synth's name: its model, numbered when that model is already
@@ -358,6 +383,7 @@ impl App {
             .synths
             .borrow()
             .iter()
+            .filter(|s| s.online)
             .map(|s| (s.id, s.doc.driver.info().id))
             .collect();
         target_of(&all, self.active.get(), driver.info().id)
@@ -368,7 +394,10 @@ impl App {
     pub(crate) fn audition_target(&self) -> Option<DeviceId> {
         match *self.doc_place.borrow() {
             Place::Library(_) => self.target_synth(self.doc_driver()),
-            _ => self.active.get(),
+            _ => self
+                .active
+                .get()
+                .filter(|&id| self.with_synth_id(id, |s| s.online).unwrap_or(false)),
         }
     }
 
@@ -507,7 +536,7 @@ impl App {
                 }
                 self.editor
                     .set_header_context(Some(tr("Oscillators and effects")));
-                if let Some(id) = self.active.get() {
+                if let Some(id) = self.active.get().filter(|_| self.active_online()) {
                     self.synth.send(Cmd::ReadSlots(id));
                 }
             }
@@ -731,6 +760,11 @@ impl App {
         id.or(self.active.get())
             .and_then(|id| self.with_synth_id(id, |s| s.loaded.iter().all(|l| *l)))
             .unwrap_or(false)
+    }
+
+    /// The active synth is connected (not offline).
+    pub(crate) fn active_online(&self) -> bool {
+        self.with_synth(|s| s.online).unwrap_or(false)
     }
 
     /// The active synth's programs have all been read.
@@ -1161,7 +1195,7 @@ impl App {
         let (n, enabled, library) = match doc_place {
             Place::Synth => {
                 let n = self.with_synth(|s| s.doc.edited_count()).unwrap_or(0);
-                (n, n > 0, false)
+                (n, n > 0 && self.active_online(), false)
             }
             Place::Library(i) => (
                 edited(self.libs.borrow().get(i).map(|l| &l.doc)),

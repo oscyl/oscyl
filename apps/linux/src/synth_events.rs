@@ -8,7 +8,7 @@ use std::rc::Rc;
 use gtk::glib;
 use oscyl_midi::hotplug::{Change, PortWatcher};
 
-use crate::app::{App, Synth, synth_name};
+use crate::app::{App, Synth, reattach_index, synth_name};
 use crate::i18n::{tr, trn};
 use crate::sidebar::{Place, SynthStatus};
 use crate::slots::slots;
@@ -157,6 +157,86 @@ impl App {
             .flatten()
     }
 
+    /// A real synth that went away keeps its entry, offline: its programs,
+    /// edits and open program stay, ready for it to come back. False for
+    /// a simulated synth (it leaves as before) or an unknown id.
+    fn go_offline(&self, id: DeviceId) -> bool {
+        let kept = self.with_synth_id(id, |s| {
+            if s.simulated {
+                return false;
+            }
+            s.online = false;
+            s.reading = false;
+            // A sync cut short stored nothing it can vouch for.
+            s.sync_batch.clear();
+            s.sync_backup = None;
+            s.status = SynthStatus::Disconnected;
+            true
+        });
+        if kept != Some(true) {
+            return false;
+        }
+        self.refresh_status();
+        if self.active.get() == Some(id) && *self.doc_place.borrow() == Place::Synth {
+            // Unread rows now say "Not read".
+            self.list.refresh();
+            self.refresh_program();
+        }
+        self.refresh_generator();
+        self.update_actions();
+        true
+    }
+
+    /// Synth `id` connected: when an offline entry of its model is
+    /// waiting, it becomes that entry again (programs and edits kept) and
+    /// is read afresh. False when there is none.
+    fn reattach(
+        &self,
+        id: DeviceId,
+        driver: &'static dyn oscyl_driver::Driver,
+        port: &str,
+        firmware: Option<String>,
+        simulated: bool,
+    ) -> bool {
+        let old = {
+            let mut synths = self.synths.borrow_mut();
+            let entries: Vec<(bool, bool, &str, &str)> = synths
+                .iter()
+                .map(|s| {
+                    (
+                        s.online,
+                        s.simulated,
+                        s.doc.driver.info().id,
+                        s.port.as_str(),
+                    )
+                })
+                .collect();
+            let Some(k) = reattach_index(&entries, driver.info().id, port, simulated) else {
+                return false;
+            };
+            let s = &mut synths[k];
+            let old = s.id;
+            s.id = id;
+            s.online = true;
+            s.reading = true;
+            s.port = port.to_string();
+            s.status = SynthStatus::Connected {
+                firmware: firmware.clone().unwrap_or_default(),
+                simulated,
+            };
+            s.firmware = firmware;
+            old
+        };
+        if self.active.get() == Some(old) {
+            self.active.set(Some(id));
+        }
+        self.synth.send(Cmd::ReadAll(id));
+        self.refresh_status();
+        self.refresh_generator();
+        self.update_actions();
+        true
+    }
+
     pub(crate) fn on_synth(&self, ev: Ev) {
         match ev {
             Ev::Connected {
@@ -167,6 +247,9 @@ impl App {
                 simulated,
             } => {
                 self.connecting.set(false);
+                if self.reattach(id, driver, &port, firmware.clone(), simulated) {
+                    return;
+                }
                 let taken: Vec<String> = self
                     .synths
                     .borrow()
@@ -181,6 +264,7 @@ impl App {
                 };
                 self.synths.borrow_mut().push(Synth {
                     id,
+                    online: true,
                     name: name.clone(),
                     firmware,
                     simulated,
@@ -214,6 +298,9 @@ impl App {
                 self.error_dialog(&tr("Couldn't connect to the synth"), &e);
             }
             Ev::Disconnected(id) => {
+                if self.go_offline(id) {
+                    return;
+                }
                 let gone = {
                     let mut synths = self.synths.borrow_mut();
                     let k = synths.iter().position(|s| s.id == id);
@@ -387,7 +474,37 @@ impl App {
 
 #[cfg(test)]
 mod tests {
-    use crate::app::{synth_name, target_of};
+    use crate::app::{reattach_index, synth_name, target_of};
+
+    const XD: &str = "korg-minilogue-xd";
+
+    /// A synth that comes back takes the entry it left on the same port;
+    /// on another port (re-plugged elsewhere), the first of its model.
+    #[test]
+    fn reattach_prefers_same_port() {
+        let entries = [
+            (false, false, XD, "xd A 28:1"),
+            (false, false, XD, "xd B 32:1"),
+        ];
+        assert_eq!(reattach_index(&entries, XD, "xd B 32:1", false), Some(1));
+        assert_eq!(reattach_index(&entries, XD, "xd C 40:1", false), Some(0));
+    }
+
+    /// Only an offline real synth of the same model is taken; a simulated
+    /// connection never takes one.
+    #[test]
+    fn reattach_skips_online_simulated_and_other_models() {
+        let entries = [
+            (true, false, XD, "xd A 28:1"),
+            (false, false, "sequential-prophet-rev2", "rev2 36:0"),
+            (false, true, XD, ""),
+        ];
+        assert_eq!(reattach_index(&entries, XD, "xd A 28:1", false), None);
+        assert_eq!(
+            reattach_index(&[(false, false, XD, "xd")], XD, "", true),
+            None
+        );
+    }
 
     #[test]
     fn send_targets_a_synth_of_the_library_driver() {

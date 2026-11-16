@@ -98,6 +98,9 @@ impl App {
         let Some((id, d)) = self.active.get().zip(self.active_driver()) else {
             return;
         };
+        if !self.active_online() {
+            return;
+        }
         match action {
             SlotAction::Load(module, slot) => {
                 let ext = unit_ext(d).unwrap_or_default();
