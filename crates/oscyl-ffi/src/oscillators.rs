@@ -51,6 +51,30 @@ pub fn oscillator_families() -> Vec<OscillatorFamily> {
         .collect()
 }
 
+/// Whether `driver_id`'s synth plays Oscyl's oscillators (the minilogue
+/// xd and the prologue): Generate shows New oscillators only then.
+#[uniffi::export]
+pub fn oscillators_supported(driver_id: String) -> bool {
+    crate::synth::driver(&driver_id)
+        .ok()
+        .and_then(oscyl_midi::logue::platform)
+        .is_some_and(|p| oscyl_logue::engine::supports(&p))
+}
+
+/// Keep oscillator `patch` on `driver_id`'s shelf without a synth to load
+/// it into (`Synth.keep_oscillator` does both). Its name. Blocks.
+#[uniffi::export]
+pub fn shelve_oscillator(
+    shelf: Arc<crate::units::Shelf>,
+    driver_id: String,
+    patch: Vec<u8>,
+) -> Result<String, FfiError> {
+    let d = crate::synth::driver(&driver_id)?;
+    oscyl_app::oscillators::keep(&shelf.0, d, &self::patch(&patch)?)
+        .map(|u| u.name)
+        .map_err(|reason| FfiError::Refused { reason })
+}
+
 /// An oscillator from its bytes (`OscillatorTile.patch`).
 pub(crate) fn patch(bytes: &[u8]) -> Result<Patch, FfiError> {
     Patch::from_bytes(bytes).map_err(|e| FfiError::failed(e.to_string()))
@@ -150,5 +174,17 @@ mod tests {
         o.select(4);
         assert!(o.breed(1));
         assert_eq!(o.hand(8).unwrap().selected, 0);
+        assert!(oscillators_supported("korg-prologue".into()));
+        assert!(!oscillators_supported("sequential-prophet-rev2".into()));
+        let dir = std::env::temp_dir().join(format!("oscyl-ffi-oscs-{}", std::process::id()));
+        let shelf = crate::units::Shelf::new(dir.to_string_lossy().into_owned());
+        let p = o.hand(8).unwrap().oscillators[0].clone();
+        let name = shelve_oscillator(shelf.clone(), "korg-minilogue-xd".into(), p.patch).unwrap();
+        assert_eq!(name, p.name);
+        assert_eq!(shelf.list("korg-minilogue-xd".into()).unwrap().len(), 1);
+        let _ = std::fs::remove_dir_all(dir);
+        // Sounds with a unit the synth does not hold yet: none dealt.
+        let g = crate::generator::Generator::new("korg-minilogue-xd".into(), 1).unwrap();
+        assert!(!g.deal_with_unit(0, vec![0.5; 4], "nowhere".into()));
     }
 }

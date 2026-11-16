@@ -30,6 +30,7 @@ pub use generator::{CharacterInfo, Dealt, Generator, HandState, MacroInfo, Sound
 pub use library::{Libraries, NodeKind, OutlineLine, Trashed};
 pub use oscillators::{
     OscillatorFamily, OscillatorHand, OscillatorTile, Oscillators, oscillator_families,
+    oscillators_supported, shelve_oscillator,
 };
 pub use settings::{PlayLayout, Role, Settings, Theme, set_locale};
 pub use synth::{

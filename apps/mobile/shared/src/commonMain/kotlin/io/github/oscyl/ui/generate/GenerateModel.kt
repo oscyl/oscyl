@@ -8,6 +8,10 @@ import io.github.oscyl.core.FfiException
 import io.github.oscyl.core.Generator
 import io.github.oscyl.core.HandState
 import io.github.oscyl.core.MacroInfo
+import io.github.oscyl.core.OscillatorHand
+import io.github.oscyl.core.Oscillators
+import io.github.oscyl.core.oscillatorFamilies
+import io.github.oscyl.core.oscillatorsSupported
 import io.github.oscyl.core.SynthRef
 import io.github.oscyl.core.UnitChip
 import io.github.oscyl.core.auditionTarget
@@ -59,6 +63,14 @@ data class GenerateUi(
     val units: List<UnitChip> = emptyList(),
     /** Said once: a kept sound needs its user unit where it goes. */
     val unitWarning: String? = null,
+    /** The synth runs Oscyl's oscillators: New oscillators shows. */
+    val oscillatorsOn: Boolean = false,
+    /** The hand of new oscillators; null before the first. */
+    val oscillators: OscillatorHand? = null,
+    /** A synth of this model is connected (Deal with a new oscillator loads into it). */
+    val connected: Boolean = false,
+    /** The new oscillator loading for Deal with a new oscillator: its sounds follow once the synth lists it. */
+    val pending: String? = null,
 )
 
 /** The families [characters] come in, in the core's order. */
@@ -86,6 +98,12 @@ interface GenerateActions {
     fun step(delta: Int) {}
     fun keepInSlot() {}
     fun keepInLibrary() {}
+    fun dealOscillators() {}
+    fun selectOscillator(i: Int) {}
+    fun varyOscillator() {}
+    fun breedOscillator(other: Int) {}
+    fun keepOscillator() {}
+    fun dealWithNewOscillator() {}
 }
 
 /** Does nothing: previews. */
@@ -114,6 +132,9 @@ class GenerateModel(
 
     /** Each synth's generator, kept: going back to a synth finds its hands as they were. */
     private val generators = mutableMapOf<String, Generator>()
+
+    /** The new oscillators' hands, the same for every synth that runs them. */
+    private val oscillators = Oscillators(seed.toULong())
     private val models = drivers().associate { it.id to it.model }
 
     init {
@@ -121,7 +142,9 @@ class GenerateModel(
             combine(library.open, synth.cards) { open, cards -> open to cards.filter { it.connected } }.collect { (open, cards) ->
                 val id = open?.document?.driverId() ?: cards.firstOrNull()?.driverId ?: drivers().first().id
                 if (id != driver) use(id)
-                _ui.update { it.copy(slot = open?.let { o -> o.document.slotLabel(o.index.toUInt()) }) }
+                _ui.update {
+                    it.copy(slot = open?.let { o -> o.document.slotLabel(o.index.toUInt()) }, connected = cards.any { c -> c.driverId == id })
+                }
             }
         }
         // A synth listed its slots: "My units" follows (the core keeps each synth's units).
@@ -143,6 +166,9 @@ class GenerateModel(
             pages = g.pages(),
             slot = _ui.value.slot,
             units = g.units(),
+            oscillatorsOn = oscillatorsSupported(id),
+            oscillators = _ui.value.oscillators,
+            connected = synth.cards.value.any { it.connected && it.driverId == id },
         )
         show(play = false)
     }
@@ -157,6 +183,10 @@ class GenerateModel(
     private fun refreshUnits() {
         val g = generator ?: return
         _ui.update { it.copy(units = g.units()) }
+        // The new oscillator is in a slot with its parameters known: deal sounds that use it.
+        val name = _ui.value.pending ?: return
+        val ui = _ui.value
+        dealt { g2 -> g2.dealWithUnit(ui.character.toUInt(), ui.values.map { it / 100f }, name).also { ok -> if (ok) _ui.update { it.copy(pending = null) } } }
     }
 
     override fun unitOn(i: Int, on: Boolean) {
@@ -300,12 +330,61 @@ class GenerateModel(
         }
     }
 
+    /** Run [work] on the oscillators off the main thread, then show their hand. */
+    private fun oscillatorsDealt(work: (Oscillators) -> Boolean) {
+        if (_ui.value.busy) return
+        _ui.update { it.copy(busy = true) }
+        viewModelScope.launch {
+            val hand = withContext(Dispatchers.IO) { if (work(oscillators)) oscillators.hand(WAVE_POINTS) else null }
+            _ui.update { it.copy(busy = false, oscillators = hand ?: it.oscillators) }
+        }
+    }
+
+    override fun dealOscillators() = oscillatorsDealt { it.deal(null); true }
+
+    override fun selectOscillator(i: Int) {
+        if (_ui.value.busy) return
+        oscillators.select(i.toUInt())
+        _ui.update { it.copy(oscillators = it.oscillators?.copy(selected = i.toUInt())) }
+    }
+
+    override fun varyOscillator() = oscillatorsDealt { it.vary(_ui.value.amount.toUInt()) }
+
+    override fun breedOscillator(other: Int) = oscillatorsDealt { it.breed(other.toUInt()) }
+
+    /** Keep the picked oscillator: on the shelf, and into the synth when one is connected. */
+    override fun keepOscillator() {
+        val hand = _ui.value.oscillators ?: return
+        val tile = hand.oscillators.getOrNull(hand.selected.toInt()) ?: return
+        val id = driver ?: return
+        viewModelScope.launch { synth.keepOscillator(id, tile.patch) }
+    }
+
+    /** Make an oscillator, load it, and deal sounds that use it once the synth lists it. */
+    override fun dealWithNewOscillator() {
+        val id = driver ?: return
+        if (_ui.value.busy || _ui.value.pending != null) return
+        viewModelScope.launch {
+            val tile = withContext(Dispatchers.IO) {
+                Oscillators(kotlin.random.Random.nextLong().toULong()).use { o ->
+                    o.deal(oscillatorFamilies().random().id)
+                    o.hand(WAVE_POINTS)?.oscillators?.firstOrNull()
+                }
+            } ?: return@launch
+            if (synth.keepOscillator(id, tile.patch) == true) _ui.update { it.copy(pending = tile.name) }
+        }
+    }
+
     override fun onCleared() {
         generators.values.forEach { it.close() }
+        oscillators.close()
     }
 
     private companion object {
         /** The tiles' pictures are small. */
         const val POINTS = 96u
+
+        /** One cycle of an oscillator, small. */
+        const val WAVE_POINTS = 96u
     }
 }

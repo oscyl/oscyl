@@ -251,6 +251,17 @@
     <string name="gen_with">con %1$s</string>
     <string name="gen_unit_warning">Questo suono usa un\'unità utente</string>
     <string name="gen_unit_ok">OK</string>
+    <string name="gen_osc">Nuovi oscillatori</string>
+    <string name="gen_osc_intro">Oscillatori tutti tuoi per gli slot utente del synth. Conservane uno per caricarlo: Genera poi lo usa.</string>
+    <string name="gen_osc_deal">Creane sei</string>
+    <string name="gen_osc_deal_with">Crea con un nuovo oscillatore</string>
+    <string name="gen_osc_offline">Collega il synth per caricare un nuovo oscillatore</string>
+    <string name="gen_osc_empty">Ancora nessun oscillatore: premi Creane sei.</string>
+    <string name="gen_osc_keep">Conserva</string>
+    <string name="gen_osc_params">Parametri: %1$s</string>
+    <string name="gen_osc_waiting">Caricamento di «%1$s». I suoni arrivano appena il synth lo elenca.</string>
+    <string name="osc_loading">Caricamento di «%1$s»…</string>
+    <string name="osc_shelved">«%1$s» è sullo scaffale. Collega il synth per caricarlo.</string>
     <string name="units_shelf">Scaffale</string>
     <string name="units_shelf_add">Aggiungi…</string>
     <string name="units_shelf_empty">Lo scaffale è ancora vuoto. Aggiungi un file di unità per tenerlo qui.</string>

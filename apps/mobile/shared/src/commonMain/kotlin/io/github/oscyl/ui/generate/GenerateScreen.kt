@@ -125,6 +125,18 @@ import io.github.oscyl.core.HandState
 import io.github.oscyl.core.MacroInfo
 import io.github.oscyl.core.MarkStyle
 import io.github.oscyl.core.SoundTile
+import io.github.oscyl.core.OscillatorHand
+import io.github.oscyl.core.OscillatorTile
+import androidx.compose.ui.graphics.Color
+import io.github.oscyl.shared.generated.resources.gen_osc
+import io.github.oscyl.shared.generated.resources.gen_osc_deal
+import io.github.oscyl.shared.generated.resources.gen_osc_deal_with
+import io.github.oscyl.shared.generated.resources.gen_osc_empty
+import io.github.oscyl.shared.generated.resources.gen_osc_intro
+import io.github.oscyl.shared.generated.resources.gen_osc_keep
+import io.github.oscyl.shared.generated.resources.gen_osc_offline
+import io.github.oscyl.shared.generated.resources.gen_osc_params
+import io.github.oscyl.shared.generated.resources.gen_osc_waiting
 import io.github.oscyl.shared.generated.resources.Res
 import io.github.oscyl.shared.generated.resources.gen_breed
 import io.github.oscyl.shared.generated.resources.gen_character
@@ -272,6 +284,7 @@ fun GenerateScreen(ui: GenerateUi, actions: GenerateActions, modifier: Modifier 
                 Hand(hand, actions, Modifier.bringIntoViewRequester(seen))
                 HandActions(ui, hand, actions)
             }
+            if (ui.oscillatorsOn) NewOscillators(ui, actions)
         }
     }
     // The page's actions float at the foot's end above the island, the page scrolling
@@ -690,6 +703,124 @@ private fun HandActions(ui: GenerateUi, hand: HandState, actions: GenerateAction
     }
 }
 
+/**
+ * New oscillators (on a synth that runs Oscyl's engine): Make six and Deal with a new
+ * oscillator (which loads one and deals sounds that use it: it needs the synth), then the
+ * six as lifted tiles like the sounds (one cycle of the wave, the name, the family and the
+ * parameters' names), and for the one picked Keep, Vary and Breed with. While a new
+ * oscillator loads, a line at the section's end says so (nothing under it moves).
+ */
+@Composable
+private fun NewOscillators(ui: GenerateUi, actions: GenerateActions) {
+    val c = OscylTheme.colors
+    val type = MaterialTheme.typography
+    var breeding by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.testTag("generate-oscillators"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Legend(stringResource(Res.string.gen_osc))
+        BasicText(stringResource(Res.string.gen_osc_intro), style = type.bodyMedium.copy(color = c.legend))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedAction(stringResource(Res.string.gen_osc_deal), actions::dealOscillators, Modifier.testTag("generate-osc-deal"), enabled = !ui.busy)
+            val offline = stringResource(Res.string.gen_osc_offline)
+            OutlinedAction(
+                stringResource(Res.string.gen_osc_deal_with),
+                actions::dealWithNewOscillator,
+                Modifier.testTag("generate-osc-deal-with").then(if (!ui.connected) Modifier.semantics { stateDescription = offline } else Modifier),
+                enabled = ui.connected && !ui.busy && ui.pending == null,
+            )
+        }
+        val hand = ui.oscillators
+        if (hand == null) {
+            BasicText(stringResource(Res.string.gen_osc_empty), style = type.bodyMedium.copy(color = c.legend))
+        } else {
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val columns = if (maxWidth >= 600.dp) 3 else 2
+                FlowRow(
+                    Modifier.selectableGroup().fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    maxItemsInEachRow = columns,
+                ) {
+                    hand.oscillators.forEachIndexed { i, o ->
+                        OscillatorTile(o, i == hand.selected.toInt(), Modifier.weight(1f)) { actions.selectOscillator(i) }
+                    }
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedAction(
+                    stringResource(Res.string.gen_osc_keep), actions::keepOscillator, Modifier.testTag("generate-osc-keep"),
+                    leading = { Image(painterResource(Res.drawable.ic_keep), null, Modifier.size(18.dp), colorFilter = ColorFilter.tint(c.ink)) },
+                    enabled = !ui.busy,
+                )
+                OutlinedAction(stringResource(Res.string.gen_vary), actions::varyOscillator, enabled = !ui.busy)
+                OutlinedAction(stringResource(Res.string.gen_breed), { breeding = !breeding }, role = Role.DropdownList, enabled = !ui.busy)
+            }
+            if (breeding) {
+                val what = stringResource(Res.string.gen_breed)
+                FlowRow(
+                    Modifier.semantics { contentDescription = what },
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    hand.oscillators.forEachIndexed { i, o ->
+                        if (i != hand.selected.toInt()) OutlinedAction(o.name, { breeding = false; actions.breedOscillator(i) })
+                    }
+                }
+            }
+        }
+        ui.pending?.let { name ->
+            BasicText(
+                stringResource(Res.string.gen_osc_waiting, name),
+                Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                style = type.bodySmall.copy(color = c.legend, textDirection = TextDirection.Content),
+            )
+        }
+    }
+}
+
+/** An oscillator of the hand: one cycle of its wave, its name, its family and parameters. */
+@Composable
+private fun OscillatorTile(o: OscillatorTile, picked: Boolean, modifier: Modifier, onPick: () -> Unit) {
+    val c = OscylTheme.colors
+    val type = MaterialTheme.typography
+    val shape = RoundedCornerShape(OscylTokens.radiusPanel)
+    val interaction = remember { MutableInteractionSource() }
+    val motion = LocalOscylMotion.current
+    val fill by animateColorAsState(if (picked) c.plate else c.raised, tween(if (motion) OscylTokens.baseMs else 0, easing = OscylTokens.easing))
+    val params = stringResource(Res.string.gen_osc_params, o.params.joinToString(", "))
+    Column(
+        modifier
+            .liftedPlate(c, shape, fill)
+            .selectable(picked, interaction, indication = null, role = Role.RadioButton, onClick = onPick)
+            .semantics { stateDescription = params }
+            .touchStates(interaction, shape, c.press)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        val ink = if (picked) c.onPlate else c.ink
+        Wave(o.wave, ink, Modifier.fillMaxWidth().height(40.dp))
+        BasicText(o.name, style = type.bodyMedium.copy(color = ink, fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        val caption = (listOf(o.family) + o.params).joinToString(" · ")
+        BasicText(caption, style = type.bodySmall.copy(color = if (picked) c.plateLegend else c.legend), maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** One cycle of a wave (each point -1 to 1), drawn in [pen] across the box. */
+@Composable
+private fun Wave(points: List<Float>, pen: Color, modifier: Modifier) {
+    val path = remember(points) { androidx.compose.ui.graphics.Path() }
+    Canvas(modifier.clearAndSetSemantics {}) {
+        path.reset()
+        val inset = 2.dp.toPx()
+        val h = size.height / 2 - inset
+        points.forEachIndexed { i, v ->
+            val x = if (points.size > 1) size.width * i / (points.size - 1) else 0f
+            val y = size.height / 2 - v.coerceIn(-1f, 1f) * h
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(path, pen, style = Stroke(1.5.dp.toPx()))
+    }
+}
+
 // Sample state for the previews and the device checks: plain values, no model, no core calls.
 
 private fun wave(k: Float) = GraphShape(
@@ -719,6 +850,14 @@ val SampleGenerate = GenerateUi(
         at = 1u,
         count = 2u,
     ),
+    oscillatorsOn = true,
+    connected = true,
+    oscillators = OscillatorHand(
+        listOf("Cekotin" to "Wavetable", "Taedras" to "FM", "Sadylus" to "Fold", "Thirol" to "Formant").mapIndexed { i, (n, f) ->
+            OscillatorTile(n, f, listOf("Bend", "Sub", "Tone").take(1 + i % 3), (0..47).map { x -> sin(2 * PI.toFloat() * (1 + i) * x / 48f) }, ByteArray(0))
+        },
+        selected = 0u,
+    ),
 )
 
 @Composable
@@ -741,3 +880,17 @@ private fun generate_a11y() = GeneratePreview()
 @OscylSizePreviews
 @Composable
 private fun generate_sizes() = GeneratePreview()
+
+/** New oscillators alone (the page's end, which the whole-page previews do not reach). */
+@Composable
+private fun OscillatorsPreview(mode: OscylThemeMode = OscylThemeMode.Dark, ui: GenerateUi = SampleGenerate) = OscylTheme(mode) {
+    Box(Modifier.fillMaxSize().background(OscylTheme.colors.ground).padding(16.dp)) { NewOscillators(ui, NoGenerateActions) }
+}
+
+@OscylPreviews
+@Composable
+private fun generate_oscillators(@PreviewParameter(ThemeModes::class) mode: OscylThemeMode) = OscillatorsPreview(mode)
+
+@OscylA11yPreviews
+@Composable
+private fun generate_oscillators_a11y() = OscillatorsPreview(ui = SampleGenerate.copy(pending = "Cekotin", connected = false))

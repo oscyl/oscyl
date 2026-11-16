@@ -38,6 +38,9 @@ import io.github.oscyl.shared.generated.resources.notice_synth_silent
 import io.github.oscyl.shared.generated.resources.notice_unit_lost
 import io.github.oscyl.shared.generated.resources.units_no_empty
 import io.github.oscyl.shared.generated.resources.units_shelf_added
+import io.github.oscyl.shared.generated.resources.osc_loading
+import io.github.oscyl.shared.generated.resources.osc_shelved
+import io.github.oscyl.core.shelveOscillator
 import io.github.oscyl.shared.generated.resources.units_no_synth
 import io.github.oscyl.ui.library.reason
 import kotlinx.coroutines.Dispatchers
@@ -189,6 +192,28 @@ class SynthModel(
             } catch (e: FfiException) {
                 _notice.value = e.reason()
             }
+        }
+    }
+
+    /**
+     * Keep oscillator [patch] (`OscillatorTile.patch`) for [driverId]'s synth: on the shelf, and
+     * into the first free oscillator slot of a connected synth of that model (the synth says so
+     * when they are all taken). True when a synth takes it, false when it waits on the shelf, null
+     * when it could not be kept; the notice says which.
+     */
+    suspend fun keepOscillator(driverId: String, patch: ByteArray): Boolean? {
+        val s = shelf ?: return null
+        val id = _cards.value.firstOrNull { it.connected && it.driverId == driverId }?.let { w(it.id) }
+        return try {
+            val name = withContext(Dispatchers.IO) {
+                if (id != null) synth.keepOscillator(id, driverId, s, patch) else shelveOscillator(s, driverId, patch)
+            }
+            _notice.value = getString(if (id != null) Res.string.osc_loading else Res.string.osc_shelved, name)
+            refreshShelf(driverId)
+            id != null
+        } catch (e: FfiException) {
+            _notice.value = e.reason()
+            null
         }
     }
 

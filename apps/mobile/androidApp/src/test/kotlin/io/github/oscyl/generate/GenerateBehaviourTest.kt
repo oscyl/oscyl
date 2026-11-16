@@ -174,6 +174,35 @@ class GenerateBehaviourTest {
         assertNull(generate.ui.value.code)
     }
 
+    @Test
+    fun newOscillatorsAreDealtVariedBredAndKept() {
+        val shelf = temp.newFolder("units").path
+        val synth = make(SynthModel::class) { SynthModel(NoMidi, shelfDir = shelf) }
+        val library = make(LibraryModel::class) { LibraryModel(temp.newFolder("libraries").path, synth) }
+        val generate = make(GenerateModel::class) { GenerateModel(library, synth, seed = 3) }
+        compose.setContent { OscylTheme(OscylThemeMode.Dark) { GenerateScreen(generate) } }
+        await { generate.ui.value.oscillatorsOn }
+        // No synth: Deal with a new oscillator waits for one.
+        assertTrue(!generate.ui.value.connected)
+        compose.onNodeWithTag("generate-osc-deal").performScrollTo().performClick()
+        await { generate.ui.value.oscillators != null && !generate.ui.value.busy }
+        val first = generate.ui.value.oscillators!!
+        assertEquals(6, first.oscillators.size)
+        assertTrue(first.oscillators.all { it.wave.size == 96 && it.params.isNotEmpty() })
+        assertNotNull(compose.onNodeWithText(first.oscillators[0].name).fetchSemanticsNode())
+        compose.runOnIdle { generate.selectOscillator(2) }
+        assertEquals(2u, generate.ui.value.oscillators!!.selected)
+        compose.runOnIdle { generate.varyOscillator() }
+        await { !generate.ui.value.busy && generate.ui.value.oscillators!!.oscillators.none { o -> first.oscillators.any { it.name == o.name } } }
+        compose.runOnIdle { generate.breedOscillator(1) }
+        await { !generate.ui.value.busy && generate.ui.value.oscillators!!.selected == 0u }
+        // Kept with no synth: on the shelf, said so.
+        val kept = generate.ui.value.oscillators!!.oscillators[0].name
+        compose.onNodeWithTag("generate-osc-keep").performScrollTo().performClick()
+        await { synth.notice.value?.contains(kept) == true }
+        assertTrue(java.io.File(shelf).walk().any { it.isFile && it.name.startsWith(kept) })
+    }
+
     private companion object {
         const val TIMEOUT_MS = 30_000L
         const val XD = "korg-minilogue-xd"

@@ -321,6 +321,17 @@
     <string name="gen_with">with %1$s</string>
     <string name="gen_unit_warning">This sound uses a user unit</string>
     <string name="gen_unit_ok">OK</string>
+    <string name="gen_osc">New oscillators</string>
+    <string name="gen_osc_intro">Oscillators of your own for the synth’s user slots. Keep one to load it: Generate then uses it.</string>
+    <string name="gen_osc_deal">Make six</string>
+    <string name="gen_osc_deal_with">Deal with a new oscillator</string>
+    <string name="gen_osc_offline">Connect the synth to load a new oscillator</string>
+    <string name="gen_osc_empty">No oscillators yet: press Make six.</string>
+    <string name="gen_osc_keep">Keep</string>
+    <string name="gen_osc_params">Parameters: %1$s</string>
+    <string name="gen_osc_waiting">Loading “%1$s”. Its sounds follow once the synth lists it.</string>
+    <string name="osc_loading">Loading “%1$s”…</string>
+    <string name="osc_shelved">“%1$s” is on the shelf. Connect the synth to load it.</string>
     <!-- The shelf: unit files Oscyl keeps, ready to load into a free slot. -->
     <string name="units_shelf">Shelf</string>
     <string name="units_shelf_add">Add…</string>
