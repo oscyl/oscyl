@@ -216,17 +216,17 @@ pub(crate) fn mutability(f: &Field) -> Mutability {
 }
 
 /// Modulation destinations, in the User's Guide's order (see the module
-/// docs: unconfirmed).
+/// docs), Appendix B: 8 and 9 are each oscillator's shape, 10 both.
 mod dest {
     pub const OFF: u16 = 0;
     pub const OSC_1: u16 = 1;
     pub const FREQ: u16 = 3;
-    pub const SHAPE: u16 = 9;
-    pub const CUTOFF: u16 = 10;
-    pub const VCA: u16 = 13;
-    pub const PAN: u16 = 14;
+    pub const SHAPE: u16 = 10;
+    pub const CUTOFF: u16 = 11;
+    pub const VCA: u16 = 14;
+    pub const PAN: u16 = 15;
     /// The ones vary may switch to.
-    pub const KNOWN: &[u16] = &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+    pub const KNOWN: &[u16] = &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 }
 
 /// Modulation sources, likewise.
