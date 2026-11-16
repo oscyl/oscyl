@@ -489,7 +489,7 @@
   },
   {
    "name": "uniffi",
-   "version": "0.32.0",
+   "version": "0.32.2",
    "licence": "MPL-2.0",
    "url": "https://github.com/mozilla/uniffi-rs",
    "texts": [
@@ -498,7 +498,7 @@
   },
   {
    "name": "uniffi_core",
-   "version": "0.32.0",
+   "version": "0.32.2",
    "licence": "MPL-2.0",
    "url": "https://github.com/mozilla/uniffi-rs",
    "texts": [
@@ -507,7 +507,7 @@
   },
   {
    "name": "uniffi_internal_macros",
-   "version": "0.32.0",
+   "version": "0.32.2",
    "licence": "MPL-2.0",
    "url": "https://github.com/mozilla/uniffi-rs",
    "texts": [
@@ -516,7 +516,7 @@
   },
   {
    "name": "uniffi_macros",
-   "version": "0.32.0",
+   "version": "0.32.2",
    "licence": "MPL-2.0",
    "url": "https://github.com/mozilla/uniffi-rs",
    "texts": [
@@ -525,7 +525,7 @@
   },
   {
    "name": "uniffi_meta",
-   "version": "0.32.0",
+   "version": "0.32.2",
    "licence": "MPL-2.0",
    "url": "https://github.com/mozilla/uniffi-rs",
    "texts": [
@@ -534,7 +534,7 @@
   },
   {
    "name": "uniffi_pipeline",
-   "version": "0.32.0",
+   "version": "0.32.2",
    "licence": "MPL-2.0",
    "url": "https://github.com/mozilla/uniffi-rs",
    "texts": [
