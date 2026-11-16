@@ -1002,6 +1002,7 @@ impl App {
     /// Generate's Keep in Library.
     fn keep_in_library(&self, j: Option<usize>) {
         if let Some((d, p)) = self.generator.get().and_then(|g| g.selected_program()) {
+            self.warn_about_units(d, &p, false);
             self.put_in_library(j, d, p, Info::default());
         }
     }

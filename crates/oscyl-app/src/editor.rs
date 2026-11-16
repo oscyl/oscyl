@@ -67,6 +67,50 @@ pub fn raw_of(control: Control, min: u16, max: u16, option: usize) -> Option<u16
 
 /// `raw` for `field`, read in the context of program `p` (a voice mode
 /// depth names a chord or an arpeggio depending on the mode), translated.
+/// When `field` is, in `p`, a parameter of a user unit the synth's
+/// palette knows ([`crate::palette`]): the unit's own name for it, and the
+/// lowest and highest value a program stores for it (the value itself;
+/// the value plus 100 when it runs either side of zero).
+pub fn unit_param(d: &dyn Driver, p: &[u8], field: usize) -> Option<(String, u16, u16)> {
+    let (kind, slot, n) = d.unit_param(p, field)?;
+    let palette = crate::palette::shared().all(d);
+    let unit = palette
+        .units
+        .iter()
+        .find(|u| u.kind == kind && u.slot == slot)?;
+    let param = unit.params.as_ref()?.get(n)?;
+    let f = d.fields().get(field)?;
+    let stored = |v: i16| {
+        let v = match param.kind {
+            oscyl_driver::UnitParamKind::Bipolar => v + 100,
+            _ => v,
+        };
+        (v.max(0) as u16).clamp(f.min, f.max)
+    };
+    let (lo, hi) = (stored(param.min), stored(param.max));
+    Some((param.name.clone(), lo.min(hi), hi.max(lo)))
+}
+
+/// The label for `field` in `p`, in the app's language: the unit's own
+/// word where the field is a known user unit's parameter (never
+/// translated), else the driver's.
+pub fn label_in(d: &dyn Driver, p: &[u8], field: usize) -> String {
+    match unit_param(d, p, field) {
+        Some((name, ..)) if !name.is_empty() => name,
+        _ => crate::i18n::tr(&d.label_in(p, field)),
+    }
+}
+
+/// The lowest and highest value `field` takes in `p`: a known user unit's
+/// parameter keeps to what the unit declares, any other field to its own
+/// range.
+pub fn range_in(d: &dyn Driver, p: &[u8], field: usize) -> (u16, u16) {
+    match unit_param(d, p, field) {
+        Some((_, lo, hi)) => (lo, hi),
+        None => d.fields().get(field).map_or((0, 0), |f| (f.min, f.max)),
+    }
+}
+
 pub fn format_in(d: &dyn Driver, p: &[u8], field: usize, raw: u16) -> String {
     let mut q = p.to_vec();
     match d.set(&mut q, field, raw) {

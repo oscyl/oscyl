@@ -388,7 +388,7 @@ impl App {
         let layout = self.play_layout();
         let read_only = self.with_doc(|doc| doc.is_read_only(i)).unwrap_or(true);
         let shown = |f: Option<usize>| f.filter(|&f| d.relevant(&prog, f));
-        let label = |f: usize| tr(&d.label_in(&prog, f));
+        let label = |f: usize| oscyl_app::editor::label_in(d, &prog, f);
         let value = |f: usize, of: &[u8]| d.get(of, f).unwrap_or(0);
         p.updating.set(true);
         p.name

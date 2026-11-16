@@ -667,6 +667,18 @@ impl Driver for MinilogueXd {
         Ok(out)
     }
 
+    fn unit_param(&self, p: &[u8], i: usize) -> Option<(UnitKind, u8, usize)> {
+        use Field::*;
+        let (p, f) = program_field(p, i)?;
+        let n = [
+            UserParam1, UserParam2, UserParam3, UserParam4, UserParam5, UserParam6,
+        ]
+        .iter()
+        .position(|u| *u == f)?;
+        let osc = self.capabilities().units.iter().find(|k| k.name == "osc")?;
+        (p.get(MultiType) == 2).then(|| (*osc, p.get(SelectUser) as u8, n))
+    }
+
     fn needs(&self, p: &[u8]) -> Vec<(UnitKind, u8)> {
         let Ok(p) = program(p) else { return vec![] };
         generate::needs(&p)

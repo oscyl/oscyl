@@ -388,7 +388,7 @@ impl ProgramEditor {
     fn state(&self, field: usize, p: &[u8], base: &[u8]) -> FieldState {
         let d = self.driver;
         let spec = d.fields().get(field).copied();
-        let (min, max) = spec.map_or((0, 0), |f| (f.min, f.max));
+        let min = spec.map_or(0, |f| f.min);
         let control = d.control(p, field);
         let raw = d.get(p, field).unwrap_or(min);
         let saved_raw = d.get(base, field).unwrap_or(min);
@@ -396,11 +396,13 @@ impl ProgramEditor {
         let h = d.help(field);
         FieldState {
             field: u(field),
-            label: tr(&d.label_in(p, field)),
+            // A known user unit's parameter reads by the unit's own name
+            // and keeps to its declared range.
+            label: ed::label_in(d, p, field),
             control: match ed::widget(control) {
                 Widget::Dial => ControlKind::Dial {
-                    min: min.into(),
-                    max: max.into(),
+                    min: ed::range_in(d, p, field).0.into(),
+                    max: ed::range_in(d, p, field).1.into(),
                     large: d.emphasized(field),
                 },
                 Widget::Segments(n) => ControlKind::Segments { options: words(n) },

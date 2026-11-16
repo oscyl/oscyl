@@ -263,6 +263,12 @@ pub trait Driver: Send + Sync {
     fn needs(&self, _program: &[u8]) -> Vec<(UnitKind, u8)> {
         vec![]
     }
+    /// When `field` is, under `program`'s settings, a parameter of a user
+    /// unit: the unit's kind and slot, and which of its parameters (from
+    /// 0). Apps that know the unit show its own name and range there.
+    fn unit_param(&self, _program: &[u8], _field: usize) -> Option<(UnitKind, u8, usize)> {
+        None
+    }
     /// Step `t` (`0.0..=1.0`) of the way from `a` to `b`: 0 is `a`, 1 is
     /// `b`'s sound, and steps in between never turn back, so a row of them
     /// goes smoothly from one to the other. Same inputs, same bytes; `seed`

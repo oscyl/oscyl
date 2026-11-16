@@ -70,6 +70,10 @@ pub struct Generator {
     chips: adw::WrapBox,
     keep_chips: RefCell<Vec<(usize, gtk::ToggleButton)>>,
     keep_caption: gtk::Label,
+    /// "My units": one chip per user unit the synth holds, on unless the
+    /// player excludes it; hidden while it holds none.
+    units_legend: gtk::Label,
+    units: adw::WrapBox,
     /// "Hold from Slot 004": the stages' legend names the slot they come from.
     hold_legend: gtk::Label,
     offline: gtk::Label,
@@ -170,7 +174,12 @@ fn character_tile(d: &dyn Driver, i: usize) -> gtk::FlowBoxChild {
 
 /// A dealt sound's tile: name, a lamp while it plays, its category (and
 /// where it was kept), and the six stages drawn small.
-fn sound_tile(d: &dyn Driver, p: &[u8], kept: Option<&str>) -> (gtk::FlowBoxChild, gtk::Widget) {
+fn sound_tile(
+    d: &dyn Driver,
+    p: &[u8],
+    kept: Option<&str>,
+    units: &[String],
+) -> (gtk::FlowBoxChild, gtk::Widget) {
     let name = d.name(p).unwrap_or_default();
     let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
     body.add_css_class("gen-tile");
@@ -196,6 +205,17 @@ fn sound_tile(d: &dyn Driver, p: &[u8], kept: Option<&str>) -> (gtk::FlowBoxChil
             .replace("{category}", &category)
             .replace("{slot}", slot),
         None => category,
+    };
+    // The user units it relies on: "Pad · with waves".
+    let caption = if units.is_empty() {
+        caption
+    } else {
+        let with = tr("with {units}").replace("{units}", &units.join(", "));
+        if caption.is_empty() {
+            with
+        } else {
+            format!("{caption} · {with}")
+        }
     };
     let legend = gtk::Label::builder()
         .label(&caption)
@@ -401,6 +421,20 @@ impl Generator {
             .build();
         page.append(&keep_caption);
 
+        // The synth's own units, as sources.
+        let units_legend = legend(&tr("My units"));
+        units_legend.set_tooltip_text(Some(&tr(
+            "User oscillators and effects the synth holds. About one sound in three uses one.",
+        )));
+        units_legend.set_visible(false);
+        page.append(&units_legend);
+        let units = adw::WrapBox::builder()
+            .child_spacing(6)
+            .line_spacing(6)
+            .visible(false)
+            .build();
+        page.append(&units);
+
         // Sounds.
         let sounds_head = gtk::Box::new(gtk::Orientation::Horizontal, 4);
         sounds_head.add_css_class("gen-sounds-head");
@@ -604,6 +638,8 @@ impl Generator {
             chips,
             keep_chips: RefCell::default(),
             keep_caption,
+            units_legend,
+            units,
             hold_legend,
             offline,
             sounds,
@@ -677,6 +713,7 @@ impl Generator {
             self.characters.append(&character_tile(d, i));
         }
         self.build_families(d);
+        self.refresh_units();
         self.generate.set_sensitive(!d.characters().is_empty());
         self.surprise.set_sensitive(!d.characters().is_empty());
         self.enter.set_sensitive(!d.characters().is_empty());
@@ -705,6 +742,46 @@ impl Generator {
         self.select_character(0);
         let target = self.target.borrow_mut().take();
         self.set_target(target);
+    }
+
+    /// "My units": the user units the synth of this page's driver held
+    /// when last listed, each a chip that is on unless the player excluded
+    /// it (kept per synth for the session by the app's palettes).
+    pub fn refresh_units(&self) {
+        let d = self.driver.get();
+        while let Some(c) = self.units.first_child() {
+            self.units.remove(&c);
+        }
+        let entries = oscyl_app::palette::shared().units(d);
+        for e in &entries {
+            let b = gtk::ToggleButton::builder()
+                .label(&e.unit.name)
+                .css_classes(["chip"])
+                .active(e.on)
+                .tooltip_text(format!("{} {}", e.section, e.unit.slot + 1))
+                .build();
+            b.update_property(&[gtk::accessible::Property::Label(
+                &tr("Use {name} ({section})")
+                    .replace("{name}", &e.unit.name)
+                    .replace("{section}", &e.section),
+            )]);
+            let (kind, slot) = (e.unit.kind.name, e.unit.slot);
+            let me = self.me.clone();
+            b.connect_toggled(move |b| {
+                if let Some(me) = me.upgrade() {
+                    oscyl_app::palette::shared().set_on(me.driver.get(), kind, slot, b.is_active());
+                }
+            });
+            self.units.append(&b);
+        }
+        self.units_legend.set_visible(!entries.is_empty());
+        self.units.set_visible(!entries.is_empty());
+    }
+
+    /// The hands deal with the units that are on.
+    fn use_units(&self) {
+        let palette = oscyl_app::palette::shared().palette(self.driver.get());
+        self.hands.borrow_mut().set_palette(palette);
     }
 
     /// The family row: "All", then each family `d` has characters of, as
@@ -775,6 +852,7 @@ impl Generator {
     /// Surprise: the model picks a character and dials and deals; the
     /// page shows what it picked.
     fn surprise_me(&self) {
+        self.use_units();
         let picked = self.hands.borrow_mut().surprise(self.driver.get());
         if let Some((character, macros)) = picked {
             self.show_recipe(character, macros);
@@ -1055,6 +1133,7 @@ impl Generator {
             .map(|(s, _)| *s)
             .collect();
         let base = self.target.borrow().as_ref().and_then(|t| t.base.clone());
+        self.use_units();
         let dealt = self
             .hands
             .borrow_mut()
@@ -1125,7 +1204,8 @@ impl Generator {
                 .as_ref()
                 .filter(|(k, _)| *k == i)
                 .map(|(_, s)| s.as_str());
-            let (child, lamp) = sound_tile(self.driver.get(), p, kept);
+            let units = h.units.get(i).map_or(&[][..], Vec::as_slice);
+            let (child, lamp) = sound_tile(self.driver.get(), p, kept, units);
             if dealt {
                 child.add_css_class("deal");
                 child.add_css_class(&format!("deal-{i}"));
@@ -1446,6 +1526,49 @@ mod tests {
             assert_eq!(h.character, g.character.get());
             let m = g.macros.get();
             assert_eq!(g.dials[0].value(), (m.bright * 100.0).round() as u16);
+
+            // The synth's units: a chip each, on; a sound that uses one
+            // says so on its tile; an excluded unit is not used.
+            let waves = oscyl_logue::unit::UnitInfo {
+                module: oscyl_midi::logue::Module::Osc,
+                platform: 2,
+                name: "waves".into(),
+                dev_id: 0,
+                prg_id: 0,
+                version: 0x010000,
+                params: Some(vec![]),
+            };
+            let listing = |unit: Option<oscyl_logue::unit::UnitInfo>| {
+                vec![oscyl_app::synth::SlotInfo {
+                    module: oscyl_midi::logue::Module::Osc,
+                    slot: 2,
+                    name: unit.as_ref().map(|u| u.name.clone()),
+                    info: unit,
+                }]
+            };
+            assert!(!g.units.is_visible());
+            oscyl_app::palette::shared().listed(XD, &listing(Some(waves)));
+            g.refresh_units();
+            assert!(g.units.is_visible() && g.units_legend.is_visible());
+            let chip = g
+                .units
+                .first_child()
+                .and_downcast::<gtk::ToggleButton>()
+                .unwrap();
+            assert!(chip.is_active());
+            g.set_family(None);
+            g.select_character(XD.characters().iter().position(|c| c.id == "pad").unwrap());
+            g.deal();
+            let h = g.hands.borrow().current().unwrap().clone();
+            assert!(h.units.iter().any(|u| u == &["waves"]), "{:?}", h.units);
+            chip.set_active(false);
+            g.deal();
+            let h = g.hands.borrow().current().unwrap().clone();
+            assert!(h.units.iter().all(Vec::is_empty));
+            // The slot cleared: the row goes.
+            oscyl_app::palette::shared().listed(XD, &listing(None));
+            g.refresh_units();
+            assert!(!g.units.is_visible());
         });
     }
 }

@@ -1148,7 +1148,10 @@ impl Editor {
                 Ctl::Menu(gtk::DropDown::default()),
             );
         };
-        let label = tr(&d.label_in(program, field));
+        // A known user unit's parameter reads by the unit's own name and
+        // keeps to its declared range.
+        let label = oscyl_app::editor::label_in(d, program, field);
+        let (lo, hi) = oscyl_app::editor::range_in(d, program, field);
         let h = d.help(field);
         let mut tooltip = [h.summary, h.detail]
             .into_iter()
@@ -1167,7 +1170,7 @@ impl Editor {
         let (widget, ctl): (gtk::Widget, Ctl) = match kind {
             Control::Continuous => {
                 let dial = Dial::new(&label);
-                dial.set_range(spec.min, spec.max);
+                dial.set_range(lo, hi);
                 dial.set_large(d.emphasized(field));
                 // The range lives here rather than under the dial.
                 let range = tr("Range {min} to {max}")
@@ -1500,7 +1503,9 @@ fn apply_values(d: &dyn Driver, controls: &Controls, p: &[u8], base: &[u8]) {
             Ctl::Dial(dial) => {
                 // A depth reads as a detune in one mode and a duo amount
                 // in another.
-                let label = tr(&d.label_in(p, field));
+                let label = oscyl_app::editor::label_in(d, p, field);
+                let (lo, hi) = oscyl_app::editor::range_in(d, p, field);
+                dial.set_range(lo, hi);
                 dial.set_label(&label);
                 dial.update_property(&[gtk::accessible::Property::Label(&label)]);
                 dial.show(v, b);

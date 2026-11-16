@@ -156,10 +156,19 @@ msgstr ""
 msgid "Across"
 msgstr ""
 
+msgid "Add a unit file to keep it here."
+msgstr ""
+
 msgid "Add this sound to the end of a library"
 msgstr ""
 
+msgid "Add to Shelf"
+msgstr ""
+
 msgid "Adds noise to the VPM modulation."
+msgstr ""
+
+msgid "Add…"
 msgstr ""
 
 msgid "Aftertouch"
@@ -564,6 +573,9 @@ msgstr ""
 msgid "Couldn't read this library"
 msgstr ""
 
+msgid "Couldn't remove the unit"
+msgstr ""
+
 msgid "Couldn't rename the folder"
 msgstr ""
 
@@ -838,6 +850,9 @@ msgid "Envelopes"
 msgstr ""
 
 msgid "Every change to these programs is listed here; a click goes back to it."
+msgstr ""
+
+msgid "Every slot of {section} is full. Clear one first."
 msgstr ""
 
 msgid "Everything works offline; you only need the synth to listen and sync."
@@ -1152,6 +1167,9 @@ msgstr ""
 msgid "Keep Editing"
 msgstr ""
 
+msgid "Keep a unit file on the shelf"
+msgstr ""
+
 msgid "Keep as Library"
 msgstr ""
 
@@ -1302,10 +1320,19 @@ msgstr ""
 msgid "Live"
 msgstr ""
 
+msgid "Load"
+msgstr ""
+
 msgid "Load Unit"
 msgstr ""
 
+msgid "Load into the first free slot of its section"
+msgstr ""
+
 msgid "Load unit into {section}, slot {number}"
+msgstr ""
+
+msgid "Load {name} into the first free slot of {section}"
 msgstr ""
 
 msgid "Loading “{name}”…"
@@ -1526,6 +1553,9 @@ msgstr ""
 msgid "Multi Type"
 msgstr ""
 
+msgid "My units"
+msgstr ""
+
 msgid "Name"
 msgstr ""
 
@@ -1626,6 +1656,9 @@ msgid "Not read"
 msgstr ""
 
 msgid "Not stored"
+msgstr ""
+
+msgid "Nothing on the shelf yet"
 msgstr ""
 
 msgid "Nothing was synced."
@@ -2295,6 +2328,9 @@ msgstr ""
 msgid "Shape VPM"
 msgstr ""
 
+msgid "Shelf"
+msgstr ""
+
 msgid "Shift Shape Noise"
 msgstr ""
 
@@ -2314,6 +2350,9 @@ msgid "Show every change"
 msgstr ""
 
 msgid "Show in the editor"
+msgstr ""
+
+msgid "Show its parameters"
 msgstr ""
 
 msgid "Show or hide sources"
@@ -2552,6 +2591,12 @@ msgstr ""
 msgid "Synths of the logue family have slots for user oscillators and effects made with the logue SDK. Oscyl lists what is loaded in each slot."
 msgstr ""
 
+msgid "Take it off the shelf"
+msgstr ""
+
+msgid "Take {name} off the shelf"
+msgstr ""
+
 msgid "Tape"
 msgstr ""
 
@@ -2571,6 +2616,9 @@ msgid "That code has a typing mistake"
 msgstr ""
 
 msgid "That is not a recipe code"
+msgstr ""
+
+msgid "That is not a unit on the shelf."
 msgstr ""
 
 msgid "That library is for another synth."
@@ -2640,6 +2688,15 @@ msgid "This library is full: a library holds up to {max} programs."
 msgstr ""
 
 msgid "This slot is read-only (a factory bank)."
+msgstr ""
+
+msgid "This sound uses a user unit"
+msgstr ""
+
+msgid "This sound uses {units}, which the synth does not hold in that slot. It will sound different until the unit is loaded there."
+msgstr ""
+
+msgid "This sound uses {units}. A synth plays it as it sounds here only with that unit in the same slot."
 msgstr ""
 
 msgid "This synth deals no sounds"
@@ -2729,6 +2786,9 @@ msgstr ""
 msgid "Unison puts all four voices on one note, so the program plays one note at a time."
 msgstr ""
 
+msgid "Unit files Oscyl keeps for this synth. Load puts one into the first free slot of its section."
+msgstr ""
+
 msgid "Up"
 msgstr ""
 
@@ -2745,6 +2805,9 @@ msgid "Use simulated synth"
 msgstr ""
 
 msgid "Use the simulated synth"
+msgstr ""
+
+msgid "Use {name} ({section})"
 msgstr ""
 
 msgid "User"
@@ -2844,6 +2907,9 @@ msgid "User Shift"
 msgstr ""
 
 msgid "User oscillators and effects in the synth's user slots. Connect the synth to list them."
+msgstr ""
+
+msgid "User oscillators and effects the synth holds. About one sound in three uses one."
 msgstr ""
 
 msgid "V.M Depth"
@@ -3034,6 +3100,9 @@ msgstr ""
 msgid "Zero turns glide off."
 msgstr ""
 
+msgid "a user unit"
+msgstr ""
+
 msgid "edited"
 msgstr ""
 
@@ -3055,6 +3124,9 @@ msgstr ""
 msgid "was {value}"
 msgstr ""
 
+msgid "with {units}"
+msgstr ""
+
 msgid "{a} or {b} voices"
 msgstr ""
 
@@ -3065,6 +3137,9 @@ msgid "{category} · kept in slot {slot}"
 msgstr ""
 
 msgid "{first}, {second} and {count} more"
+msgstr ""
+
+msgid "{from} to {to}"
 msgstr ""
 
 msgid "{maker} · {voices}"
@@ -3130,5 +3205,11 @@ msgid "{x} and {y}"
 msgstr ""
 
 msgid "“{name}” is full: a library holds up to {max} programs."
+msgstr ""
+
+msgid "“{name}” is off the shelf"
+msgstr ""
+
+msgid "“{name}” is on the shelf"
 msgstr ""
 

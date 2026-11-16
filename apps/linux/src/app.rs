@@ -151,6 +151,8 @@ pub(crate) fn synth_name(model: &str, taken: &[String]) -> String {
 
 impl App {
     pub fn new(win: Rc<OscylWindow>) -> Rc<App> {
+        // Each synth's units, remembered for Generate between runs.
+        oscyl_app::palette::init(&glib::user_data_dir().join("oscyl").join("palettes.json"));
         let (synth, events) = synth::spawn();
         let list_title = win.list_title.clone();
         let app: Rc<App> = Rc::new_cyclic(|me: &Weak<App>| App {
@@ -539,9 +541,7 @@ impl App {
                 // time; never the "connect the synth" page.
                 let cached = self.with_synth(|s| s.slots.clone());
                 match (self.active.get(), cached) {
-                    (Some(_), Some(c)) if !c.is_empty() => {
-                        crate::units::show(&self.editor, &c, self.weak(|me, a| me.slot_action(a)))
-                    }
+                    (Some(_), Some(c)) if !c.is_empty() => self.show_units(),
                     (Some(_), _) => self.editor.show_status(
                         &tr("Oscillators and effects"),
                         &tr("Reading the synth's user slots…"),
@@ -736,6 +736,16 @@ impl App {
         });
         g.set_target(target);
         g.set_connected(self.audition_target().is_some());
+        g.refresh_units();
+    }
+
+    /// Once a session: a kept sound that relies on a user unit needs that
+    /// unit where it goes (`on_synth`: over a slot of the synth shown).
+    pub(crate) fn warn_about_units(&self, d: &'static dyn Driver, p: &[u8], on_synth: bool) {
+        let warning = oscyl_app::palette::shared().keep_warning(d, p, on_synth);
+        if let Some(w) = warning {
+            self.error_dialog(&tr("This sound uses a user unit"), &w);
+        }
     }
 
     fn on_generator(&self, ask: Ask) {
@@ -758,6 +768,8 @@ impl App {
                 let message = tr("Kept “{name}” in slot {slot}")
                     .replace("{name}", &name)
                     .replace("{slot}", &self.slot_label(i));
+                let on_synth = matches!(*self.doc_place.borrow(), Place::Synth);
+                self.warn_about_units(d, &p, on_synth);
                 self.replace_program(i, p, &message);
             }
             Ask::Open => {

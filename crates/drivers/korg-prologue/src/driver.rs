@@ -280,6 +280,22 @@ impl Driver for Prologue {
         generate::cohered(&oscyl_driver::morph_fields(self, a, b, t, seed)?, &held)
     }
 
+    fn unit_param(&self, p: &[u8], i: usize) -> Option<(UnitKind, u8, usize)> {
+        let (p, f) = program_field(p, i)?;
+        // Each timbre's "Param 1" to "Param 6" belong to its user oscillator.
+        let n: usize = f.label.strip_prefix("Param ")?.parse().ok()?;
+        if f.section != "Multi Engine" || !(1..=6).contains(&n) {
+            return None;
+        }
+        let timbre = usize::from(f.timbre?);
+        let at = |label: &str| {
+            let name = format!("{} Multi Engine {label}", crate::fields::TIMBRES[timbre].1);
+            p.get(crate::fields::field(&name))
+        };
+        let osc = self.capabilities().units.iter().find(|k| k.name == "osc")?;
+        (at("Type") == 2).then(|| (*osc, at("User Osc") as u8, n - 1))
+    }
+
     fn needs(&self, p: &[u8]) -> Vec<(UnitKind, u8)> {
         generate::needs(p)
             .into_iter()

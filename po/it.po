@@ -169,11 +169,20 @@ msgstr "Acid"
 msgid "Across"
 msgstr "In orizzontale"
 
+msgid "Add a unit file to keep it here."
+msgstr "Aggiungi un file di unità per tenerlo qui."
+
 msgid "Add this sound to the end of a library"
 msgstr "Aggiungi questo suono in fondo a una libreria"
 
+msgid "Add to Shelf"
+msgstr "Aggiungi allo scaffale"
+
 msgid "Adds noise to the VPM modulation."
 msgstr "Aggiunge rumore alla modulazione VPM."
+
+msgid "Add…"
+msgstr "Aggiungi…"
 
 msgid "Aftertouch"
 msgstr "Aftertouch"
@@ -592,6 +601,9 @@ msgstr "Impossibile leggere l'unità"
 msgid "Couldn't read this library"
 msgstr "Impossibile leggere questa libreria"
 
+msgid "Couldn't remove the unit"
+msgstr "Impossibile rimuovere l'unità"
+
 msgid "Couldn't rename the folder"
 msgstr "Impossibile rinominare la cartella"
 
@@ -878,6 +890,9 @@ msgid "Every change to these programs is listed here; a click goes back to it."
 msgstr ""
 "Ogni modifica a questi programmi è elencata qui; un clic riporta a quel "
 "punto."
+
+msgid "Every slot of {section} is full. Clear one first."
+msgstr "Tutti gli slot di {section} sono pieni. Svuotane uno prima."
 
 msgid "Everything works offline; you only need the synth to listen and sync."
 msgstr ""
@@ -1231,6 +1246,9 @@ msgstr "Tieni"
 msgid "Keep Editing"
 msgstr "Continua a modificare"
 
+msgid "Keep a unit file on the shelf"
+msgstr "Tieni un file di unità sullo scaffale"
+
 msgid "Keep as Library"
 msgstr "Tieni come libreria"
 
@@ -1385,11 +1403,20 @@ msgstr "Chiaro"
 msgid "Live"
 msgstr "Live"
 
+msgid "Load"
+msgstr "Carica"
+
 msgid "Load Unit"
 msgstr "Carica unità"
 
+msgid "Load into the first free slot of its section"
+msgstr "Carica nel primo slot libero della sua sezione"
+
 msgid "Load unit into {section}, slot {number}"
 msgstr "Carica un'unità in {section}, slot {number}"
+
+msgid "Load {name} into the first free slot of {section}"
+msgstr "Carica {name} nel primo slot libero di {section}"
 
 msgid "Loading “{name}”…"
 msgstr "Caricamento di «{name}»…"
@@ -1616,6 +1643,9 @@ msgstr "Shape multi"
 msgid "Multi Type"
 msgstr "Tipo multi"
 
+msgid "My units"
+msgstr "Le mie unità"
+
 msgid "Name"
 msgstr "Nome"
 
@@ -1718,6 +1748,9 @@ msgstr "Non letto"
 
 msgid "Not stored"
 msgstr "Non memorizzata"
+
+msgid "Nothing on the shelf yet"
+msgstr "Lo scaffale è ancora vuoto"
 
 msgid "Nothing was synced."
 msgstr "Non è stato sincronizzato nulla."
@@ -2460,6 +2493,9 @@ msgstr "Shape utente"
 msgid "Shape VPM"
 msgstr "Shape VPM"
 
+msgid "Shelf"
+msgstr "Scaffale"
+
 msgid "Shift Shape Noise"
 msgstr "Shift Shape rumore"
 
@@ -2480,6 +2516,9 @@ msgstr "Mostra tutte le modifiche"
 
 msgid "Show in the editor"
 msgstr "Mostra nell'editor"
+
+msgid "Show its parameters"
+msgstr "Mostra i suoi parametri"
 
 msgid "Show or hide sources"
 msgstr "Mostra o nascondi le sorgenti"
@@ -2738,6 +2777,12 @@ msgstr ""
 "I synth della famiglia logue hanno slot per oscillatori ed effetti utente "
 "creati con il logue SDK. Oscyl elenca cosa è caricato in ciascuno slot."
 
+msgid "Take it off the shelf"
+msgstr "Togli dallo scaffale"
+
+msgid "Take {name} off the shelf"
+msgstr "Togli {name} dallo scaffale"
+
 msgid "Tape"
 msgstr "Tape"
 
@@ -2758,6 +2803,9 @@ msgstr "Quel codice ha un errore di battitura"
 
 msgid "That is not a recipe code"
 msgstr "Non è un codice ricetta"
+
+msgid "That is not a unit on the shelf."
+msgstr "Non è un'unità dello scaffale."
 
 msgid "That library is for another synth."
 msgstr "Quella libreria è per un altro synth."
@@ -2850,6 +2898,15 @@ msgstr "Questa libreria è piena: una libreria contiene fino a {max} programmi."
 
 msgid "This slot is read-only (a factory bank)."
 msgstr "Questo slot è di sola lettura (un banco di fabbrica)."
+
+msgid "This sound uses a user unit"
+msgstr "Questo suono usa un'unità utente"
+
+msgid "This sound uses {units}, which the synth does not hold in that slot. It will sound different until the unit is loaded there."
+msgstr "Questo suono usa {units}, che il synth non ha in quello slot. Suonerà diverso finché l'unità non viene caricata lì."
+
+msgid "This sound uses {units}. A synth plays it as it sounds here only with that unit in the same slot."
+msgstr "Questo suono usa {units}. Un synth lo suona come qui solo con quell'unità nello stesso slot."
 
 msgid "This synth deals no sounds"
 msgstr "Questo synth non genera suoni"
@@ -2950,6 +3007,9 @@ msgstr ""
 "Unison mette tutte e quattro le voci su una nota, quindi il programma suona "
 "una nota alla volta."
 
+msgid "Unit files Oscyl keeps for this synth. Load puts one into the first free slot of its section."
+msgstr "I file di unità che Oscyl tiene per questo synth. Carica ne mette una nel primo slot libero della sua sezione."
+
 msgid "Up"
 msgstr "In verticale"
 
@@ -2972,6 +3032,9 @@ msgstr "Usa il synth simulato"
 
 msgid "Use the simulated synth"
 msgstr "Usa il synth simulato"
+
+msgid "Use {name} ({section})"
+msgstr "Usa {name} ({section})"
 
 msgid "User"
 msgstr "Utente"
@@ -3075,6 +3138,9 @@ msgid ""
 msgstr ""
 "Oscillatori ed effetti utente negli slot utente del synth. Collega il synth "
 "per elencarli."
+
+msgid "User oscillators and effects the synth holds. About one sound in three uses one."
+msgstr "Oscillatori ed effetti utente presenti sul synth. Circa un suono su tre ne usa uno."
 
 msgid "V.M Depth"
 msgstr "V.M Depth"
@@ -3271,6 +3337,9 @@ msgstr "Impossibile aprire la cartella delle tue librerie."
 msgid "Zero turns glide off."
 msgstr "A zero il glide è disattivato."
 
+msgid "a user unit"
+msgstr "un'unità utente"
+
 msgid "edited"
 msgstr "modificato"
 
@@ -3292,6 +3361,9 @@ msgstr "Traduzione italiana"
 msgid "was {value}"
 msgstr "era {value}"
 
+msgid "with {units}"
+msgstr "con {units}"
+
 msgid "{a} or {b} voices"
 msgstr "{a} o {b} voci"
 
@@ -3303,6 +3375,9 @@ msgstr "{category} · tenuto nello slot {slot}"
 
 msgid "{first}, {second} and {count} more"
 msgstr "{first}, {second} e altri {count}"
+
+msgid "{from} to {to}"
+msgstr "da {from} a {to}"
 
 msgid "{maker} · {voices}"
 msgstr "{maker} · {voices}"
@@ -3369,3 +3444,9 @@ msgstr "{x} e {y}"
 
 msgid "“{name}” is full: a library holds up to {max} programs."
 msgstr "«{name}» è piena: una libreria contiene fino a {max} programmi."
+
+msgid "“{name}” is off the shelf"
+msgstr "«{name}» tolta dallo scaffale"
+
+msgid "“{name}” is on the shelf"
+msgstr "«{name}» è sullo scaffale"

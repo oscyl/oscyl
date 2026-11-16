@@ -452,7 +452,11 @@ impl App {
             Ev::Slots(id, slots) => {
                 self.with_synth_id(id, |s| s.slots = slots.clone());
                 if self.active.get() == Some(id) && *self.place.borrow() == Place::Units {
-                    crate::units::show(&self.editor, &slots, self.weak(|me, a| me.slot_action(a)));
+                    self.show_units();
+                }
+                // Generate's "My units" follow the listing.
+                if let Some(g) = self.generator.get() {
+                    g.refresh_units();
                 }
             }
             Ev::Error(id, e) => {
