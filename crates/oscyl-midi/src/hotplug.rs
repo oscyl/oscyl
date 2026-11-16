@@ -19,13 +19,31 @@ pub enum Change {
 }
 
 /// What changed from `old` to `new`: appearances first, in order.
-fn diff(old: &[Candidate], new: &[Candidate]) -> Vec<Change> {
+/// What changed from `old` to `new`. `cycled` names the ports that exited
+/// meanwhile, as `"client:port"`, or `"client:"` for a whole client: one
+/// still listed under the same name left and came back.
+fn diff(old: &[Candidate], new: &[Candidate], cycled: &[String]) -> Vec<Change> {
+    let left = |c: &Candidate| {
+        let addr = c.port.rsplit(' ').next().unwrap_or_default();
+        cycled.iter().any(|x| {
+            if x.ends_with(':') {
+                addr.starts_with(x.as_str())
+            } else {
+                addr == x
+            }
+        })
+    };
     let appeared = new.iter().filter(|c| !old.contains(c));
     let gone = old.iter().filter(|c| !new.contains(c));
+    let back = old.iter().filter(|c| new.contains(c) && left(c));
+    let back: Vec<Change> = back
+        .flat_map(|c| [Change::Gone(c.clone()), Change::Appeared(c.clone())])
+        .collect();
     appeared
         .cloned()
         .map(Change::Appeared)
         .chain(gone.cloned().map(Change::Gone))
+        .chain(back)
         .collect()
 }
 
@@ -80,10 +98,18 @@ impl PortWatcher {
     /// Read pending announcements; returns each synth port that came or
     /// went.
     pub fn drain_changes(&mut self) -> Vec<Change> {
-        let mut relevant = false;
+        let (mut relevant, mut cycled) = (false, Vec::new());
         {
             let mut input = self.seq.input();
             while let Ok(ev) = input.event_input() {
+                let addr = ev.get_data::<Addr>();
+                match (ev.get_type(), addr) {
+                    (EventType::PortExit, Some(a)) => {
+                        cycled.push(format!("{}:{}", a.client, a.port))
+                    }
+                    (EventType::ClientExit, Some(a)) => cycled.push(format!("{}:", a.client)),
+                    _ => {}
+                }
                 relevant |= matches!(
                     ev.get_type(),
                     EventType::PortStart
@@ -97,7 +123,7 @@ impl PortWatcher {
             return vec![];
         }
         let now = self.scan();
-        let changes = diff(&self.ports, &now);
+        let changes = diff(&self.ports, &now, &cycled);
         self.ports = now;
         changes
     }
@@ -150,13 +176,24 @@ mod tests {
             "Prophet Rev2:Prophet Rev2 MIDI 1 36:0",
         );
         assert_eq!(
-            diff(&c(&[xd1, rev2]), &c(&[xd1, xd2])),
+            diff(&c(&[xd1, rev2]), &c(&[xd1, xd2]), &[]),
             [
                 Change::Appeared(c(&[xd2])[0].clone()),
                 Change::Gone(c(&[rev2])[0].clone())
             ]
         );
-        assert!(diff(&c(&[xd1]), &c(&[xd1])).is_empty());
+        assert!(diff(&c(&[xd1]), &c(&[xd1]), &[]).is_empty());
+    }
+
+    /// A port that exits and starts again between two drains keeps its
+    /// name: it is still reported gone, then back, so its synth reconnects.
+    #[test]
+    fn diff_reports_a_port_that_cycled_under_the_same_name() {
+        let xd = crate::candidates(&["minilogue xd:minilogue xd _ SOUND 28:1".to_string()]);
+        let cycled = vec![Change::Gone(xd[0].clone()), Change::Appeared(xd[0].clone())];
+        assert_eq!(diff(&xd, &xd, &["28:1".into()]), cycled);
+        assert_eq!(diff(&xd, &xd, &["28:".into()]), cycled, "its client exited");
+        assert!(diff(&xd, &xd, &["2:".into(), "28:0".into()]).is_empty());
     }
 
     /// Needs an ALSA sequencer; skipped where none exists (e.g. CI).
