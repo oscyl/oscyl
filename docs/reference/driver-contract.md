@@ -8,7 +8,8 @@ Each method links to its documentation in the
 made this way.
 
 A driver is a crate under `crates/drivers/` that exposes one
-`pub static DRIVER`. The apps use it only as `&dyn Driver`. A required
+`pub static DRIVER`. Of the 53 methods of `Driver`, 18 are required, and the
+other 35 have defaults. The apps use it only as `&dyn Driver`. A required
 method has no default. An optional method has a default that suits a
 driver which does not use it.
 

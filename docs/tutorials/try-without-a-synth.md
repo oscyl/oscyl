@@ -64,7 +64,8 @@ Now ask for the program that the synth plays, its edit buffer:
 cargo run -p oscyl-cli -- --simulator current
 ```
 
-Oscyl prints the program's name and then every field with its value:
+Oscyl prints the program's name and then every field with its raw value,
+the number that the synth stores:
 
 ```text
 name: Glass Choir
@@ -72,6 +73,9 @@ Voice / Octave: 2
 Voice / Portamento: 0
 Voice / Key Trig: 0
 ```
+
+The editor shows some raw values as words or other numbers. For example, it
+shows Key Trig 0 as Off, and Octave 2 as 0.
 
 ## 4. Back up the synth
 

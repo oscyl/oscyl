@@ -49,6 +49,11 @@ synth yet.
 [GOVERNANCE](https://github.com/oscyl/oscyl/blob/main/GOVERNANCE.md#support-tiers)
 defines the tiers. A driver reports its tier with `Driver::tier`.
 
+No driver is Tier 1 today. The minilogue xd was checked on the synth, but
+Tier 1 also needs a named maintainer who checks the driver for each
+release. `.github/CODEOWNERS` names the maintainers' team for each driver,
+not one person, so every driver is Tier 2.
+
 | Tier | What it takes |
 |---|---|
 | Tier 3 (community) | It compiles. |

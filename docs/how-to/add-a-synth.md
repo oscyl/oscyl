@@ -51,10 +51,17 @@ The minilogue xd driver gives `"minilogue xd _ SOUND"` and
 
 1. Make `crates/drivers/<vendor>-<model>`. The workspace includes every
    crate under `crates/drivers/`.
-2. Copy the Rev2's `Cargo.toml`. Change the name and the description. The
-   only dependency is `oscyl-driver`, and `oscyl-conformance` is a
-   dev-dependency.
-3. Split the code into modules as the Rev2 does:
+2. Copy the Rev2's `Cargo.toml`, with its path dependencies and its
+   `version.workspace = true` lines. Change the name and the description.
+   The only dependency is `oscyl-driver`, and `oscyl-conformance` is a
+   dev-dependency. Do not add `publish = false`: only the tutorial's crate
+   and the test crate have it.
+3. Name the package. The driver's id, in `Driver::info`, is
+   `<vendor>-<model>`, as the folder. No rule fixes the package name yet:
+   the packages are `oscyl-minilogue-xd`, `oscyl-korg-prologue` and
+   `oscyl-prophet-rev2`. `oscyl-<vendor>-<model>` matches the folder and
+   the id, as the prologue's does.
+4. Split the code into modules as the Rev2 does:
 
 | Module | What it holds |
 |---|---|
@@ -74,7 +81,8 @@ Obey these rules:
   completion signal, the session reads the slot back and compares it.
 - The simulator reproduces every fault that you saw on the hardware, so the
   conformance suite can prove that the session survives it.
-- The simulator has the fault `lose_reply`: every reply is lost.
+- The simulator offers the fault `lose_reply`, which loses every reply. The
+  suite switches it on and checks that every operation then fails.
 - Test fixtures are synthetic. You make them; you do not copy them.
 
 [The driver contract](../reference/driver-contract.md) lists every method
@@ -127,15 +135,17 @@ A driver's page titles, labels, value names and help can be translated:
 
 1. Add the driver's id to `TRANSLATED` in
    [`apps/linux/src/pot.rs`](https://github.com/oscyl/oscyl/blob/main/apps/linux/src/pot.rs).
-2. Make the template again, as [Translate Oscyl](translate.md) says.
+2. Regenerate the template, as [Translate Oscyl](translate.md) says.
 
 Today only the minilogue xd is translated. The other drivers stay in
 English.
 
 ## 7. Check it on the synth
 
-Follow [Check a driver on hardware](hardware-check.md) before you ask for a
-review.
+If you have the synth, follow
+[Check a driver on hardware](hardware-check.md) before you ask for a review.
+Tier 2 does not need it, but the real synth can find faults that your
+simulator does not have.
 
 ## 8. Send it
 

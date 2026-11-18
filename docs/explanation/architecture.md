@@ -7,8 +7,8 @@ folders.
 
 ## Generic code and synth code
 
-Oscyl draws one line through everything: what is the same for every synth,
-and what belongs to one synth.
+Oscyl splits its code in two: what is the same for every synth, and what
+belongs to one synth.
 
 - **The same for every synth:** the library, sync, auditions, the editor's
   drawing, Generate's hands, the files on disk. This code is in
@@ -45,7 +45,7 @@ A driver's session and simulator never touch a port, a thread or a clock.
 The session takes bytes and the time from its caller, and gives back bytes
 to send and events. This is *sans-IO* code.
 
-This choice pays several times:
+Sans IO has three uses:
 
 - The same session runs on Linux, macOS and Windows (through midir), on
   Android and iOS (where the platform moves the bytes), and in tests.

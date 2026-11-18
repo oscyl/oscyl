@@ -1,9 +1,15 @@
 # Your first driver
 
-> Read this page on the website, at
-> [oscyl.github.io/oscyl/docs/tutorials/first-driver.html](https://oscyl.github.io/oscyl/docs/tutorials/first-driver.html).
-> The code blocks come from the repository, and GitHub shows only the
-> lines that include them.
+> **Read this page in the built book.** Its code blocks come from the
+> repository, and GitHub or an editor shows only the lines that include
+> them. Read it on the website, at
+> [oscyl.github.io/oscyl/docs/tutorials/first-driver.html](https://oscyl.github.io/oscyl/docs/tutorials/first-driver.html),
+> or build the book yourself:
+>
+> 1. Install mdBook. On x86_64 Linux, `scripts/docs-tools.sh ~/.local/bin`
+>    downloads the version that CI uses.
+> 2. Run `mdbook build docs` in the repository.
+> 3. Open `target/book/tutorials/first-driver.html`.
 
 In this tutorial you write a driver for the Tutorial Mono, a small synth
 that exists only in this tutorial. You build it one file at a time, test
@@ -29,10 +35,23 @@ implementation chart. This is the chart of the Tutorial Mono.
 
 - It has one bank of 16 program slots, numbered 0 to 15, and an edit
   buffer.
-- A program is 14 bytes: an 8-character name, then six parameters of one
-  byte each.
+- A program is 14 bytes: an 8-character name in printable ASCII, padded
+  with spaces, then one byte for each of six parameters.
 - Every SysEx message starts with `F0 7D 54`. `7D` is the manufacturer ID
   that MIDI keeps for non-commercial use. `54` is the model.
+
+The six parameters, in the order of their bytes after the name:
+
+| Byte | Parameter | Group | Range | Control Change |
+|---|---|---|---|---|
+| 8 | Wave | Oscillator | 0 to 3: Saw, Square, Triangle, Noise | 70 |
+| 9 | Glide | Oscillator | 0 (off) or 1 (on) | 65, sent as 0 or 127 |
+| 10 | Cutoff | Filter | 0 to 127 | 74 |
+| 11 | Resonance | Filter | 0 to 127 | 71 |
+| 12 | Attack | Envelope | 0 to 127 | 73 |
+| 13 | Release | Envelope | 0 to 127 | 72 |
+
+The synth's messages:
 
 | Message | Bytes | Answer |
 |---|---|---|
@@ -42,13 +61,20 @@ implementation chart. This is the chart of the Tutorial Mono.
 | Edit buffer dump | `F0 7D 54 04 program F7` | The synth plays it, then sends an acknowledgement |
 | Acknowledgement | `F0 7D 54 7F slot F7` | Sent by the synth; `slot` is `7F` for the edit buffer |
 
-To the MIDI device inquiry, the synth answers
-`F0 7E channel 06 02 7D 54 4D 01 00`, four version bytes and `F7`.
+To the MIDI device inquiry (`F0 7E 7F 06 01 F7`), the synth answers
+`F0 7E channel 06 02 7D 54 4D 01 00 01 00 00 00 F7`:
+
+- `06 02`: this is an identity reply;
+- `7D`: the manufacturer;
+- `54 4D` ("TM"): the family, the Tutorial Mono;
+- `01 00`: the model in the family;
+- `01 00 00 00`: the firmware version.
 
 ## 1. Start from an empty crate
 
 The repository holds the finished driver in `crates/drivers/tutorial-synth`.
-Delete it, so that you can write it again:
+Delete it, so that you can rewrite it. Git keeps the finished files:
+`git restore crates/drivers/tutorial-synth` brings them back at any time.
 
 ```sh
 rm -r crates/drivers/tutorial-synth
@@ -56,7 +82,13 @@ mkdir -p crates/drivers/tutorial-synth/src crates/drivers/tutorial-synth/tests
 ```
 
 The workspace includes every crate under `crates/drivers/`, so you do not
-register the crate anywhere. Create `crates/drivers/tutorial-synth/Cargo.toml`:
+register the crate anywhere. The crate has three names, each for one use:
+
+- the folder `tutorial-synth`;
+- the package `oscyl-tutorial-synth`, which you give to Cargo with `-p`;
+- the driver's id `oscyl-tutorial-mono`, which the apps and `--synth` use.
+
+Create `crates/drivers/tutorial-synth/Cargo.toml`:
 
 ```toml
 {{#include ../../crates/drivers/tutorial-synth/Cargo.toml}}
@@ -82,7 +114,8 @@ cargo build -p oscyl-tutorial-synth
 ```
 
 Cargo builds the crate and prints `Finished`. The crate is empty, but it
-compiles.
+compiles: Rust accepts an empty module. Each file stays empty until its
+step.
 
 ## 2. The program
 
@@ -213,9 +246,23 @@ which answer finishes it. It never touches a port or a clock: Oscyl gives it
 the bytes and the time. This is *sans-IO*. The same session runs on every
 platform and in tests.
 
-The request engine in `oscyl_driver::engine` does the hard part: one request
-in flight, timeouts, and progress. You tell it two things. Open
-`src/session.rs`. First, the requests that make up each operation:
+The request engine in `oscyl_driver::engine` does the hard part. It keeps
+one request in flight, times out a request whose reply does not come, and
+reports progress. You describe the synth's protocol to it with the trait
+`Protocol`:
+
+| Item | What it is |
+|---|---|
+| `expand(op)` | Turns one operation, such as "read slots 3 and 4", into its requests, in order. |
+| `on_message(bytes, expect, what, index)` | Says what one message from the synth means for the request in flight. |
+| `Step` | One request: `msg`, the bytes to send; `expect`, what completes it; `timeout`; `what`, its name in error messages ("program write"); `index`, its slot, also for error messages. |
+| `Outcome::Done` | The message completes the request, with an event for the apps or none. |
+| `Outcome::Unrelated` | The message does not answer the request. The engine keeps waiting. |
+| `Outcome::Failed` | The message fails the request, and the engine drops the rest of the operation. |
+| `progress`, `done`, `failed` | Make the events that the engine reports. |
+
+Open `src/session.rs`. First, write the requests that make up each
+operation:
 
 ```rust
 {{#include ../../crates/drivers/tutorial-synth/src/session.rs:protocol}}
@@ -224,7 +271,9 @@ in flight, timeouts, and progress. You tell it two things. Open
 Notice that a write waits for the acknowledgement. The program dump alone
 does not finish it.
 
-Second, what each message from the synth means for the request in flight.
+Second, write what each message from the synth means for the request in
+flight. `on_message` gets `what` and `index` so that an error can name
+them. This driver's one error names the step only, so it ignores `index`.
 Add the rest of the `impl` block, and a helper after it:
 
 ```rust
@@ -346,15 +395,21 @@ problem, for example `oscyl-tutorial-mono: fields: Wave reads back wrong`.
 
 ## What you built
 
-You wrote a complete driver. It has a program model, the synth's messages,
-a simulator and a sans-IO session on the request engine. It also has a file
-format, and the `Driver` that the apps see. It passes the same suite as every driver of a
-real synth.
+You wrote a complete driver:
+
+- a program model;
+- the synth's messages;
+- a simulator;
+- a sans-IO session on the request engine;
+- a file format;
+- the `Driver` that the apps see.
+
+It passes the same suite as every driver of a real synth.
 
 To put the repository's own copy back, run:
 
 ```sh
-git checkout -- crates/drivers/tutorial-synth
+git restore crates/drivers/tutorial-synth
 ```
 
 Next:

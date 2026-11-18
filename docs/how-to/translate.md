@@ -20,7 +20,7 @@ The domain is `oscyl`. In `po/`:
 - `<lang>.po` is one language, for example `it.po`;
 - `LINGUAS` lists the languages that ship.
 
-1. Make the template again after a change to the words:
+1. Regenerate the template after a change to the words:
 
    ```sh
    cargo run -p oscyl-gtk -- --write-pot po/oscyl.pot

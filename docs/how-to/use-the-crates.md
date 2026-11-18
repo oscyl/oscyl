@@ -16,8 +16,10 @@ this repository: see [Add a driver for a new synth](add-a-synth.md).
 | `oscyl-conformance` | Test a driver against its simulator |
 | A driver crate, such as `oscyl-minilogue-xd` | Use one synth's own types directly |
 
-`oscyl-midi` depends on every driver. On Linux, its default feature `midir`
-needs the ALSA development package (`alsa-lib`).
+`oscyl-midi` depends on every driver crate. Cargo clones the whole
+repository once, then builds only the crates that you name and their
+dependencies. On Linux, the default feature `midir` of `oscyl-midi` needs
+the ALSA development package (`alsa-lib`).
 
 ## Add the dependencies
 
@@ -61,7 +63,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-`cargo run` prints the program's name, then one line for each field:
+`cargo run` prints the program's name, then one line for each field. This
+is the output with Oscyl 0.5.0:
 
 ```text
 Glass Choir
@@ -71,8 +74,25 @@ Voice / Key Trig: Off
 Voice / Voice Mode Depth: Off
 ```
 
-For a real synth, call `oscyl_midi::scan()`. It gives the ports that a
-driver claims. Then open one with `Device::open`.
+`format_value` gives each value as the editor shows it. `Driver::get` gives
+the raw number that the synth stores, as `oscyl current` prints it: Octave
+2, Key Trig 0.
+
+## Open a real synth
+
+`oscyl_midi::scan()` lists the MIDI ports that a driver claims, each with
+its driver. `Device::open` connects one. It sends the device inquiry, and
+fails unless the driver's synth answers:
+
+```rust
+let found = oscyl_midi::scan()?;
+let candidate = found.first().ok_or("no synth found")?;
+let mut synth = Device::open(candidate)?;
+println!("{} on {}", synth.driver().info().model, synth.port_name());
+```
+
+Then run operations on `synth` as above. A scan needs the feature `midir`,
+which is on by default.
 
 ## What may change
 

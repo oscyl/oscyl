@@ -6,8 +6,10 @@ order. Each entry links to the page that tells more.
 ### Audition
 
 To play a program on the synth without storing it. Oscyl sends the program
-to the [edit buffer](#edit-buffer). See
-[What happens when you plug in a synth](plug-in.md).
+to the [edit buffer](#edit-buffer). An audition plays one program, for
+example a sound that you pick in Generate. [Live](#live) plays each edit as
+you make it, and Hold to compare plays the saved program while you hold the
+button. See [What happens when you plug in a synth](plug-in.md).
 
 ### Backup
 
@@ -51,6 +53,14 @@ One parameter of a program, such as a filter's cutoff, with its range of
 raw values. A driver lists its fields in a fixed order. See
 [The driver contract](../reference/driver-contract.md).
 
+### Generate
+
+The part of the apps that makes new programs. You pick a
+[character](#character) and set four dials: Bright, Movement, Grit and
+Ambience. Oscyl makes six programs, and you can vary them, cross two of
+them, or keep one. Each has a [recipe code](#recipe-code). The command line
+does the same with `oscyl generate`.
+
 ### Library
 
 A list of programs for one synth model, kept in a file on your computer or
@@ -64,6 +74,13 @@ The switch in the apps that plays every edit on the synth at once, in the
 [edit buffer](#edit-buffer). On a minilogue xd, Live also follows the
 synth's knobs and program changes. See
 [What happens when you plug in a synth](plug-in.md#you-edit-and-live-plays-the-edit).
+
+### logue SDK
+
+KORG's kit for writing *user units*: oscillators and effects in C. The
+minilogue xd, the prologue and the other logue synths load them into their
+unit slots. "logue" is KORG's name for this family of synths. See
+[User unit](#user-unit).
 
 ### Oscillator unit
 

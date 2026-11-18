@@ -1,9 +1,20 @@
 # Check a driver on hardware
 
-This guide checks a driver on the real synth. A driver needs it before its
-first review, and a Tier 1 driver needs it again for each release. You need
-the synth, a USB cable, and the command line tool `oscyl` (from a release,
-or `cargo run -p oscyl-cli --`).
+This guide checks a driver on the real synth. You need the synth, a USB
+cable, and the command line tool `oscyl` (from a release, or
+`cargo run -p oscyl-cli --`).
+
+When the check is needed:
+
+- **Tier 2** needs no hardware check. The conformance suite against the
+  simulator is enough for a driver to be accepted.
+- **Tier 1** needs this check for each release, by the driver's named
+  maintainer. A Tier 1 failure blocks the release.
+- **A new driver** gains from one check before its first review, if you
+  have the synth. Its simulator copies only the faults that you saw, so the
+  real synth can find more.
+
+[Supported synths](../reference/synths.md#tiers) lists each driver's tier.
 
 ## Before you start
 

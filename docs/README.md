@@ -17,6 +17,10 @@ computer or a phone. Then it writes back only the programs you changed.
 | Reference | look up a fact | [The driver contract](reference/driver-contract.md) |
 | Explanation | understand why Oscyl is made the way it is | [Architecture](explanation/architecture.md) |
 
+Explanation also holds the *decision records* (ADRs), which record
+decisions already made, and the *RFCs*, which propose a change before
+anyone makes it.
+
 The Rust API reference of the crates that a driver or another project uses
 is on the website, at
 [oscyl.github.io/oscyl/api](https://oscyl.github.io/oscyl/api/).

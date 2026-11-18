@@ -20,14 +20,23 @@ jobs with them.
 Oscyl also works with the synth unplugged. You open a library, edit it, and
 sync it to the synth later.
 
-**Generate** is a source of new ideas. You pick a character (for example
-"fuzz bass" or "bells") and set four dials. Oscyl then makes six new
-programs for your synth. You can vary them, cross two of them, keep the one
-you like, or share it as a short recipe code.
+**[Generate](glossary.md#generate)** makes new programs. You pick a
+character, for example "fuzz bass" or "bells". You set four dials: Bright,
+Movement, Grit and Ambience. Oscyl then makes six new programs for your
+synth. You can vary them, cross two of them, keep the one you like, or share
+it as a short recipe code.
 
 Oscyl runs on Linux, Windows, macOS, Android and iOS, and as a command line
-tool, `oscyl`. Today it supports the KORG minilogue xd, the KORG prologue and
-the Sequential Prophet Rev2. [Supported synths](../reference/synths.md) says
+tool, `oscyl`. Not every platform has run with a real synth yet:
+
+- **Checked with a synth:** the desktop app and the command line on Linux,
+  the Android app, and `oscyl info` on Windows.
+- **Built in CI, not yet run with a synth:** the desktop app on Windows and
+  macOS, the command line on macOS, and the iOS app. You build the iOS app
+  from source.
+
+Today Oscyl supports the KORG minilogue xd, the KORG prologue and the
+Sequential Prophet Rev2. [Supported synths](../reference/synths.md) says
 what works on each one.
 
 ## Why it exists
@@ -40,11 +49,15 @@ and for synths of different makers.
 Oscyl also touches the synth as little as it can. It reads the synth once
 when the synth connects, and then works from that copy. It writes only the
 slots you changed, and it backs them up first.
-[What happens when you plug in a synth](plug-in.md) tells the whole story.
+[What happens when you plug in a synth](plug-in.md) describes the whole
+sequence.
 
-On a minilogue xd or a prologue, Oscyl can also make new user oscillators.
-It does this with its [oscillator unit](../explanation/oscillator-unit.md):
-one prebuilt logue SDK unit whose sound comes from data that Oscyl writes.
+The minilogue xd and the prologue run *user units*: oscillators and effects
+that anyone can write with KORG's [logue SDK](glossary.md#logue-sdk). The
+synth keeps them in its unit slots. Oscyl lists and loads them. It can also
+make new user oscillators with its
+[oscillator unit](../explanation/oscillator-unit.md): one prebuilt logue SDK
+unit whose sound comes from data that Oscyl writes.
 
 ## What Oscyl is not
 

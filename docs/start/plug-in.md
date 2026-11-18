@@ -68,15 +68,19 @@ pick on the synth opens in Oscyl.
 
 1. Sync lists every slot that it will change and asks you to confirm.
 2. Oscyl saves a backup of those slots as it read them, in its backups
-   folder. If the backup fails, Oscyl writes nothing.
+   folder. On Linux, the desktop app's folder is
+   `~/.local/share/oscyl/backups`. If the backup fails, Oscyl writes
+   nothing.
 3. Oscyl writes only those slots, one at a time.
 4. A slot counts as written only when the synth confirms it. When a synth
    sends no confirmation, the driver reads the slot back and compares it.
 
 No slot that you did not edit changes, and Oscyl never writes a factory
-slot. The minilogue xd and the prologue save to flash memory later than they
-answer. So their driver can send a program twice, or send a neighbouring
-slot the bytes it already holds. Then the synth saves before it answers.
+slot. One detail: the minilogue xd and the prologue answer a write before
+they save it to flash memory. To be sure that the save is done, their driver
+can send the last program twice. It can also send a neighbouring slot the
+bytes that it already holds. This forces the synth to finish the save before it
+answers.
 
 When you unplug the synth, your edits that are not synced stay in Oscyl.
 The phone app keeps them on disk, so they stay even when the app closes.

@@ -36,8 +36,8 @@ oscillator slot.
 So the sound is data, and every app can make it. The desktop app, the
 phone apps and `oscyl units make` all use the same Rust code,
 [`oscyl_logue::osc`](https://github.com/oscyl/oscyl/blob/main/crates/drivers/logue/src/osc.rs).
-It deals patches by family (wavetable, FM, fold, formant, noise or hybrid),
-and varies and crosses them as Generate does with programs.
+It makes patches in six families: wavetable, FM, fold, formant, noise and
+hybrid. It varies and crosses them as Generate does with programs.
 
 ## An extra, not a requirement
 
@@ -56,7 +56,8 @@ A Rust copy of C code can drift from the C. So the test crate
 `oscyl-osc-host` compiles the unit's C for the computer, and its tests hold
 the two together:
 
-- every family's oscillators sound, do not clip and carry no DC offset;
+- every family's oscillators make a sound, do not clip, and carry no DC
+  offset (a constant shift of the whole wave);
 - the Rust port plays what the C plays;
 - a bad or empty patch plays a plain saw;
 - the committed payloads come from the sources as they are. The file
@@ -67,11 +68,11 @@ the two together:
 
 The unit, its patch format and its Rust code change together. A new block
 needs C, a Rust port, a patch field and new tests, in one commit. The KORG
-drivers load the unit's payloads, so the unit stays beside them. This is
-the reason of [ADR 0001](../adr/0001-monorepo.md) too: a change and
-everything that it affects land together.
+drivers load the unit's payloads, so the unit stays beside them.
+[ADR 0001](../adr/0001-monorepo.md) gives the same reason for the whole
+repository: a change and everything that it affects land together.
 
-`scripts/build-units.sh` builds the payloads again, with
+`scripts/build-units.sh` rebuilds the payloads, with
 `arm-none-eabi-gcc`. A new payload must be checked on the synths before a
 release, so nobody builds them again without a reason.
 
