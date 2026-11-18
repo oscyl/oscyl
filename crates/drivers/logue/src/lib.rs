@@ -2,13 +2,13 @@
 //! messages, the flash commit planner, Librarian and unit files, and, per
 //! model, the constants that differ ([`Model`]).
 
-pub mod engine;
 mod error;
 pub mod kinds;
 pub mod lag;
 pub mod library;
 mod model;
 pub mod msg;
+pub mod osc;
 pub mod session;
 pub mod sim;
 pub mod store;

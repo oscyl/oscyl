@@ -40,7 +40,7 @@ const val UniffiSource = "https://github.com/mozilla/uniffi-rs"
  * Every notice, sorted and unique: the Rust crates ([rustJson], from
  * `scripts/licences.sh`), the Kotlin and Android libraries ([kotlinJson], from the
  * AboutLibraries Gradle plugin's export), UniFFI's MPL-2.0 notice, the Albert Sans font and
- * KORG's logue SDK (in the oscillator engine unit Oscyl loads into synths).
+ * KORG's logue SDK (in the oscillator unit Oscyl loads into synths).
  */
 fun notices(rustJson: String, kotlinJson: String, albertSansLicence: String, logueSdkLicence: String): List<Notice> {
     val rust = Json.parseToJsonElement(rustJson).jsonObject

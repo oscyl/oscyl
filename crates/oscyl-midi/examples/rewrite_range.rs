@@ -4,9 +4,9 @@
 //! Usage: rewrite_range <library> <lo> <hi>
 use std::time::Instant;
 
+use oscyl_korg_minilogue_xd::library::Library;
+use oscyl_korg_minilogue_xd::session::{Event, Op};
 use oscyl_midi::Device;
-use oscyl_minilogue_xd::library::Library;
-use oscyl_minilogue_xd::session::{Event, Op};
 
 fn main() {
     let a: Vec<String> = std::env::args().collect();
@@ -19,7 +19,7 @@ fn main() {
     let mut port = Device::open_xd(None).unwrap();
     let t0 = Instant::now();
     let mut acks = Vec::new();
-    let plan = oscyl_minilogue_xd::store::plan_commit(want.clone(), |_| None).unwrap();
+    let plan = oscyl_korg_minilogue_xd::store::plan_commit(want.clone(), |_| None).unwrap();
     println!(
         "plan: {:?}",
         plan.writes().iter().map(|(n, _)| n).collect::<Vec<_>>()

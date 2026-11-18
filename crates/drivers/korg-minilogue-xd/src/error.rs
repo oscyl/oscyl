@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-/// Errors produced by `oscyl-minilogue-xd`.
+/// Errors produced by `oscyl-korg-minilogue-xd`.
 #[derive(Debug, Clone, Error, PartialEq, Eq)]
 pub enum Error {
     /// A byte that must be 7-bit had its high bit set.

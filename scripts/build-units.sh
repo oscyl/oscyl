@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 # Build Oscyl's runtime units (units/*) for every logue platform they run on
 # and keep the payloads next to their source, so no app needs a toolchain.
-# Writes units/oscyl-engine/payload/<platform>.bin and SOURCE, the cksum of
+# Writes units/oscyl-osc/payload/<platform>.bin and SOURCE, the cksum of
 # the sources the payloads were built from (a test fails when it is stale).
 #
 # Needs arm-none-eabi-gcc (GCC_BIN_PATH, default /usr/bin). The SDK files in
-# units/oscyl-engine/sdk are from KORG's logue-sdk (BSD-3-Clause, see
+# units/oscyl-osc/sdk are from KORG's logue-sdk (BSD-3-Clause, see
 # sdk/LICENSE): platform/minilogue-xd/inc/userosc.h, each platform's
 # inc/userprg.h, dummy-osc/tpl/_unit.c and dummy-osc/ld/{userosc,rules}.ld,
 # unchanged. Flags follow the SDK's oscillator Makefile.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-unit=units/oscyl-engine
+unit=units/oscyl-osc
 bin=${GCC_BIN_PATH:-/usr/bin}
 
 # The files a payload is made from, in the order SOURCE hashes them; the
-# test (crates/oscyl-engine-host) reads the same list.
+# test (crates/oscyl-osc-host) reads the same list.
 sources=(
     "$unit/engine.h" "$unit/engine.c" "$unit/unit.c" "$unit/osc_api.h"
     "$unit/sdk/userosc.h" "$unit/sdk/_unit.c" "$unit/sdk/ld/userosc.ld" "$unit/sdk/ld/rules.ld"

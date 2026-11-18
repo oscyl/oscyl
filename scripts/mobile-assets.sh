@@ -65,7 +65,7 @@ for p in glob.glob(f"{app}/**/*.plist", recursive=True) + glob.glob(f"{app}/../*
     with open(p, "rb") as f:
         plistlib.load(f)
 # The privacy manifest: no tracking, and a reason for each required-reason API the
-# binary uses (see docs/mobile/README.md).
+# binary uses (see docs/how-to/mobile.md).
 with open(f"{app}/PrivacyInfo.xcprivacy", "rb") as f:
     privacy = plistlib.load(f)
 assert privacy["NSPrivacyTracking"] is False, "PrivacyInfo: tracking must be false"

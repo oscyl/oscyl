@@ -10,8 +10,8 @@ authors.workspace = true
 [dependencies]
 oscyl-driver = { path = "../oscyl-driver" }
 oscyl-logue = { path = "../drivers/logue" }
-oscyl-minilogue-xd = { path = "../drivers/korg-minilogue-xd" }
-oscyl-prophet-rev2 = { path = "../drivers/sequential-prophet-rev2" }
+oscyl-korg-minilogue-xd = { path = "../drivers/korg-minilogue-xd" }
+oscyl-sequential-prophet-rev2 = { path = "../drivers/sequential-prophet-rev2" }
 oscyl-korg-prologue = { path = "../drivers/korg-prologue" }
 midir = { version = "0.11.1", optional = true }
 thiserror.workspace = true

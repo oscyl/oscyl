@@ -508,7 +508,7 @@ mod tests {
     #[test]
     fn bar_follows_changes_and_sheet_folds_away() {
         crate::on_gtk_thread(|| {
-            let d: &dyn Driver = &oscyl_minilogue_xd::DRIVER;
+            let d: &dyn Driver = &oscyl_korg_minilogue_xd::DRIVER;
             let c = d.curation();
             let review = Review::new();
             let base = d.init_program();

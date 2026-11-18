@@ -27,7 +27,7 @@ class HostFfiTest {
         // What the synth picker shows, from the driver registry.
         val xd = all.single { it.id == XD }
         assertEquals("4 voices", xd.voices)
-        assertEquals(2.toUByte(), xd.tier)
+        assertEquals(1.toUByte(), xd.tier)
         assertTrue(all.all { it.panel.knobs.isNotEmpty() })
         assertEquals(xd.panel, drivers().single { it.id == XD }.panel)
     }

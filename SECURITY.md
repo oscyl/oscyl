@@ -42,7 +42,7 @@ Areas where we especially want reports:
   synth crash or play unbounded noise.
 - **Firmware-write safety.** Writes to a synth's memory (programs, user units,
   and anything that touches firmware) must only happen when the user asked
-  for them, and must leave the device in a committed, safe state. A way to
+  for them. They must leave the device in a committed, safe state. A way to
   trigger an unintended or unsafe write is a security issue.
 
 Out of scope: problems in the synth's own firmware, and issues that require

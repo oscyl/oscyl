@@ -5,7 +5,7 @@
 ## Checklist
 
 - [ ] Commit messages follow Conventional Commits with a scope.
-- [ ] `scripts/ci.sh` passes locally (see CONTRIBUTING.md for its stages).
+- [ ] `scripts/ci.sh` passes locally ([Run the checks](https://oscyl.github.io/oscyl/docs/how-to/run-the-checks.html)).
 - [ ] UI changes: goldens recorded and looked at (mobile), or screenshots attached (Linux).
 - [ ] New strings have their Italian translation (`po/it.po` or `values-it/strings.xml`).
 - [ ] User-visible changes are in `CHANGELOG.md` under `## [Unreleased]` (or the PR is labelled `no-changelog`; CI checks).

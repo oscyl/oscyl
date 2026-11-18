@@ -16,6 +16,7 @@ pub struct Framer {
 }
 
 impl Framer {
+    /// A framer outside any message.
     pub fn new() -> Self {
         Self::default()
     }

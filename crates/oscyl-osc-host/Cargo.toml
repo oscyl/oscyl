@@ -1,0 +1,15 @@
+[package]
+name = "oscyl-osc-host"
+description = "Oscyl's oscillator unit (units/oscyl-osc) compiled for the computer, so tests can hear what a patch does"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dev-dependencies]
+oscyl-logue = { path = "../drivers/logue" }
+
+[build-dependencies]
+cc = "1"

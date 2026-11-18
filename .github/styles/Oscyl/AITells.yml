@@ -1,0 +1,18 @@
+# Phrases that make a page read as filler or as machine-written.
+extends: existence
+message: "Avoid '%s'. Say the fact plainly."
+level: error
+ignorecase: true
+tokens:
+  - "let's dive in"
+  - "dive into"
+  - "in today's world"
+  - 'seamless(ly)?'
+  - 'robust(ly|ness)?'
+  - 'leverag(e|es|ed|ing)'
+  - 'delv(e|es|ed|ing)'
+  - 'unlock(s|ed|ing)?'
+  - 'game[- ]changer'
+  - "it's not [^,.;]+, it's"
+  - "it isn't just"
+  - 'not just [^,.;]+, but'

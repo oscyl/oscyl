@@ -85,7 +85,7 @@ fn main() -> glib::ExitCode {
         }
         load_styles(dark);
         // The minilogue xd's pages, as the editor shows them.
-        let d: &dyn Driver = &oscyl_minilogue_xd::DRIVER;
+        let d: &dyn Driver = &oscyl_korg_minilogue_xd::DRIVER;
         let saved = d.init_program();
         let mut p = saved.clone();
         let field = |name: &str| d.fields().iter().position(|f| f.name == name).unwrap();

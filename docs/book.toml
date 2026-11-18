@@ -1,0 +1,27 @@
+# The documentation book: `mdbook build docs` writes it to target/book.
+# The sources are the Markdown files in docs/, so they also read on GitHub.
+[book]
+title = "Oscyl"
+description = "Oscyl, the open-source librarian and sound editor for hardware synths: how it works and how to add a synth."
+authors = ["Giuseppe Maggio"]
+language = "en-GB"
+src = "."
+
+[build]
+build-dir = "../target/book"
+create-missing = false
+
+[output.html]
+site-url = "/oscyl/docs/"
+git-repository-url = "https://github.com/oscyl/oscyl"
+edit-url-template = "https://github.com/oscyl/oscyl/edit/main/docs/{path}"
+default-theme = "light"
+preferred-dark-theme = "navy"
+smart-punctuation = true
+
+[output.html.search]
+enable = true
+
+# The book's Rust needs Oscyl's crates, which the Rust Playground lacks.
+[output.html.playground]
+runnable = false

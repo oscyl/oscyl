@@ -4,7 +4,7 @@
 *                                 @oscyl/maintainers
 
 # Driver maintainers: one line per driver.
-/crates/drivers/korg-minilogue-xd/ @oscyl/maintainers
+/crates/drivers/korg-minilogue-xd/ @Jertlok @oscyl/maintainers
 /crates/drivers/sequential-prophet-rev2/ @oscyl/maintainers
 /crates/drivers/korg-prologue/ @oscyl/maintainers
 /crates/drivers/logue/ @oscyl/maintainers

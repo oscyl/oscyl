@@ -1,0 +1,7 @@
+# House style: no em-dash. Use a colon, a comma, brackets or a new sentence.
+extends: existence
+message: "Do not use an em-dash. Use a colon, a comma, brackets or a new sentence."
+level: error
+nonword: true
+tokens:
+  - "\u2014"

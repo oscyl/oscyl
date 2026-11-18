@@ -4,8 +4,8 @@
 //! deferred flash save.
 use std::time::{Duration, Instant};
 
+use oscyl_korg_minilogue_xd::msg::{Dump, Reply, Request, decode, encode_dump, encode_request};
 use oscyl_midi::Device;
-use oscyl_minilogue_xd::msg::{Dump, Reply, Request, decode, encode_dump, encode_request};
 
 fn main() {
     let mut port = Device::open_xd(None).unwrap();

@@ -12,8 +12,9 @@ cd "$(dirname "$0")/.."
 out=${1:-target/mobile}
 
 cargo build -p oscyl-ffi --features cli
+built=${CARGO_TARGET_DIR:-target}/debug
 rm -rf "$out/kotlin"
-target/debug/uniffi-bindgen generate --library target/debug/liboscyl_ffi.so \
+"$built/uniffi-bindgen" generate --library "$built/liboscyl_ffi.so" \
     --language kotlin --no-format --out-dir "$out/kotlin"
 
 if [ -z "${ANDROID_NDK_HOME:-}" ]; then

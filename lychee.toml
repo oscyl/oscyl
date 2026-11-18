@@ -1,0 +1,10 @@
+# Link check for the Markdown sources and the built book: scripts/ci.sh
+# (stage "links") and the book job of .github/workflows/ci.yml run
+#   git ls-files '*.md' | xargs lychee --config lychee.toml
+#   lychee --config lychee.toml target/book
+# Offline: relative links, files and anchors only. Nothing is fetched.
+offline = true
+include_fragments = "anchor-only"
+# Private working notes are not published. The book's 404 page uses the
+# absolute paths of the published site.
+exclude_path = ["docs/(superpowers|plans|design|research)/", "404\\.html$"]

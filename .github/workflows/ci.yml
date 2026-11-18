@@ -73,7 +73,7 @@ jobs:
       fail-fast: false
       matrix:
         # One entry per driver package under crates/drivers/.
-        driver: [oscyl-minilogue-xd, oscyl-prophet-rev2, oscyl-korg-prologue]
+        driver: [oscyl-korg-minilogue-xd, oscyl-sequential-prophet-rev2, oscyl-korg-prologue, oscyl-tutorial-synth]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -135,6 +135,32 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - run: cargo doc --workspace --exclude oscyl-gtk --no-deps --locked
+
+  # The book (docs/): it builds, its prose keeps the house style (.vale.ini)
+  # and its links resolve (lychee.toml), in the sources and in the book.
+  book:
+    name: book
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: mdBook, Vale and lychee (pinned, checksums checked)
+        run: |
+          scripts/docs-tools.sh "$RUNNER_TEMP/docs-tools"
+          echo "$RUNNER_TEMP/docs-tools" >> "$GITHUB_PATH"
+      - run: mdbook build docs
+      - run: git ls-files -z '*.md' | xargs -0 vale --minAlertLevel=warning
+      # As scripts/ci.sh: links to this repository's files on GitHub resolve
+      # in the checkout, links to the published book in the book just built.
+      - name: Links
+        run: |
+          remap=(--remap "^https://github\.com/oscyl/oscyl/(?:blob|tree)/main/(.*)\$ file://$PWD/\$1"
+                 --remap "^https://oscyl\.github\.io/oscyl/docs/(.*)\$ file://$PWD/target/book/\$1")
+          git ls-files -z '*.md' | xargs -0 lychee --no-progress --config lychee.toml "${remap[@]}"
+          lychee --no-progress --config lychee.toml "${remap[@]}" target/book
 
   licences:
     name: licences

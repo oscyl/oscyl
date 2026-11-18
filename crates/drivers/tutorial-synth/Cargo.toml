@@ -1,0 +1,15 @@
+[package]
+name = "oscyl-tutorial-synth"
+description = "The Tutorial Mono, an invented synth, and the driver that Oscyl's first-driver tutorial builds"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+oscyl-driver = { path = "../../oscyl-driver" }
+
+[dev-dependencies]
+oscyl-conformance = { path = "../../oscyl-conformance" }

@@ -6,6 +6,7 @@ use crate::contract::{DriverError, FieldInfo, UnitKind};
 /// A titled group of fields on a [`Page`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Section {
+    /// The section's title ("VCO 1").
     pub title: &'static str,
     /// Field indices, in display order.
     pub fields: Vec<usize>,
@@ -14,6 +15,7 @@ pub struct Section {
 /// A top-level editor page (a stage of the signal path, a layer, …).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Page {
+    /// The page's title ("Filter").
     pub title: &'static str,
     /// Symbolic icon name the apps ship, if any. For now these are the GTK
     /// app's symbolic icon ids (`oscyl-filter-symbolic`, …); other apps map
@@ -21,6 +23,7 @@ pub struct Page {
     pub icon: Option<&'static str>,
     /// An introduction shown under the page heading, or empty.
     pub help: &'static str,
+    /// The page's sections, in display order.
     pub sections: Vec<Section>,
 }
 
@@ -29,7 +32,9 @@ pub struct Page {
 /// sequencer data that needs its own view).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Curation {
+    /// The editor's pages, in display order.
     pub pages: Vec<Page>,
+    /// The indices of the fields that the editor does not show.
     pub excluded: Vec<usize>,
 }
 
@@ -82,7 +87,9 @@ pub enum Control {
     /// the next band; the last band extends to the field's max. To pick
     /// band `i`, set `i * width + width / 2`.
     Bands {
+        /// The bands' names, from the lowest raw values.
         names: &'static [&'static str],
+        /// How many raw values each band covers.
         width: u16,
     },
 }
@@ -114,15 +121,22 @@ pub enum Mutability {
 /// What a [`Character`] is for; apps group characters by it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Family {
+    /// Keys, organs, bells and plucks.
     Keys,
+    /// Basses.
     Bass,
+    /// Leads.
     Lead,
+    /// Pads, strings and drones.
     Pad,
+    /// Drums and rhythmic pulses.
     Rhythm,
+    /// Sound effects: risers, sirens, impacts.
     Effect,
 }
 
 impl Family {
+    /// Every family, in the order apps show them.
     pub const ALL: [Family; 6] = [
         Family::Keys,
         Family::Bass,
@@ -162,9 +176,11 @@ impl Family {
 pub struct Character {
     /// Stable, lowercase, dash-separated.
     pub id: &'static str,
+    /// The character's name, for people ("Fuzz bass").
     pub title: &'static str,
     /// One line on what it sounds like.
     pub hint: &'static str,
+    /// The family that apps group it in.
     pub family: Family,
     /// The page whose graphs say most about this character, as an index
     /// into [`Curation::pages`].
@@ -174,6 +190,7 @@ pub struct Character {
 /// How a driver names and explains one of the four [`Macros`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MacroInfo {
+    /// The macro's name on this synth ("Bright").
     pub title: &'static str,
     /// What the macro changes on this synth.
     pub help: &'static str,
@@ -203,9 +220,13 @@ pub const MACROS: [MacroInfo; 4] = [
 /// A note on a piano roll, for [`Graph::Voices`]. Times and pitch 0..1.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Note {
+    /// The voice that plays the note, from 0.
     pub voice: u8,
+    /// When the note starts.
     pub start: f32,
+    /// When the note ends.
     pub end: f32,
+    /// How high the note is.
     pub pitch: f32,
 }
 
@@ -219,8 +240,11 @@ pub enum Graph {
     /// A filter response: `(x, y)` points, the cutoff's x, and the y of
     /// unity gain.
     Response {
+        /// The curve, as `(frequency, gain)` points.
         points: Vec<(f32, f32)>,
+        /// The cutoff's x.
         cutoff: f32,
+        /// The y of unity gain.
         unity: f32,
     },
     /// Envelope corners as `(time, level)`: start, attack peak, decay end,
@@ -231,8 +255,11 @@ pub enum Graph {
     /// Echo taps `(time, level)`, a reverb tail `(length, level)` and a
     /// modulation sweep `(cycles, depth)`, each when on.
     Effects {
+        /// The echo taps, as `(time, level)`.
         taps: Vec<(f32, f32)>,
+        /// The reverb tail, as `(length, level)`, when the reverb is on.
         tail: Option<(f32, f32)>,
+        /// The modulation sweep, as `(cycles, depth)`, when it is on.
         sweep: Option<(f32, f32)>,
     },
     /// What each voice plays.
@@ -292,9 +319,13 @@ pub enum UnitParamKind {
 /// A parameter a user unit declares, in its own values.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnitParam {
+    /// The parameter's name, as the unit declares it.
     pub name: String,
+    /// The smallest value.
     pub min: i16,
+    /// The largest value.
     pub max: i16,
+    /// How the value reads.
     pub kind: UnitParamKind,
 }
 
@@ -306,6 +337,7 @@ pub struct PaletteUnit {
     pub kind: UnitKind,
     /// Its slot, from 0.
     pub slot: u8,
+    /// The unit's name, as it declares it.
     pub name: String,
     /// Its parameters, in order; `None` when they are not known (then
     /// generation leaves them alone).
@@ -315,6 +347,7 @@ pub struct PaletteUnit {
 /// The extra sources a synth holds right now, beyond its built-in engines.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Palette {
+    /// The units, in slot order.
     pub units: Vec<PaletteUnit>,
 }
 
@@ -323,7 +356,9 @@ pub struct Palette {
 pub struct Recipe {
     /// Index into [`Driver::characters`](crate::Driver::characters).
     pub character: usize,
+    /// The four dials.
     pub macros: Macros,
+    /// The seed: the same recipe and seed make the same bytes.
     pub seed: u64,
     /// Indices into [`Curation::pages`] whose fields are copied from the
     /// base program as they are.

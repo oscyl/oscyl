@@ -1,35 +1,37 @@
-# Documentation
+# Oscyl documentation
 
-Where to find what. Start with the guides; the rest is reference and history.
-(`images/` holds the README's screenshots.)
+Oscyl is an open-source librarian and sound editor for hardware synths. It
+reads the programs on your synth, and lets you organise and edit them on a
+computer or a phone. Then it writes back only the programs you changed.
 
-## Guides
+**New here?** Read the four pages of *Start here* in order, from
+[What Oscyl is, and what it is not](start/what-is-oscyl.md).
 
-- [drivers.md](drivers.md): add a synth: the driver contract, the simulator,
-  the tests and hardware validation.
-- [building.md](building.md): build and run every app, and the repository
-  layout.
-- [mobile/README.md](mobile/README.md): build, run and test the Android and
-  iOS apps, and how the mobile code is laid out.
-- [releasing.md](releasing.md): how a release is cut, and its last dry run.
-- [../CONTRIBUTING.md](../CONTRIBUTING.md): set up, run the checks, update
-  goldens and translations, and send a change.
-- [../po/README.md](../po/README.md): translate the desktop app and the core.
-- [../packaging/README.md](../packaging/README.md): install files and the
-  Flatpak.
+## How this documentation is organised
 
-## Decisions
+| Part | Read it when you want to | Start with |
+|---|---|---|
+| Start here | understand what Oscyl is and how it works | [What Oscyl is](start/what-is-oscyl.md) |
+| Tutorials | learn by doing, one lesson at a time | [Try Oscyl without a synth](tutorials/try-without-a-synth.md) |
+| How-to guides | finish one real task | [Add a driver for a new synth](how-to/add-a-synth.md) |
+| Reference | look up a fact | [The driver contract](reference/driver-contract.md) |
+| Explanation | understand why Oscyl is made the way it is | [Architecture](explanation/architecture.md) |
 
-- [adr/](adr/README.md): architecture decision records (the monorepo, the
-  driver contract).
-- [rfcs/](rfcs/README.md): proposals for changes to the contract, the formats
-  or every driver, with the template.
+Explanation also holds the *decision records* (ADRs), which record
+decisions already made, and the *RFCs*, which propose a change before
+anyone makes it.
 
-## Formats
+The Rust API reference of the crates that a driver or another project uses
+is on the website, at
+[oscyl.github.io/oscyl/api](https://oscyl.github.io/oscyl/api/).
 
-- [protocol/native-library-format.md](protocol/native-library-format.md):
-  Oscyl's `.oscyllib` library format.
+## Outside this book
 
-## Design and history
-
-- [../DESIGN.md](../DESIGN.md): the visual system.
+- [README](https://github.com/oscyl/oscyl/blob/main/README.md): the
+  project's front page, with the downloads.
+- [CONTRIBUTING](https://github.com/oscyl/oscyl/blob/main/CONTRIBUTING.md):
+  how to send a change.
+- [GOVERNANCE](https://github.com/oscyl/oscyl/blob/main/GOVERNANCE.md):
+  roles, decisions, driver tiers and driver acceptance.
+- [CHANGELOG](https://github.com/oscyl/oscyl/blob/main/CHANGELOG.md): what
+  each release changed.

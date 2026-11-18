@@ -174,7 +174,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-driver",
  "serde",
@@ -185,7 +185,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-driver"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "thiserror",
 ]
@@ -196,14 +196,26 @@ version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
  "oscyl-core",
+ "oscyl-korg-minilogue-xd",
  "oscyl-korg-prologue",
- "oscyl-minilogue-xd",
- "oscyl-prophet-rev2",
+ "oscyl-sequential-prophet-rev2",
+]
+
+[[package]]
+name = "oscyl-korg-minilogue-xd"
+version = "0.5.0"
+dependencies = [
+ "oscyl-driver",
+ "oscyl-logue",
+ "quick-xml",
+ "serde_json",
+ "thiserror",
+ "zip",
 ]
 
 [[package]]
 name = "oscyl-korg-prologue"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-driver",
  "oscyl-logue",
@@ -211,7 +223,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-logue"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "oscyl-driver",
  "quick-xml",
@@ -221,20 +233,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "oscyl-minilogue-xd"
-version = "0.4.0"
-dependencies = [
- "oscyl-driver",
- "oscyl-logue",
- "quick-xml",
- "serde_json",
- "thiserror",
- "zip",
-]
-
-[[package]]
-name = "oscyl-prophet-rev2"
-version = "0.4.0"
+name = "oscyl-sequential-prophet-rev2"
+version = "0.5.0"
 dependencies = [
  "oscyl-driver",
 ]

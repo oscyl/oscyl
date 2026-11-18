@@ -3,8 +3,8 @@
 
 use std::path::Path;
 
-use oscyl_minilogue_xd::library::Library;
-use oscyl_minilogue_xd::unit::{HEADER_LEN, build_header};
+use oscyl_korg_minilogue_xd::library::Library;
+use oscyl_korg_minilogue_xd::unit::{HEADER_LEN, build_header};
 
 #[test]
 fn header_matches_unit_stored_on_synth() {

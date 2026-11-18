@@ -1,7 +1,7 @@
 # RFCs
 
 An RFC (request for comments) is a short design document for a change that
-affects more than one part of Oscyl. [GOVERNANCE.md](../../GOVERNANCE.md)
+affects more than one part of Oscyl. [GOVERNANCE.md](https://github.com/oscyl/oscyl/blob/main/GOVERNANCE.md)
 says when one is required: any change to the driver contract, any change
 that touches more than one driver or what every driver must provide, and any
 change to the native library format.

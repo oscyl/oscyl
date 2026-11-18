@@ -11,7 +11,7 @@ use midir::{MidiInput, MidiOutput};
 use oscyl_driver::engine::OpError;
 use oscyl_driver::sysex::DEVICE_INQUIRY;
 use oscyl_driver::{Driver, DriverError, DriverSession, SessionEvent, SessionOp};
-use oscyl_minilogue_xd::session as xd;
+use oscyl_korg_minilogue_xd::session as xd;
 
 use crate::logue::{UnitEvent, UnitOp, UnitSession, unit_session};
 #[cfg(feature = "midir")]
@@ -24,8 +24,8 @@ const INQUIRY_BOUND: Duration = Duration::from_secs(2);
 
 /// Every driver this transport can find synths for.
 pub static DRIVERS: &[&dyn Driver] = &[
-    &oscyl_minilogue_xd::DRIVER,
-    &oscyl_prophet_rev2::DRIVER,
+    &oscyl_korg_minilogue_xd::DRIVER,
+    &oscyl_sequential_prophet_rev2::DRIVER,
     &oscyl_korg_prologue::DRIVER,
 ];
 
@@ -247,7 +247,7 @@ impl Device {
     /// The minilogue xd on `port` (the first one found when `None`), for
     /// probes and hardware tests.
     pub fn open_xd(port: Option<&str>) -> Result<Device, Error> {
-        let xd = oscyl_minilogue_xd::DRIVER.info().id;
+        let xd = oscyl_korg_minilogue_xd::DRIVER.info().id;
         let c = crate::scan()?
             .into_iter()
             .find(|c| c.driver.info().id == xd && port.is_none_or(|p| c.port.contains(p)))
@@ -477,7 +477,7 @@ impl Device {
         op: xd::Op,
         mut on_event: impl FnMut(&xd::Event),
     ) -> Result<(), Error> {
-        if self.driver.info().id != oscyl_minilogue_xd::DRIVER.info().id {
+        if self.driver.info().id != oscyl_korg_minilogue_xd::DRIVER.info().id {
             return Err(Error::Driver(DriverError(format!(
                 "the {} has no user units",
                 self.driver.info().model

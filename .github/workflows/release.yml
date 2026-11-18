@@ -3,7 +3,7 @@ name: Release
 # A pushed tag vX.Y.Z builds every artifact, checksums and attests them, and
 # opens a draft GitHub Release with the CHANGELOG section as notes. A manual
 # run builds the same artifacts from the chosen ref and publishes nothing.
-# See docs/releasing.md.
+# See docs/how-to/release.md.
 on:
   push:
     tags: ['v*.*.*']

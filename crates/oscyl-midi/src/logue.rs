@@ -140,10 +140,10 @@ fn session<M: Model>(channel: u8) -> Box<dyn UnitSession> {
 /// `d`'s logue model: its unit session maker, SDK platform and unit file
 /// extension. `None` for a synth outside the logue family.
 fn model(d: &dyn Driver) -> Option<(MakeSession, Platform, &'static str)> {
+    use oscyl_korg_minilogue_xd::model::XdModel;
     use oscyl_korg_prologue::model::PrologueModel;
-    use oscyl_minilogue_xd::model::XdModel;
     let id = d.info().id;
-    if id == oscyl_minilogue_xd::DRIVER.info().id {
+    if id == oscyl_korg_minilogue_xd::DRIVER.info().id {
         Some((session::<XdModel>, XdModel::PLATFORM, "mnlgxdunit"))
     } else if id == oscyl_korg_prologue::DRIVER.info().id {
         Some((

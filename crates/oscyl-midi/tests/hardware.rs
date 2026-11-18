@@ -10,12 +10,12 @@
 //! (programs 497–500), and they put back exactly what was there, verified
 //! by reading it again. Take a backup first (`oscyl backup`) anyway.
 
+use oscyl_korg_minilogue_xd::Program;
+use oscyl_korg_minilogue_xd::msg::PROGRAM_COUNT;
+use oscyl_korg_minilogue_xd::session::{Event, Op};
+use oscyl_korg_minilogue_xd::store::plan_commit;
+use oscyl_korg_minilogue_xd::sync::plan_write;
 use oscyl_midi::Device;
-use oscyl_minilogue_xd::Program;
-use oscyl_minilogue_xd::msg::PROGRAM_COUNT;
-use oscyl_minilogue_xd::session::{Event, Op};
-use oscyl_minilogue_xd::store::plan_commit;
-use oscyl_minilogue_xd::sync::plan_write;
 
 const HW: &str = "needs a minilogue xd connected";
 
@@ -166,8 +166,8 @@ fn writes_the_last_group_and_puts_it_back() {
 #[test]
 #[ignore = "needs a minilogue xd connected"]
 fn live_messages_reach_the_edit_buffer() {
-    use oscyl_minilogue_xd::Field;
-    use oscyl_minilogue_xd::live;
+    use oscyl_korg_minilogue_xd::Field;
+    use oscyl_korg_minilogue_xd::live;
     let mut port = open();
     let before = current(&mut port);
     // A spread of controls, selectors and NRPNs, with values whose low bits
@@ -217,8 +217,8 @@ fn live_messages_reach_the_edit_buffer() {
 #[test]
 #[ignore = "needs a minilogue xd connected"]
 fn generated_programs_audition_exactly() {
-    use oscyl_minilogue_xd::Field;
-    use oscyl_minilogue_xd::generate::{Character, Macros, Recipe, generate};
+    use oscyl_korg_minilogue_xd::Field;
+    use oscyl_korg_minilogue_xd::generate::{Character, Macros, Recipe, generate};
     let mut port = open();
     let before = current(&mut port);
     let mut wrong = Vec::new();

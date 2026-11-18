@@ -148,7 +148,8 @@ footer nav { display: flex; gap: 18px; }
       <a href="#download">Download</a>
       <a href="#synths">Synths</a>
       <a href="#try">Try it</a>
-      <a href="https://github.com/oscyl/oscyl/blob/main/docs/drivers.md">Add a synth</a>
+      <a href="docs/">Docs</a>
+      <a href="docs/how-to/add-a-synth.html">Add a synth</a>
       <a class="button" href="https://github.com/oscyl/oscyl">GitHub</a>
     </nav>
   </header>
@@ -156,7 +157,7 @@ footer nav { display: flex; gap: 18px; }
   <section class="nameplate">
     <div>
       <h1>Your synth's sounds, in order.</h1>
-      <p>Oscyl is an open-source librarian and sound editor for hardware synths. It reads every program, draws each stage of the sound, and writes back only what you changed.</p>
+      <p>Oscyl is an open-source librarian and sound editor for hardware synths. It reads every program, draws each stage of the sound, and writes back only what you changed. It is not a DAW, a sequencer or a preset converter.</p>
       <div class="actions">
         <a class="button plate" href="#download">Download</a>
         <a class="button" href="https://github.com/oscyl/oscyl">Source</a>
@@ -265,7 +266,7 @@ footer nav { display: flex; gap: 18px; }
       </div>
       <div>
         <h2>Oscillators nobody else has.</h2>
-        <p>Oscyl makes user oscillators of its own for the minilogue xd and prologue, from wavetables, FM, folding and formants, and loads the one you keep into a free slot. Your own logue SDK units sit on a shelf, and Generate uses every unit your synth holds.</p>
+        <p>On a minilogue xd or prologue, Oscyl makes new oscillators with <a href="docs/explanation/oscillator-unit.html">its own logue SDK unit</a>, from wavetables, FM, folding and formants. It loads the one you keep into a free slot. Your own logue SDK units sit on a shelf, and Generate uses every unit your synth holds.</p>
         <ul class="facts">
           <li><span>Families</span><span>Wavetable, FM, Fold, Formant, Noise, Hybrid</span></li>
           <li><span>Your units</span><span>One click from a free slot</span></li>
@@ -298,7 +299,7 @@ footer nav { display: flex; gap: 18px; }
       <tr><td>Linux</td><td><a href="https://github.com/oscyl/oscyl/releases">Flatpak</a> (GNOME app) and the <code>oscyl</code> command line</td></tr>
       <tr><td>Android</td><td><a href="https://github.com/oscyl/oscyl/releases">APK</a> for phones, foldables and tablets</td></tr>
       <tr><td>macOS, Windows</td><td>The desktop app and the <code>oscyl</code> command line, from <a href="https://github.com/oscyl/oscyl/releases">Releases</a>; the app is not yet tested with a synth there</td></tr>
-      <tr><td>iOS</td><td><a href="https://github.com/oscyl/oscyl/blob/main/docs/building.md#ios">Build from source</a> for now</td></tr>
+      <tr><td>iOS</td><td><a href="docs/how-to/mobile.html#run-the-ios-app">Build from source</a> for now</td></tr>
     </table>
   </fieldset>
 
@@ -309,7 +310,7 @@ footer nav { display: flex; gap: 18px; }
         <tr><td>KORG minilogue xd</td><td>Validated on hardware, firmware 2.10</td></tr>
         <tr><td>KORG prologue</td><td>Proven against its simulator; testers wanted</td></tr>
         <tr><td>Sequential Prophet Rev2</td><td>Proven against its simulator; testers wanted</td></tr>
-        <tr><td>Yours</td><td><a href="https://github.com/oscyl/oscyl/blob/main/docs/drivers.md">Write a driver</a> or <a href="https://github.com/oscyl/oscyl/issues/new/choose">ask for one</a></td></tr>
+        <tr><td>Yours</td><td><a href="docs/tutorials/first-driver.html">Write a driver</a> or <a href="https://github.com/oscyl/oscyl/issues/new/choose">ask for one</a></td></tr>
       </table>
     </fieldset>
   </div>
@@ -319,7 +320,7 @@ footer nav { display: flex; gap: 18px; }
     <div class="try">
       <div>
         <h2>No synth on the desk? Use the demo one.</h2>
-        <p>The simulated synth answers like a real one, with no sound. You need Rust 1.92 or newer. <a href="https://github.com/oscyl/oscyl/blob/main/docs/building.md">Android, iOS and Flatpak builds</a></p>
+        <p>The simulated synth answers like a real one, with no sound. You need Rust 1.92 or newer. <a href="docs/tutorials/try-without-a-synth.html">The whole tour</a> · <a href="docs/how-to/build.html">Other builds</a></p>
       </div>
 <pre><code>git clone https://github.com/oscyl/oscyl &amp;&amp; cd oscyl
 <span class="c"># Linux, macOS, Windows</span>
@@ -331,7 +332,7 @@ cargo run -p oscyl-gtk -- --simulator</code></pre>
 
   <footer>
     <p>Oscyl is free software under MIT or Apache-2.0. It is an independent project, not affiliated with, endorsed by or supported by any synth maker. "KORG", "minilogue", "prologue" and "logue" are trademarks of KORG Inc.; "Sequential" and "Prophet" are trademarks of their owner.</p>
-    <nav aria-label="Project"><a href="https://github.com/oscyl/oscyl">GitHub</a><a href="https://github.com/oscyl/oscyl/discussions">Discussions</a><a href="https://github.com/oscyl/oscyl/blob/main/CONTRIBUTING.md">Contribute</a></nav>
+    <nav aria-label="Project"><a href="docs/">Docs</a><a href="api/">API</a><a href="https://github.com/oscyl/oscyl">GitHub</a><a href="https://github.com/oscyl/oscyl/discussions">Discussions</a><a href="https://github.com/oscyl/oscyl/blob/main/CONTRIBUTING.md">Contribute</a></nav>
   </footer>
 </main>
 

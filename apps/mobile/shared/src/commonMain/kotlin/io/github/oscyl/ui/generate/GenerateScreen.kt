@@ -704,7 +704,7 @@ private fun HandActions(ui: GenerateUi, hand: HandState, actions: GenerateAction
 }
 
 /**
- * New oscillators (on a synth that runs Oscyl's engine): Make six and Deal with a new
+ * New oscillators (on a synth that runs Oscyl's oscillator unit): Make six and Deal with a new
  * oscillator (which loads one and deals sounds that use it: it needs the synth), then the
  * six as lifted tiles like the sounds (one cycle of the wave, the name, the family and the
  * parameters' names), and for the one picked Keep, Vary and Breed with. While a new

@@ -12,12 +12,12 @@ fn identity_is_prologue_only() {
     let prologue = oscyl_korg_prologue::DRIVER
         .simulator()
         .handle(&DEVICE_INQUIRY);
-    let xd = oscyl_minilogue_xd::DRIVER
+    let xd = oscyl_korg_minilogue_xd::DRIVER
         .simulator()
         .handle(&DEVICE_INQUIRY);
     assert_eq!(prologue[0][5..8], [0x42, 0x4B, 0x01]);
     assert!(oscyl_korg_prologue::DRIVER.recognize(&prologue[0]));
     assert!(!oscyl_korg_prologue::DRIVER.recognize(&xd[0]));
-    assert!(oscyl_minilogue_xd::DRIVER.recognize(&xd[0]));
-    assert!(!oscyl_minilogue_xd::DRIVER.recognize(&prologue[0]));
+    assert!(oscyl_korg_minilogue_xd::DRIVER.recognize(&xd[0]));
+    assert!(!oscyl_korg_minilogue_xd::DRIVER.recognize(&prologue[0]));
 }

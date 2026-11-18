@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn tiers_and_voices_match_the_governance_table() {
         let tier = |id: &str| oscyl_midi::driver(id).unwrap().tier();
-        assert_eq!(tier("korg-minilogue-xd"), 2);
+        assert_eq!(tier("korg-minilogue-xd"), 1);
         assert_eq!(tier("sequential-prophet-rev2"), 2);
         assert_eq!(tier("korg-prologue"), 2);
         assert_eq!(
