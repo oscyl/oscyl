@@ -233,6 +233,15 @@ $(SRCROOT)/../../../crates/drivers/sequential-prophet-rev2/src/sim.rs
 $(SRCROOT)/../../../crates/drivers/sequential-prophet-rev2/src/syx.rs
 $(SRCROOT)/../../../crates/drivers/sequential-prophet-rev2/tests/conformance.rs
 $(SRCROOT)/../../../crates/drivers/sequential-prophet-rev2/tests/factory_file.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/Cargo.toml
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/src/driver.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/src/files.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/src/lib.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/src/msg.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/src/program.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/src/session.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/src/sim.rs
+$(SRCROOT)/../../../crates/drivers/tutorial-synth/tests/conformance.rs
 $(SRCROOT)/../../../crates/oscyl-app/Cargo.toml
 $(SRCROOT)/../../../crates/oscyl-app/src/catalog.rs
 $(SRCROOT)/../../../crates/oscyl-app/src/editor.rs
