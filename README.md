@@ -105,7 +105,7 @@ and Italian, and an `oscyl` command line for backups, diffs and scripts.
 |----------|--------|
 | Linux | [Flatpak](https://github.com/oscyl/oscyl/releases) (GNOME app) and the `oscyl` CLI |
 | Android | [APK](https://github.com/oscyl/oscyl/releases) for phones, foldables and tablets |
-| macOS, Windows | The desktop app (`Oscyl.app`, a zipped folder on Windows) and the `oscyl` CLI from [Releases](https://github.com/oscyl/oscyl/releases). The app is not yet tested with a synth there |
+| macOS, Windows | The desktop app (`Oscyl.app` on macOS; an installer or a zipped folder on Windows) and the `oscyl` CLI from [Releases](https://github.com/oscyl/oscyl/releases). The Windows installer needs no admin rights, and Settings > Apps uninstalls it. The CLI is checked with a minilogue xd on Windows. The desktop app is not yet tested with a synth on macOS or Windows |
 | iOS | [Build from source](docs/how-to/mobile.md#run-the-ios-app) for now |
 
 Every release lists SHA-256 sums and carries signed build provenance.

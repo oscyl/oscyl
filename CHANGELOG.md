@@ -13,6 +13,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   what it reads from and writes to a synth. A tutorial builds a first driver
   step by step, and the API reference of the driver crates is on the same
   site.
+- **A Windows installer.** It installs Oscyl for the current user, with no
+  admin rights, and adds it to the Start menu. Settings > Apps uninstalls
+  it. The zipped folder is still there.
 
 ### Changed
 - **The minilogue xd driver is Tier 1.** Its maintainer checks it on the
@@ -22,6 +25,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   `oscyl-sequential-prophet-rev2`, so every driver package is
   `oscyl-<vendor>-<model>`. A project that uses them from Git changes the
   names in its `Cargo.toml` and its `use` lines.
+
+### Fixed
+- **The minilogue xd is found on Windows.** Windows names its port
+  "MIDIIN2 (minilogue xd)". Oscyl now reads that name as Android's
+  "minilogue xd _ MIDI 2".
+- **The command line keeps its data on Windows.** It used `HOME`, which a
+  Windows desktop usually does not set. It now uses `%LOCALAPPDATA%`, as the
+  desktop app does.
 
 ## [0.5.0] - 2026-11-16
 

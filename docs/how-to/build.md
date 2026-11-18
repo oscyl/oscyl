@@ -87,6 +87,19 @@ cargo build --release -p oscyl-gtk
 packaging/desktop/bundle-windows.sh target/release/oscyl-gtk.exe "$MSYSTEM_PREFIX" dist/Oscyl
 ```
 
+To make the installer from that folder, install
+`mingw-w64-ucrt-x86_64-nsis`, then run:
+
+```sh
+makensis -DVERSION=0.5.0 -DSRC="$(cygpath -w "$PWD/dist/Oscyl")" \
+    -DOUT="$(cygpath -w "$PWD/dist/oscyl-setup.exe")" packaging/desktop/oscyl.nsi
+```
+
+The installer is for the current user only, and needs no admin rights. It
+puts Oscyl in `%LOCALAPPDATA%\Programs\Oscyl` and adds it to the Start
+menu. To remove Oscyl, open Settings > Apps > Installed apps, choose Oscyl,
+then choose Uninstall. Your settings and libraries stay.
+
 You can also build the Windows app on Linux:
 
 1. Install `mingw-w64-gcc`.
@@ -95,8 +108,8 @@ You can also build the Windows app on Linux:
    into it, and set `PKG_CONFIG_ALLOW_CROSS=1`.
 4. Run `cargo build -p oscyl-gtk --target x86_64-pc-windows-gnu`.
 
-The app is not signed, so SmartScreen can warn when it starts the first
-time. Choose More info, then Run anyway. As on macOS, if you plug the synth
+The installer and the app are not signed, so SmartScreen can warn the
+first time you run one of them. Choose More info, then Run anyway. As on macOS, if you plug the synth
 in after Oscyl starts, choose Connect.
 
 To try the app on a Windows PC with a synth, from Linux, see

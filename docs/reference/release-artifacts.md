@@ -11,6 +11,7 @@ checks. [Cut a release](../how-to/release.md) says how to start it.
 | `oscyl-X.Y.Z-{aarch64,x86_64}-apple-darwin.tar.gz` | The `oscyl` command line for macOS (CoreMIDI). Not signed or notarised. |
 | `oscyl-X.Y.Z-x86_64-pc-windows-msvc.zip` | The `oscyl` command line for Windows (WinMM). Not signed. |
 | `oscyl-X.Y.Z-desktop-windows-x86_64.zip` | The desktop app for Windows: a folder with `bin\Oscyl.exe`, and the MSYS2 UCRT64 DLLs, data and licence texts that it needs. Not signed. |
+| `oscyl-X.Y.Z-windows-x86_64-setup.exe` | The same desktop app as an installer for the current user (NSIS, `packaging/desktop/oscyl.nsi`). It installs to `%LOCALAPPDATA%\Programs\Oscyl`, and Settings > Apps uninstalls it. Not signed. |
 | `oscyl-X.Y.Z-desktop-macos-{aarch64,x86_64}.zip` | The desktop app for macOS: `Oscyl.app`, with Homebrew's libraries inside. Signed ad hoc, not notarised. It needs the macOS version of the runner that built it, or newer. |
 | `oscyl-X.Y.Z-x86_64.flatpak` | The GNOME app on the GNOME 49 runtime, which installs from Flathub. |
 | `oscyl-X.Y.Z.apk`, `.aab` | The Android app, signed when the keystore secrets exist. Otherwise `-unsigned` is in the name. |
