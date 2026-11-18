@@ -5,6 +5,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Gradle's daemon outlives a build. A CARGO_TARGET_DIR that an earlier build
+# set (a worktree that shares the main checkout's build) reaches the next
+# build as an empty string, and cargo refuses it. Always pass a real one.
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$PWD/target}"
+
 stage() { printf '\n==> %s\n' "$*"; }
 
 # Change-aware: a stage runs only when a file it checks changed since the last

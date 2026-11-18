@@ -7,6 +7,11 @@
 #   scripts/mobile-phone.sh frames ... then scripts/mobile-frames.py on each phone
 set -euo pipefail
 cd "$(dirname "$0")/../apps/mobile"
+
+# Gradle's daemon outlives a build. A CARGO_TARGET_DIR that an earlier build
+# set (a worktree that shares the main checkout's build) reaches the next
+# build as an empty string, and cargo refuses it. Always pass a real one.
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$(cd ../.. && pwd)/target}"
 pkg=io.github.oscyl.bench
 ./gradlew -q -PreleaseBuild=true :androidApp:assembleBenchmarkRelease
 apk=androidApp/build/outputs/apk/benchmarkRelease/androidApp-benchmarkRelease.apk
