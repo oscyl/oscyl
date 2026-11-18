@@ -37,8 +37,8 @@ Oscyl also reads and writes every synth's programs as `.oscyllib`.
 - **minilogue xd:** checked on the synth, firmware 2.10, with the desktop
   app and the command line on Linux. The Android app finds it on a Pixel 7
   Pro. On Windows 11, `oscyl info` finds it.
-- **prologue and Prophet Rev2:** proved against their simulators only.
-  Hardware testers are welcome.
+- **prologue and Prophet Rev2:** tested against their simulators only, not
+  yet on the synths. Hardware testers are welcome.
 - **The oscillator unit:** not yet heard on a synth.
 
 The desktop app on macOS and Windows, and the iOS app, have not run with a

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Oscyl: minilogue xd, prologue and Prophet Rev2 editor and librarian</title>
-<meta name="description" content="Oscyl is an open-source patch librarian and sound editor for the KORG minilogue xd, prologue and Sequential Prophet Rev2. Read, edit, back up and sync programs on Linux, Windows, macOS, Android, iOS and the command line.">
+<meta name="description" content="Oscyl is an open-source patch librarian and sound editor for hardware synths: the KORG minilogue xd today, with the prologue and Sequential Prophet Rev2 in testing. Read, edit, back up and sync programs on Linux, Windows, macOS, Android, iOS and the command line.">
 <link rel="canonical" href="https://oscyl.github.io/oscyl/">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="color-scheme" content="light dark">
@@ -163,7 +163,7 @@ footer nav { display: flex; gap: 18px; }
         <a class="button" href="https://github.com/oscyl/oscyl">Source</a>
         <a class="button" href="#try">Try it without a synth</a>
       </div>
-      <p class="state"><span class="lamp"></span><b>Pre-alpha.</b> Validated on a KORG minilogue xd. Builds for Linux, Windows, macOS, Android and the command line are on the <a href="https://github.com/oscyl/oscyl/releases">Releases</a> page.</p>
+      <p class="state"><span class="lamp"></span><b>Pre-alpha.</b> Checked with a real minilogue xd: the desktop app and the command line on Linux, the Android app, and <code>oscyl info</code> on Windows. The prologue and the Prophet Rev2 are tested against simulators only. Builds are on the <a href="https://github.com/oscyl/oscyl/releases">Releases</a> page.</p>
     </div>
     <picture>
       <source srcset="images/desktop-editor.png" media="(prefers-color-scheme: dark)">
@@ -214,7 +214,7 @@ footer nav { display: flex; gap: 18px; }
       </div>
       <div>
         <h2>Follow the signal, stage by stage.</h2>
-        <p>Voice, oscillators, mixer, filter, envelopes, effects: each stage has a live graph and every parameter. Each change plays on the synth as you make it, and with Live on, a knob turned on the synth moves here too.</p>
+        <p>Voice, oscillators, mixer, filter, envelopes, effects: each stage has a live graph and every parameter. Each change plays on the synth as you make it, but the synth stores nothing until you sync. With Live on, a knob turned on a minilogue xd moves here too.</p>
         <ul class="facts">
           <li><span>Cutoff</span><span>618 <span class="was">was 431</span></span></li>
           <li><span>Audition</span><span>Live, nothing stored</span></li>
@@ -266,7 +266,7 @@ footer nav { display: flex; gap: 18px; }
       </div>
       <div>
         <h2>Oscillators nobody else has.</h2>
-        <p>On a minilogue xd or prologue, Oscyl makes new oscillators with <a href="docs/explanation/oscillator-unit.html">its own logue SDK unit</a>, from wavetables, FM, folding and formants. It loads the one you keep into a free slot. Your own logue SDK units sit on a shelf, and Generate uses every unit your synth holds.</p>
+        <p>A minilogue xd or prologue runs small programs called units, made with KORG's logue SDK. Oscyl has <a href="docs/explanation/oscillator-unit.html">one unit of its own</a> that makes new oscillators, from wavetables, FM, folding and formants, and loads the one you keep into a free slot. You need it only for new oscillators. Your own logue SDK units sit on a shelf, and Generate uses every unit your synth holds.</p>
         <ul class="facts">
           <li><span>Families</span><span>Wavetable, FM, Fold, Formant, Noise, Hybrid</span></li>
           <li><span>Your units</span><span>One click from a free slot</span></li>
@@ -298,7 +298,8 @@ footer nav { display: flex; gap: 18px; }
     <table>
       <tr><td>Linux</td><td><a href="https://github.com/oscyl/oscyl/releases">Flatpak</a> (GNOME app) and the <code>oscyl</code> command line</td></tr>
       <tr><td>Android</td><td><a href="https://github.com/oscyl/oscyl/releases">APK</a> for phones, foldables and tablets</td></tr>
-      <tr><td>macOS, Windows</td><td>The desktop app and the <code>oscyl</code> command line, from <a href="https://github.com/oscyl/oscyl/releases">Releases</a>. On Windows, the installer needs no admin rights. The command line is checked with a minilogue xd on Windows; the app is not yet tested with a synth on macOS or Windows</td></tr>
+      <tr><td>Windows</td><td>An <a href="https://github.com/oscyl/oscyl/releases">installer</a> or a zipped folder, and the <code>oscyl</code> command line. The installer needs no admin rights. To remove Oscyl, use Settings &gt; Apps</td></tr>
+      <tr><td>macOS</td><td><a href="https://github.com/oscyl/oscyl/releases"><code>Oscyl.app</code></a> and the <code>oscyl</code> command line</td></tr>
       <tr><td>iOS</td><td><a href="docs/how-to/mobile.html#run-the-ios-app">Build from source</a> for now</td></tr>
     </table>
   </fieldset>
@@ -307,9 +308,9 @@ footer nav { display: flex; gap: 18px; }
     <fieldset id="synths">
       <legend class="legend">Synths</legend>
       <table>
-        <tr><td>KORG minilogue xd</td><td>Validated on hardware, firmware 2.10</td></tr>
-        <tr><td>KORG prologue</td><td>Proven against its simulator; testers wanted</td></tr>
-        <tr><td>Sequential Prophet Rev2</td><td>Proven against its simulator; testers wanted</td></tr>
+        <tr><td>KORG minilogue xd</td><td>Checked on the synth (firmware 2.10)</td></tr>
+        <tr><td>KORG prologue</td><td>Tested against a simulator only; hardware testers wanted</td></tr>
+        <tr><td>Sequential Prophet Rev2</td><td>Tested against a simulator only; hardware testers wanted</td></tr>
         <tr><td>Yours</td><td><a href="docs/tutorials/first-driver.html">Write a driver</a> or <a href="https://github.com/oscyl/oscyl/issues/new/choose">ask for one</a></td></tr>
       </table>
     </fieldset>
@@ -331,7 +332,7 @@ cargo run -p oscyl-gtk -- --simulator</code></pre>
   </fieldset>
 
   <footer>
-    <p>Oscyl is free software under MIT or Apache-2.0. It is an independent project, not affiliated with, endorsed by or supported by any synth maker. "KORG", "minilogue", "prologue" and "logue" are trademarks of KORG Inc.; "Sequential" and "Prophet" are trademarks of their owner.</p>
+    <p>Oscyl is free software under the MIT licence or the Apache License 2.0. It is an independent project. No synth maker supports or endorses it. "KORG", "minilogue", "prologue" and "logue" are trademarks of KORG Inc.; "Sequential" and "Prophet" are trademarks of their owner.</p>
     <nav aria-label="Project"><a href="docs/">Docs</a><a href="api/">API</a><a href="https://github.com/oscyl/oscyl">GitHub</a><a href="https://github.com/oscyl/oscyl/discussions">Discussions</a><a href="https://github.com/oscyl/oscyl/blob/main/CONTRIBUTING.md">Contribute</a></nav>
   </footer>
 </main>

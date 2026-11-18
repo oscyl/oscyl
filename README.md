@@ -5,8 +5,8 @@
 # Oscyl
 
 **The open-source librarian and sound editor for hardware synths.**<br>
-For the KORG minilogue xd, prologue and Sequential Prophet Rev2, on Linux,<br>
-Windows, macOS, Android, iOS and the command line.
+For the KORG minilogue xd today, with the prologue and Sequential Prophet<br>
+Rev2 in testing. On Linux, Windows, macOS, Android, iOS and the command line.
 
 [![CI](https://github.com/oscyl/oscyl/actions/workflows/ci.yml/badge.svg)](https://github.com/oscyl/oscyl/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/oscyl/oscyl/badge)](https://scorecard.dev/viewer/?uri=github.com/oscyl/oscyl)
@@ -26,14 +26,20 @@ Windows, macOS, Android, iOS and the command line.
 
 </div>
 
-Oscyl is a librarian and sound editor for hardware synths. It reads every
-program on your synth, draws each stage of the sound, and writes back only
-the slots you changed, after a backup. It is not a DAW, a sequencer or a
-preset converter: your synth plays, and Oscyl keeps and shapes its sounds.
+Oscyl is a librarian and sound editor for hardware synths. A librarian
+keeps your synth's programs (its saved sounds) in files on your computer or
+phone. Oscyl reads every program on your synth and draws each stage of the
+sound. It is not a DAW, a sequencer or a preset converter: your synth plays,
+and Oscyl keeps and shapes its sounds.
 
-It works with the synth unplugged too: open a library, edit, sync later.
+While you edit, the synth plays each change but stores nothing. Only Sync
+writes to the synth. It writes only the slots you changed, after it backs
+them up. Oscyl also works with the synth unplugged: open a library, edit,
+and sync later.
 
-**Status:** pre-alpha, validated on a KORG minilogue xd.
+**Status:** pre-alpha. Checked with a real minilogue xd: the desktop app and
+the command line on Linux, the Android app, and `oscyl info` on Windows.
+The prologue and the Prophet Rev2 are tested against simulators only.
 
 ## Features
 
@@ -59,9 +65,10 @@ sounds. Vary, breed or morph them, share one as a recipe code, keep the best.
 </td>
 <td valign="top">
 <img src="docs/images/desktop-oscillators.png" alt="New Oscillators on Linux: six generated oscillators, each with its wave and its parameters">
-<b>New oscillators.</b> On a minilogue xd or prologue, Oscyl makes new
-oscillators with its own logue SDK unit. It loads the one you keep into a
-free user slot.
+<b>New oscillators.</b> A minilogue xd or prologue runs small programs
+called units, made with KORG's logue SDK. Oscyl has one unit of its own that
+makes new oscillators, and loads the one you keep into a free user slot.
+You need it only for new oscillators.
 </td>
 </tr>
 <tr>
@@ -95,7 +102,7 @@ those slots written and confirmed one by one. Factory slots never change.
 </tr>
 </table>
 
-Also: with **Live** on, turning a knob on the synth moves it in the app.
+Also: with **Live** on, a knob turned on a minilogue xd moves in the app too.
 There are light, dark and AMOLED themes, large text, screen readers, English
 and Italian, and an `oscyl` command line for backups, diffs and scripts.
 
@@ -105,27 +112,35 @@ and Italian, and an `oscyl` command line for backups, diffs and scripts.
 |----------|--------|
 | Linux | [Flatpak](https://github.com/oscyl/oscyl/releases) (GNOME app) and the `oscyl` CLI |
 | Android | [APK](https://github.com/oscyl/oscyl/releases) for phones, foldables and tablets |
-| macOS, Windows | The desktop app (`Oscyl.app` on macOS; an installer or a zipped folder on Windows) and the `oscyl` CLI from [Releases](https://github.com/oscyl/oscyl/releases). The Windows installer needs no admin rights, and Settings > Apps uninstalls it. The CLI is checked with a minilogue xd on Windows. The desktop app is not yet tested with a synth on macOS or Windows |
+| Windows | An [installer](https://github.com/oscyl/oscyl/releases) or a zipped folder, and the `oscyl` CLI. The installer needs no admin rights. To remove Oscyl, use Settings > Apps |
+| macOS | [`Oscyl.app`](https://github.com/oscyl/oscyl/releases) and the `oscyl` CLI |
 | iOS | [Build from source](docs/how-to/mobile.md#run-the-ios-app) for now |
 
-Every release lists SHA-256 sums and carries signed build provenance.
+Each release lists the SHA-256 checksum of every file, and the release
+workflow signs a record of how each file was built. The desktop app on
+Windows and macOS is not yet tested with a synth.
 
 ## Supported synths
 
 | Synth | State |
 |-------|-------|
-| KORG minilogue xd | Validated on hardware (firmware 2.10) |
-| KORG prologue (8 and 16) | Proven against its simulator; hardware testers wanted |
-| Sequential Prophet Rev2 | Proven against its simulator; hardware testers wanted |
+| KORG minilogue xd | Checked on the synth (firmware 2.10) |
+| KORG prologue (8 and 16) | Tested against a simulator only; hardware testers wanted |
+| Sequential Prophet Rev2 | Tested against a simulator only; hardware testers wanted |
 
-Each synth has its own driver, tested against a simulator on every commit.
-[Supported synths](docs/reference/synths.md) says what works on each one. To
-add yours, start with the tutorial [Your first driver](docs/tutorials/first-driver.md),
-then [Add a driver for a new synth](docs/how-to/add-a-synth.md).
+Each synth has its own driver, a Rust crate that teaches Oscyl the synth's
+MIDI messages and program format. CI tests every driver against a simulator
+on every commit. [Supported synths](docs/reference/synths.md) says what works
+on each one.
+
+To add your synth, do the tutorial [Your first driver](docs/tutorials/first-driver.md),
+then follow [Add a driver for a new synth](docs/how-to/add-a-synth.md). No
+time to write one? [Ask for a driver](https://github.com/oscyl/oscyl/issues/new/choose).
 
 ## Try it without a synth
 
-The simulated synth answers like a real one, with no sound:
+The simulated synth answers like a real one, with no sound. You need Rust
+1.92 or newer:
 
 ```sh
 git clone https://github.com/oscyl/oscyl && cd oscyl
@@ -158,18 +173,20 @@ The documentation is a book, online at
 
 ## Contributing
 
-Hardware testers, drivers for new synths and translations are the most
-welcome help. Start with [CONTRIBUTING.md](CONTRIBUTING.md); ask in
-[Discussions](https://github.com/oscyl/oscyl/discussions). Security problems:
-[SECURITY.md](SECURITY.md).
+We most want hardware testers, drivers for new synths, and translations.
+Read [CONTRIBUTING.md](CONTRIBUTING.md), then ask in
+[Discussions](https://github.com/oscyl/oscyl/discussions). To report a
+security problem, follow [SECURITY.md](SECURITY.md).
 
 ## Licence
 
-Code: [Apache License 2.0](LICENSE-APACHE) or [MIT licence](LICENSE-MIT), at
-your option. The bundled Albert Sans font is under the SIL Open Font License
-1.1; the logue SDK files in `units/` are under their BSD licence.
+Code: [MIT licence](LICENSE-MIT) or [Apache License 2.0](LICENSE-APACHE), at
+your option. The bundled Albert Sans font uses the SIL Open Font License 1.1.
+The `units/` folder holds a few header and linker files from KORG's logue
+SDK, under their BSD licence.
 
-Oscyl is an independent project, not affiliated with or endorsed by any synth
-maker. "KORG", "minilogue", "prologue" and "logue" are trademarks of KORG
-Inc.; "Sequential" and "Prophet" are trademarks of their owner. This
-repository contains no vendor firmware, presets or software.
+Oscyl is an independent project. No synth maker supports or endorses it.
+"KORG", "minilogue", "prologue" and "logue" are trademarks of KORG Inc.;
+"Sequential" and "Prophet" are trademarks of their owner. This repository
+holds no vendor firmware or presets, and no vendor code beyond those logue
+SDK files.
