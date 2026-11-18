@@ -144,6 +144,46 @@ done
 scripts/version-test.sh
 fi
 
+# The book (docs/), and the prose and links of every Markdown file in the work
+# tree ($index): when a page, a Markdown file, the style rules or the
+# tutorial's driver (which its pages include) changed.
+docs='(^docs/|\.md$|^\.vale\.ini$|^\.github/styles/|^lychee\.toml$|^crates/drivers/tutorial-synth/)'
+stage "book"
+book=false
+if ! touched "$docs"; then skip
+elif command -v mdbook >/dev/null 2>&1; then
+    mdbook build docs
+    book=true
+else
+    echo "mdbook not installed, skipping (see docs/how-to/run-the-checks.md)"
+fi
+
+stage "prose"
+if ! touched "$docs"; then skip
+elif command -v vale >/dev/null 2>&1; then
+    GIT_INDEX_FILE=$index git ls-files -z '*.md' | xargs -0 vale --minAlertLevel=warning
+else
+    echo "vale not installed, skipping (see docs/how-to/run-the-checks.md)"
+fi
+
+stage "links"
+if ! touched "$docs"; then skip
+elif command -v lychee >/dev/null 2>&1; then
+    # Links to this repository's files on GitHub resolve in the work tree, and
+    # links to the published book in the book just built.
+    remap=(--remap "^https://github\.com/oscyl/oscyl/(?:blob|tree)/main/(.*)\$ file://$PWD/\$1")
+    if $book; then
+        remap+=(--remap "^https://oscyl\.github\.io/oscyl/docs/(.*)\$ file://$PWD/target/book/\$1")
+    fi
+    GIT_INDEX_FILE=$index git ls-files -z '*.md' \
+        | xargs -0 lychee --no-progress --config lychee.toml "${remap[@]}"
+    if $book; then
+        lychee --no-progress --config lychee.toml "${remap[@]}" target/book
+    fi
+else
+    echo "lychee not installed, skipping (see docs/how-to/run-the-checks.md)"
+fi
+
 if ! touched "$rust" || [ -z "$crates" ]; then
     stage "rust"
     skip

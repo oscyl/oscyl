@@ -27,7 +27,7 @@ one vendor's format.
    simulator, with fault injection for faults known on the hardware. The
    `oscyl-conformance` suite runs the same checks against every driver's
    simulator in CI. Hardware tests stay `#[ignore]`d and back the Tier 1
-   release validation (see [GOVERNANCE.md](../../GOVERNANCE.md)).
+   release validation (see [GOVERNANCE.md](https://github.com/oscyl/oscyl/blob/main/GOVERNANCE.md)).
 4. **Libraries use a native format, `.oscyllib`.** It records which driver a
    library belongs to and stores programs as the driver's own bytes. Vendor
    library and program files are import and export formats handled

@@ -1,0 +1,32 @@
+# British spelling in prose. Code, identifiers and quoted UI text are not
+# prose. Proper names ("Apache License", "SIL Open Font License") keep
+# their capital letter, so the rule does not match them.
+extends: substitution
+message: "Use British spelling: '%s', not '%s'."
+level: warning
+ignorecase: false
+swap:
+  license: licence
+  licenses: licences
+  color: colour
+  colors: colours
+  colored: coloured
+  Color: Colour
+  behavior: behaviour
+  behaviors: behaviours
+  Behavior: Behaviour
+  organize: organise
+  organizes: organises
+  organized: organised
+  organizing: organising
+  Organize: Organise
+  center: centre
+  centers: centres
+  centered: centred
+  analyze: analyse
+  analyzed: analysed
+  recognize: recognise
+  recognizes: recognises
+  recognized: recognised
+  favorite: favourite
+  favorites: favourites

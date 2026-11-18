@@ -147,12 +147,12 @@ cargo run -p oscyl-gtk -- --simulator
 A driver's user-facing strings (page titles, labels, value names, help) can
 be translated. List the driver's id in `TRANSLATED` in
 `apps/linux/src/pot.rs`, then regenerate the template (see
-[po/README.md](../po/README.md)). Today only the minilogue xd is translated;
+[po/README.md](https://github.com/oscyl/oscyl/blob/main/po/README.md)). Today only the minilogue xd is translated;
 other drivers stay English.
 
 ## Hardware validation and tiers
 
-[GOVERNANCE.md](../GOVERNANCE.md) defines the tiers. What each one means for
+[GOVERNANCE.md](https://github.com/oscyl/oscyl/blob/main/GOVERNANCE.md) defines the tiers. What each one means for
 a driver:
 
 | Tier | What it takes |

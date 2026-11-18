@@ -1,0 +1,46 @@
+# Active voice where the actor is known: "the session sends", not "is sent".
+extends: existence
+message: "'%s' may be passive. Name who does it if you can."
+level: suggestion
+ignorecase: true
+raw:
+  - '\b(am|are|were|being|is|been|was|be)\b\s*'
+tokens:
+  - '[\w]+ed'
+  - been
+  - born
+  - bought
+  - brought
+  - built
+  - chosen
+  - done
+  - drawn
+  - driven
+  - found
+  - given
+  - gone
+  - held
+  - hidden
+  - kept
+  - known
+  - laid
+  - led
+  - left
+  - lost
+  - made
+  - meant
+  - paid
+  - read
+  - run
+  - said
+  - seen
+  - sent
+  - set
+  - shown
+  - sold
+  - spent
+  - taken
+  - thought
+  - told
+  - understood
+  - written

@@ -9,7 +9,7 @@ public until a maintainer publishes the draft.
 ## Checklist
 
 1. **Hardware validation.** Every Tier 1 driver's maintainer has validated
-   it on real hardware for this release ([GOVERNANCE.md](../GOVERNANCE.md)).
+   it on real hardware for this release ([GOVERNANCE.md](https://github.com/oscyl/oscyl/blob/main/GOVERNANCE.md)).
    Note any driver that missed it in the changelog.
 2. **Bump the version** in a release PR:
    - `Cargo.toml`, `[workspace.package] version` (then `cargo check` to

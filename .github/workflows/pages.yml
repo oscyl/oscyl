@@ -1,10 +1,21 @@
 name: Site
 
-# Publishes site/ with the README's pictures to GitHub Pages.
+# Publishes to GitHub Pages: the landing page (site/) with the README's
+# pictures at the root, the book (docs/) at /docs/, and the API reference of
+# the crates a driver or another project uses at /api/.
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'docs/images/**', '.github/workflows/pages.yml']
+    paths:
+      - 'site/**'
+      - 'docs/**'
+      - 'crates/oscyl-driver/**'
+      - 'crates/oscyl-conformance/**'
+      - 'crates/oscyl-core/**'
+      - 'crates/oscyl-midi/**'
+      - 'crates/drivers/tutorial-synth/**'
+      - 'scripts/docs-tools.sh'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions: {}
@@ -28,6 +39,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - name: mdBook (pinned, checksum checked)
+        run: |
+          scripts/docs-tools.sh "$RUNNER_TEMP/docs-tools"
+          echo "$RUNNER_TEMP/docs-tools" >> "$GITHUB_PATH"
       - name: Assemble
         run: |
           mkdir -p _site/images
@@ -35,6 +55,10 @@ jobs:
           cp docs/images/*.png _site/images/
           cp apps/linux/data/fonts/AlbertSans-Bold.ttf _site/
           cp apps/linux/data/icons/hicolor/scalable/apps/io.github.oscyl.Oscyl.svg _site/icon.svg
+          mdbook build docs --dest-dir _site/docs
+          cargo doc --no-deps --locked -p oscyl-driver -p oscyl-conformance -p oscyl-core -p oscyl-midi
+          cp -r target/doc _site/api
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=oscyl_driver/index.html"><title>Oscyl API</title><a href="oscyl_driver/index.html">oscyl_driver</a>\n' > _site/api/index.html
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
       - id: deploy

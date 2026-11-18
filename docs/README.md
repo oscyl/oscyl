@@ -9,20 +9,20 @@ Where to find what. Start with the guides; the rest is reference and history.
   the tests and hardware validation.
 - [building.md](building.md): build and run every app, and the repository
   layout.
-- [mobile/README.md](mobile/README.md): build, run and test the Android and
+- [mobile/README.md](mobile/): build, run and test the Android and
   iOS apps, and how the mobile code is laid out.
 - [releasing.md](releasing.md): how a release is cut, and its last dry run.
-- [../CONTRIBUTING.md](../CONTRIBUTING.md): set up, run the checks, update
+- [../CONTRIBUTING.md](https://github.com/oscyl/oscyl/blob/main/CONTRIBUTING.md): set up, run the checks, update
   goldens and translations, and send a change.
-- [../po/README.md](../po/README.md): translate the desktop app and the core.
-- [../packaging/README.md](../packaging/README.md): install files and the
+- [../po/README.md](https://github.com/oscyl/oscyl/blob/main/po/README.md): translate the desktop app and the core.
+- [../packaging/README.md](https://github.com/oscyl/oscyl/blob/main/packaging/README.md): install files and the
   Flatpak.
 
 ## Decisions
 
-- [adr/](adr/README.md): architecture decision records (the monorepo, the
+- [adr/](adr/): architecture decision records (the monorepo, the
   driver contract).
-- [rfcs/](rfcs/README.md): proposals for changes to the contract, the formats
+- [rfcs/](rfcs/): proposals for changes to the contract, the formats
   or every driver, with the template.
 
 ## Formats
@@ -32,4 +32,4 @@ Where to find what. Start with the guides; the rest is reference and history.
 
 ## Design and history
 
-- [../DESIGN.md](../DESIGN.md): the visual system.
+- [../DESIGN.md](https://github.com/oscyl/oscyl/blob/main/DESIGN.md): the visual system.

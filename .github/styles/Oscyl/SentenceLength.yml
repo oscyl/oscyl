@@ -1,0 +1,8 @@
+# Simplified Technical English: 25 words or fewer in a description
+# (20 in an instruction, which a reviewer checks by eye).
+extends: occurrence
+message: "Keep a sentence to 25 words or fewer."
+level: warning
+scope: sentence
+max: 25
+token: '\b(\w+)\b'
