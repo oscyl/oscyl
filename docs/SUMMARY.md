@@ -2,6 +2,13 @@
 
 [Oscyl documentation](README.md)
 
+# Start here
+
+- [What Oscyl is, and what it is not](start/what-is-oscyl.md)
+- [What happens when you plug in a synth](start/plug-in.md)
+- [Glossary](start/glossary.md)
+- [A tour of the code](start/code-tour.md)
+
 # Guides
 
 - [Writing a synth driver](drivers.md)
