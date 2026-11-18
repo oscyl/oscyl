@@ -51,6 +51,11 @@
   <!-- TODO: add <screenshots> once the UI is stable (light and dark, 16:9). -->
 
   <releases>
+    <release version="0.6.0" date="2026-11-18" type="development">
+      <description>
+        <p>Oscyl finds a minilogue xd on Windows and installs there for your user, Hold to compare keeps your notes sounding, and the documentation is a book that starts from zero.</p>
+      </description>
+    </release>
     <release version="0.5.0" date="2026-11-16" type="development">
       <description>
         <p>Generate goes deeper and uses the units in your synth, Oscyl makes oscillators of its own for logue synths, the desktop app shares the phone app's look, and it now runs on Windows and macOS too.</p>

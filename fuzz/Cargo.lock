@@ -174,7 +174,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-core"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "oscyl-driver",
  "serde",
@@ -185,7 +185,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-driver"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "thiserror",
 ]
@@ -203,7 +203,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-korg-minilogue-xd"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "oscyl-driver",
  "oscyl-logue",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-korg-prologue"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "oscyl-driver",
  "oscyl-logue",
@@ -223,7 +223,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-logue"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "oscyl-driver",
  "quick-xml",
@@ -234,7 +234,7 @@ dependencies = [
 
 [[package]]
 name = "oscyl-sequential-prophet-rev2"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "oscyl-driver",
 ]

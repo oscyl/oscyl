@@ -6,6 +6,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-18
+
+Oscyl now finds a minilogue xd on Windows and installs there like any other
+app, and its documentation is a book that starts from zero.
+
+Checked on a KORG minilogue xd (firmware 2.10) on Linux: the command line
+(backup, current, diff, restore, audition) and the desktop app (reading
+every slot, Live).
+
 ### Added
 - **The documentation is a book**, online at
   [oscyl.github.io/oscyl/docs](https://oscyl.github.io/oscyl/docs/). It
@@ -18,6 +27,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   it. The zipped folder is still there.
 
 ### Changed
+- **Hold to compare keeps your notes sounding.** On the desktop, the synth
+  now gets only the parameters that differ between the saved program and
+  your edit. Before, it reloaded the whole program, and a minilogue xd went
+  silent for about 2.6 seconds.
 - **The minilogue xd driver is Tier 1.** Its maintainer checks it on the
   synth for each release, and a failure of that check blocks the release.
 - **Two driver crates have new names.** `oscyl-minilogue-xd` is now
@@ -33,6 +46,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - **The command line keeps its data on Windows.** It used `HOME`, which a
   Windows desktop usually does not set. It now uses `%LOCALAPPDATA%`, as the
   desktop app does.
+- **The synth's action lines up with its name** in the desktop sidebar.
 
 ## [0.5.0] - 2026-11-16
 
@@ -268,6 +282,7 @@ Rev2.
 - Avoids and detects a firmware 2.10 fault where reading during a flash save
   leaves the synth answering every request with the previous request's data.
 
-[Unreleased]: https://github.com/oscyl/oscyl/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/oscyl/oscyl/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/oscyl/oscyl/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/oscyl/oscyl/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/oscyl/oscyl/releases/tag/v0.4.0
