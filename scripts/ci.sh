@@ -183,7 +183,12 @@ elif command -v lychee >/dev/null 2>&1; then
     GIT_INDEX_FILE=$index git ls-files -z '*.md' \
         | xargs -0 lychee --no-progress --config lychee.toml "${remap[@]}"
     if $book; then
-        lychee --no-progress --config lychee.toml "${remap[@]}" target/book
+        # Folders that git ignores under docs/ reach only the local book.
+        ignored=()
+        while IFS= read -r dir; do
+            ignored+=(--exclude-path "target/book/${dir#docs/}")
+        done < <(git ls-files --others --ignored --exclude-standard --directory docs)
+        lychee --no-progress --config lychee.toml "${remap[@]}" "${ignored[@]}" target/book
     fi
 else
     echo "lychee not installed, skipping (see docs/how-to/run-the-checks.md)"

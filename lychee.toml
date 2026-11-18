@@ -5,6 +5,5 @@
 # Offline: relative links, files and anchors only. Nothing is fetched.
 offline = true
 include_fragments = "anchor-only"
-# Private working notes are not published. The book's 404 page uses the
-# absolute paths of the published site.
-exclude_path = ["docs/(superpowers|plans|design|research)/", "404\\.html$"]
+# The book's 404 page uses the absolute paths of the published site.
+exclude_path = ["404\\.html$"]
