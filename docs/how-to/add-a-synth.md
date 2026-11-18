@@ -54,8 +54,8 @@ The minilogue xd driver gives `"minilogue xd _ SOUND"` and
 2. Copy the Rev2's `Cargo.toml`, with its path dependencies and its
    `version.workspace = true` lines. Change the name and the description.
    The only dependency is `oscyl-driver`, and `oscyl-conformance` is a
-   dev-dependency. Do not add `publish = false`: only the tutorial's crate
-   and the test crate have it.
+   dev-dependency. Do not add `publish = false`: only
+   `oscyl-tutorial-synth` and `oscyl-osc-host` have it.
 3. Name the package. The driver's id, in `Driver::info`, is
    `<vendor>-<model>`, as the folder. No rule fixes the package name yet:
    the packages are `oscyl-minilogue-xd`, `oscyl-korg-prologue` and

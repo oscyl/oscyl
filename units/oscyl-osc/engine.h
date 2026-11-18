@@ -3,8 +3,8 @@
  * Copyright (c) 2026 the Oscyl contributors. MIT OR Apache-2.0.
  *
  * The same code runs in the logue SDK unit (unit.c) and, compiled for the
- * computer, in Oscyl's tests (crates/oscyl-engine-host). Oscyl writes the
- * patch (crates/drivers/logue/src/engine.rs, which documents the format
+ * computer, in Oscyl's tests (crates/oscyl-osc-host). Oscyl writes the
+ * patch (crates/drivers/logue/src/osc.rs, which documents the format
  * and holds a Rust port of this file for the apps' pictures).
  *
  * Patch: a 20-byte head (marker "OSCYLPAT", version, block, mod and table

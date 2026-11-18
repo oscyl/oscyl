@@ -56,6 +56,7 @@ jobs:
           cp apps/linux/data/fonts/AlbertSans-Bold.ttf _site/
           cp apps/linux/data/icons/hicolor/scalable/apps/io.github.oscyl.Oscyl.svg _site/icon.svg
           mdbook build docs --dest-dir _site/docs
+          rm _site/docs/book.toml # mdBook copies its own config: docs/ is its source
           cargo doc --no-deps --locked -p oscyl-driver -p oscyl-conformance -p oscyl-core -p oscyl-midi
           cp -r target/doc _site/api
           printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=oscyl_driver/index.html"><title>Oscyl API</title><a href="oscyl_driver/index.html">oscyl_driver</a>\n' > _site/api/index.html

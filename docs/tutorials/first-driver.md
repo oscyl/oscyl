@@ -86,7 +86,12 @@ register the crate anywhere. The crate has three names, each for one use:
 
 - the folder `tutorial-synth`;
 - the package `oscyl-tutorial-synth`, which you give to Cargo with `-p`;
-- the driver's id `oscyl-tutorial-mono`, which the apps and `--synth` use.
+- the driver's id `oscyl-tutorial-mono`. The apps and `--synth` find a
+  driver by its id once it is in `oscyl_midi::DRIVERS`. The tutorial's
+  driver is not, so no app lists it: you run it through its tests. A real
+  driver gets registered, as
+  [Add a driver for a new synth](../how-to/add-a-synth.md#5-register-the-driver)
+  says.
 
 Create `crates/drivers/tutorial-synth/Cargo.toml`:
 

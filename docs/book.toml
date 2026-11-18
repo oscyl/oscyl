@@ -25,11 +25,3 @@ enable = true
 # The book's Rust needs Oscyl's crates, which the Rust Playground lacks.
 [output.html.playground]
 runnable = false
-
-# Pages that moved: their old addresses open the new page.
-[output.html.redirect]
-"/drivers.html" = "how-to/add-a-synth.html"
-"/building.html" = "how-to/build.html"
-"/releasing.html" = "how-to/release.html"
-"/mobile/index.html" = "../how-to/mobile.html"
-"/protocol/native-library-format.html" = "../reference/oscyllib-format.html"

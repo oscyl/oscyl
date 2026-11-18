@@ -3,7 +3,7 @@
  * Copyright (c) 2026 the Oscyl contributors. MIT OR Apache-2.0.
  *
  * Kept free of libc and libm, so the unit and the host build compute the
- * same thing; crates/drivers/logue/src/engine/render.rs ports it to Rust
+ * same thing; crates/drivers/logue/src/osc/render.rs ports it to Rust
  * operation for operation (a test holds the two together).
  */
 #include "engine.h"

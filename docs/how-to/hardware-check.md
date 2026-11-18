@@ -48,28 +48,39 @@ When the check is needed:
 4. Make a library with new programs in your scratch slots only. For
    example, open `before.oscyllib` in the desktop app, change the scratch
    slots, and save it as `scratch.oscyllib`.
-5. Write it. Oscyl writes only the programs that differ, and backs up the
-   synth first:
-
-   ```sh
-   oscyl restore scratch.oscyllib
-   ```
-
-   Check that the output names only your scratch slots, and that each write
-   ends.
-6. Compare the synth with the library. Expect `0 of N programs differ`:
+5. List the programs that the write will change:
 
    ```sh
    oscyl diff scratch.oscyllib
    ```
 
-7. Play a program without storing it, and listen to the synth:
+   It prints one line for each program that differs, its position from 0
+   and its name, then `N of M programs differ`. Check that it lists only
+   your scratch slots. If it lists any other slot, stop.
+6. Write it. Oscyl backs up the whole synth first, then writes only the
+   programs that differ:
+
+   ```sh
+   oscyl restore scratch.oscyllib
+   ```
+
+   It prints `backup of the synth saved to <path>`, the progress, and
+   `wrote and saved N programs in <time>`. Check that N is the number of
+   programs that the diff listed.
+7. Compare the synth with the library again. Expect `0 of M programs
+   differ`:
+
+   ```sh
+   oscyl diff scratch.oscyllib
+   ```
+
+8. Play a program without storing it, and listen to the synth:
 
    ```sh
    oscyl audition scratch.oscyllib --index 3
    ```
 
-8. Put the scratch slots back:
+9. Put the scratch slots back:
 
    ```sh
    oscyl restore before.oscyllib
@@ -78,8 +89,8 @@ When the check is needed:
 
    The diff must say that no program differs.
 
-9. In the desktop app, connect the synth and check that it reads every
-   slot. Turn on Live, edit a value, and listen to the change.
+10. In the desktop app, connect the synth and check that it reads every
+    slot. Turn on Live, edit a value, and listen to the change.
 
 ## Record the result
 

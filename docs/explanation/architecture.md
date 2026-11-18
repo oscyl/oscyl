@@ -102,8 +102,8 @@ A write changes the only copy of someone's sounds. These rules keep it safe:
 | Platform | App | Synth link |
 |---|---|---|
 | Linux | The GTK app (`apps/linux`) on `oscyl-app` | `oscyl-midi` with midir on ALSA, with hotplug |
-| macOS | The same GTK app | midir on CoreMIDI; choose Connect after you plug the synth in |
-| Windows | The same GTK app | midir on WinMM; choose Connect after you plug the synth in |
+| macOS | The same GTK app | midir on CoreMIDI; synths plugged in at start connect, later ones need Connect |
+| Windows | The same GTK app | midir on WinMM; synths plugged in at start connect, later ones need Connect |
 | Android | The Compose app (`apps/mobile`), on `oscyl-app` through `oscyl-ffi` | Android's `MidiManager` moves the bytes |
 | iOS | The same Compose app | CoreMIDI, in the app's own code, moves the bytes |
 | Every desktop | The command line, `oscyl-cli` | `oscyl-midi` with midir, one operation at a time |

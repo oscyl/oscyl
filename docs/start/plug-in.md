@@ -27,9 +27,12 @@ shows. When a port with such a name appears, Oscyl sends it the MIDI *device
 inquiry*. The synth answers with its identity, and the driver checks that
 the answer comes from its synth.
 
-On Linux the desktop app sees a synth when you plug it in. On macOS and
-Windows, you choose **Connect** after you plug it in. On Android, the
-system offers Oscyl when the synth is plugged in, and Oscyl connects it.
+On Linux, the desktop app sees a synth when you plug it in. On macOS and
+Windows, the desktop app connects the synths that are plugged in when it
+starts. For a synth that you plug in later, choose **Connect**. On Android,
+the system offers Oscyl when the synth is plugged in, and Oscyl connects it.
+The iOS app connects a synth when CoreMIDI reports its port; it has not run
+with a synth yet.
 
 ## Oscyl reads the synth
 
@@ -77,10 +80,15 @@ pick on the synth opens in Oscyl.
 
 No slot that you did not edit changes, and Oscyl never writes a factory
 slot. One detail: the minilogue xd and the prologue answer a write before
-they save it to flash memory. To be sure that the save is done, their driver
-can send the last program twice. It can also send a neighbouring slot the
-bytes that it already holds. This forces the synth to finish the save before it
-answers.
+they save it to flash memory. A write past the end of the memory group that
+the synth holds forces the save. So their driver does this:
+
+- It writes the last program of the sync again, with the same bytes, until
+  the synth has saved.
+- A sync of the synth's last slot alone also writes one other slot of the
+  same group. That slot gets the bytes that it already holds.
+
+Then the synth answers only after the save.
 
 When you unplug the synth, your edits that are not synced stay in Oscyl.
 The phone app keeps them on disk, so they stay even when the app closes.
