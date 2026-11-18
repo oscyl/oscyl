@@ -56,11 +56,13 @@ The minilogue xd driver gives `"minilogue xd _ SOUND"` and
    The only dependency is `oscyl-driver`, and `oscyl-conformance` is a
    dev-dependency. Do not add `publish = false`: only
    `oscyl-tutorial-synth` and `oscyl-osc-host` have it.
-3. Name the package. The driver's id, in `Driver::info`, is
-   `<vendor>-<model>`, as the folder. No rule fixes the package name yet:
-   the packages are `oscyl-minilogue-xd`, `oscyl-korg-prologue` and
-   `oscyl-prophet-rev2`. `oscyl-<vendor>-<model>` matches the folder and
-   the id, as the prologue's does.
+3. Name the crate by the rule: the folder and the driver's id (in
+   `Driver::info`) are `<vendor>-<model>`, and the package is
+   `oscyl-<vendor>-<model>`. For example, `crates/drivers/korg-prologue`
+   holds the package `oscyl-korg-prologue`, whose driver id is
+   `korg-prologue`. A crate that a family of synths shares is
+   `oscyl-<family>`, as `oscyl-logue`. The tutorial's crate,
+   `oscyl-tutorial-synth`, is the one exception: no real synth has it.
 4. Split the code into modules as the Rev2 does:
 
 | Module | What it holds |
@@ -95,14 +97,14 @@ Add `tests/conformance.rs`:
 ```rust
 #[test]
 fn prophet_rev2_conforms() {
-    oscyl_conformance::run(&oscyl_prophet_rev2::DRIVER);
+    oscyl_conformance::run(&oscyl_sequential_prophet_rev2::DRIVER);
 }
 ```
 
 Run it until it passes:
 
 ```sh
-cargo test -p oscyl-prophet-rev2 --test conformance
+cargo test -p oscyl-sequential-prophet-rev2 --test conformance
 ```
 
 A failure names the driver, the check and the problem.

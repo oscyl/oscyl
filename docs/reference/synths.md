@@ -21,7 +21,7 @@ The synths that Oscyl has a driver for, and what Oscyl does with each one.
 | | KORG minilogue xd | KORG prologue | Sequential Prophet Rev2 |
 |---|---|---|---|
 | Driver id | `korg-minilogue-xd` | `korg-prologue` | `sequential-prophet-rev2` |
-| Crate | `oscyl-minilogue-xd` | `oscyl-korg-prologue` | `oscyl-prophet-rev2` |
+| Crate | `oscyl-korg-minilogue-xd` | `oscyl-korg-prologue` | `oscyl-sequential-prophet-rev2` |
 | Tier | 1 | 2 | 2 |
 | Program slots | 500, all writable | 500, all writable | U1 to U4 (512, writable); F1 to F4 (512, factory, never written) |
 | User unit slots | Oscillators 16, modulation effects 16, delays 8, reverbs 8 | Oscillators 16, modulation effects 16, delays 8, reverbs 8 | None |

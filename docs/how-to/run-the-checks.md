@@ -27,7 +27,7 @@ optional tools.
 Run the smallest check that can fail for your change, for example:
 
 - one crate: `cargo test -p oscyl-app` and `cargo clippy -p oscyl-app`;
-- one driver's conformance: `cargo test -p oscyl-prophet-rev2 --test conformance`;
+- one driver's conformance: `cargo test -p oscyl-sequential-prophet-rev2 --test conformance`;
 - one mobile test class: see [Fast loops](mobile.md#fast-loops);
 - the book: `mdbook build docs`, then open `target/book/index.html`.
 

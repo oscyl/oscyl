@@ -7,13 +7,13 @@
 use std::io::Cursor;
 
 use oscyl_driver::{DriverSession, SessionOp, Simulator};
-use oscyl_minilogue_xd::adapter::{XdSession, XdSimulator};
-use oscyl_minilogue_xd::library::{Entry, Library, ProgInfo, from_data, to_data};
-use oscyl_minilogue_xd::msg::{Dump, Module, Request, decode, encode_dump, encode_request};
-use oscyl_minilogue_xd::sim::SimDevice;
-use oscyl_minilogue_xd::store::{StoreModel, plan_commit};
-use oscyl_minilogue_xd::unit::{Unit, build_header};
-use oscyl_minilogue_xd::{Field, Program};
+use oscyl_korg_minilogue_xd::adapter::{XdSession, XdSimulator};
+use oscyl_korg_minilogue_xd::library::{Entry, Library, ProgInfo, from_data, to_data};
+use oscyl_korg_minilogue_xd::msg::{Dump, Module, Request, decode, encode_dump, encode_request};
+use oscyl_korg_minilogue_xd::sim::SimDevice;
+use oscyl_korg_minilogue_xd::store::{StoreModel, plan_commit};
+use oscyl_korg_minilogue_xd::unit::{Unit, build_header};
+use oscyl_korg_minilogue_xd::{Field, Program};
 
 /// FNV-1a, 64 bit: stable across Rust releases, unlike `DefaultHasher`.
 fn fnv(bytes: &[u8]) -> u64 {

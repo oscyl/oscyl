@@ -28,8 +28,8 @@ use midir::{Ignore, MidiInput, MidiInputConnection, MidiOutput, MidiOutputConnec
 use oscyl_driver::engine::OpError;
 use oscyl_driver::sysex::Framer;
 use oscyl_driver::{DriverError, Simulator};
-use oscyl_minilogue_xd::adapter::XdSimulator;
-use oscyl_minilogue_xd::sim::SimDevice;
+use oscyl_korg_minilogue_xd::adapter::XdSimulator;
+use oscyl_korg_minilogue_xd::sim::SimDevice;
 
 #[cfg(feature = "midir")]
 const CLIENT: &str = "oscyl";

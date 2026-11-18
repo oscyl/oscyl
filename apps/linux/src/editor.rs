@@ -1699,9 +1699,9 @@ fn labelled(label: &str, widget: &gtk::Widget, tooltip: &str) -> gtk::Box {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use oscyl_minilogue_xd::{Field, Program};
+    use oscyl_korg_minilogue_xd::{Field, Program};
 
-    const XD: &dyn Driver = &oscyl_minilogue_xd::DRIVER;
+    const XD: &dyn Driver = &oscyl_korg_minilogue_xd::DRIVER;
 
     fn idx(f: Field) -> usize {
         Field::ALL.iter().position(|g| *g == f).unwrap()

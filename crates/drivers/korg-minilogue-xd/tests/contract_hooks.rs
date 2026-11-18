@@ -1,9 +1,9 @@
 //! The xd's contract hooks give exactly what its own modules give.
 
 use oscyl_driver::{Control, Driver, Graph, Handle, Recipe};
-use oscyl_minilogue_xd::generate::{self, Character};
-use oscyl_minilogue_xd::present::{self, Stage};
-use oscyl_minilogue_xd::{DRIVER, Field, Program, help, viz};
+use oscyl_korg_minilogue_xd::generate::{self, Character};
+use oscyl_korg_minilogue_xd::present::{self, Stage};
+use oscyl_korg_minilogue_xd::{DRIVER, Field, Program, help, viz};
 
 fn idx(f: Field) -> usize {
     Field::ALL.iter().position(|g| *g == f).unwrap()

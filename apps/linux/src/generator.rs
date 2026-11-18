@@ -1726,7 +1726,7 @@ mod tests {
     use oscyl_app::generator::{HAND, HISTORY};
     use oscyl_core::generate::hand;
 
-    const XD: &dyn Driver = &oscyl_minilogue_xd::DRIVER;
+    const XD: &dyn Driver = &oscyl_korg_minilogue_xd::DRIVER;
 
     fn names(g: &Generator) -> Vec<String> {
         g.hands
@@ -1744,8 +1744,8 @@ mod tests {
     /// generated sounds.
     #[test]
     fn same_hands_as_before_for_the_xd() {
-        use oscyl_minilogue_xd::Program as XdProgram;
-        use oscyl_minilogue_xd::generate as old;
+        use oscyl_korg_minilogue_xd::Program as XdProgram;
+        use oscyl_korg_minilogue_xd::generate as old;
         let bytes = |v: Vec<XdProgram>| -> Vec<Vec<u8>> {
             v.into_iter().map(|p| p.as_bytes().to_vec()).collect()
         };

@@ -4,8 +4,8 @@
 
 use std::io::Cursor;
 
-use oscyl_minilogue_xd::Field;
-use oscyl_minilogue_xd::library::Library;
+use oscyl_korg_minilogue_xd::Field;
+use oscyl_korg_minilogue_xd::library::Library;
 
 #[test]
 fn real_librarian_file_round_trips() {

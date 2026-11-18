@@ -832,10 +832,10 @@ mod tests {
         );
         assert!(!doc.can_undo());
     }
-    use oscyl_minilogue_xd::Field;
+    use oscyl_korg_minilogue_xd::Field;
 
     fn xd() -> &'static dyn Driver {
-        &oscyl_minilogue_xd::DRIVER
+        &oscyl_korg_minilogue_xd::DRIVER
     }
 
     fn init() -> Program {

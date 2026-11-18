@@ -1,5 +1,5 @@
 [package]
-name = "oscyl-prophet-rev2"
+name = "oscyl-sequential-prophet-rev2"
 description = "Sequential Prophet Rev2 driver for Oscyl: protocol, program model, .syx files, simulator"
 version.workspace = true
 edition.workspace = true

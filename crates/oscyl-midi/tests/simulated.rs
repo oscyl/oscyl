@@ -1,18 +1,20 @@
 //! End-to-end sessions against the simulated synth.
 
+use oscyl_korg_minilogue_xd::Program;
+use oscyl_korg_minilogue_xd::demo::{demo_library, demo_units};
+use oscyl_korg_minilogue_xd::msg::{
+    Dump, Module, PROGRAM_COUNT, Request, encode_dump, encode_request,
+};
+use oscyl_korg_minilogue_xd::session::{Event, Op, OpError};
+use oscyl_korg_minilogue_xd::sim::SimDevice;
+use oscyl_korg_minilogue_xd::store::plan_commit;
+use oscyl_korg_minilogue_xd::sync::plan_write;
 use oscyl_midi::{Device, Error, SimLink};
-use oscyl_minilogue_xd::Program;
-use oscyl_minilogue_xd::demo::{demo_library, demo_units};
-use oscyl_minilogue_xd::msg::{Dump, Module, PROGRAM_COUNT, Request, encode_dump, encode_request};
-use oscyl_minilogue_xd::session::{Event, Op, OpError};
-use oscyl_minilogue_xd::sim::SimDevice;
-use oscyl_minilogue_xd::store::plan_commit;
-use oscyl_minilogue_xd::sync::plan_write;
 
 /// A minilogue xd device on `sim`, through the same inquiry as a real one.
 fn simulated(sim: SimDevice) -> Result<Device, Error> {
     Device::connect(
-        &oscyl_minilogue_xd::DRIVER,
+        &oscyl_korg_minilogue_xd::DRIVER,
         Box::new(SimLink::new(sim)),
         "simulated minilogue xd".into(),
     )

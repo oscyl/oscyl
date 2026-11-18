@@ -1280,9 +1280,9 @@ dependencies = [
  "async-channel",
  "oscyl-core",
  "oscyl-driver",
+ "oscyl-korg-minilogue-xd",
  "oscyl-logue",
  "oscyl-midi",
- "oscyl-minilogue-xd",
  "serde",
  "serde_json",
  "zip",
@@ -1298,9 +1298,9 @@ dependencies = [
  "oscyl-app",
  "oscyl-core",
  "oscyl-driver",
+ "oscyl-korg-minilogue-xd",
  "oscyl-logue",
  "oscyl-midi",
- "oscyl-minilogue-xd",
  "serde_json",
  "zip",
 ]
@@ -1357,13 +1357,27 @@ dependencies = [
  "oscyl-app",
  "oscyl-core",
  "oscyl-driver",
+ "oscyl-korg-minilogue-xd",
  "oscyl-logue",
  "oscyl-midi",
- "oscyl-minilogue-xd",
  "pango",
  "pangocairo",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "oscyl-korg-minilogue-xd"
+version = "0.5.0"
+dependencies = [
+ "oscyl-conformance",
+ "oscyl-core",
+ "oscyl-driver",
+ "oscyl-logue",
+ "quick-xml",
+ "serde_json",
+ "thiserror 2.0.21",
+ "zip",
 ]
 
 [[package]]
@@ -1372,8 +1386,8 @@ version = "0.5.0"
 dependencies = [
  "oscyl-conformance",
  "oscyl-driver",
+ "oscyl-korg-minilogue-xd",
  "oscyl-logue",
- "oscyl-minilogue-xd",
  "zip",
 ]
 
@@ -1395,25 +1409,11 @@ dependencies = [
  "alsa",
  "midir",
  "oscyl-driver",
+ "oscyl-korg-minilogue-xd",
  "oscyl-korg-prologue",
  "oscyl-logue",
- "oscyl-minilogue-xd",
- "oscyl-prophet-rev2",
+ "oscyl-sequential-prophet-rev2",
  "thiserror 2.0.21",
-]
-
-[[package]]
-name = "oscyl-minilogue-xd"
-version = "0.5.0"
-dependencies = [
- "oscyl-conformance",
- "oscyl-core",
- "oscyl-driver",
- "oscyl-logue",
- "quick-xml",
- "serde_json",
- "thiserror 2.0.21",
- "zip",
 ]
 
 [[package]]
@@ -1425,7 +1425,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "oscyl-prophet-rev2"
+name = "oscyl-sequential-prophet-rev2"
 version = "0.5.0"
 dependencies = [
  "oscyl-conformance",

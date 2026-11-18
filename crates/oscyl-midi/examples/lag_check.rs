@@ -3,9 +3,9 @@
 //! session check repairs the state before it is seen.
 use std::time::{Duration, Instant};
 
+use oscyl_korg_minilogue_xd::Program;
+use oscyl_korg_minilogue_xd::msg::{Dump, Reply, Request, decode, encode_request};
 use oscyl_midi::Device;
-use oscyl_minilogue_xd::Program;
-use oscyl_minilogue_xd::msg::{Dump, Reply, Request, decode, encode_request};
 
 fn name(port: &mut Device, n: u16) -> String {
     let ch = port.channel();

@@ -1,5 +1,5 @@
 [package]
-name = "oscyl-minilogue-xd"
+name = "oscyl-korg-minilogue-xd"
 description = "KORG minilogue xd driver for Oscyl: protocol, program model, file formats, simulator"
 version.workspace = true
 edition.workspace = true

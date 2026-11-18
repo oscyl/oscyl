@@ -8,7 +8,11 @@ Each method links to its documentation in the
 made this way.
 
 A driver is a crate under `crates/drivers/` that exposes one
-`pub static DRIVER`. Of the 53 methods of `Driver`, 18 are required, and the
+`pub static DRIVER`. Its folder and its driver id (`Info::id`) are
+`<vendor>-<model>`, and its package is `oscyl-<vendor>-<model>`, for
+example `oscyl-korg-minilogue-xd`. A crate that a family of synths shares
+is `oscyl-<family>`, as `oscyl-logue`. The tutorial's `oscyl-tutorial-synth`
+is the one exception. Of the 53 methods of `Driver`, 18 are required, and the
 other 35 have defaults. The apps use it only as `&dyn Driver`. A required
 method has no default. An optional method has a default that suits a
 driver which does not use it.

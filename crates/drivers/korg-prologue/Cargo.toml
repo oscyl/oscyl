@@ -13,5 +13,5 @@ oscyl-logue = { path = "../logue" }
 
 [dev-dependencies]
 oscyl-conformance = { path = "../../oscyl-conformance" }
-oscyl-minilogue-xd = { path = "../korg-minilogue-xd" }
+oscyl-korg-minilogue-xd = { path = "../korg-minilogue-xd" }
 zip = { version = "9.5.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }

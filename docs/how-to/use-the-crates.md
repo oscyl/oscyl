@@ -14,7 +14,11 @@ this repository: see [Add a driver for a new synth](add-a-synth.md).
 | `oscyl-midi` | Find and open a synth, and run operations on it. It holds `DRIVERS`, every driver that Oscyl has |
 | `oscyl-core` | Read and write `.oscyllib` library files |
 | `oscyl-conformance` | Test a driver against its simulator |
-| A driver crate, such as `oscyl-minilogue-xd` | Use one synth's own types directly |
+| A driver crate, such as `oscyl-korg-minilogue-xd` | Use one synth's own types directly |
+
+The driver packages are named `oscyl-<vendor>-<model>` after Oscyl 0.5.0.
+At the tag v0.5.0, two of them have older names: `oscyl-minilogue-xd` and
+`oscyl-prophet-rev2`.
 
 `oscyl-midi` depends on every driver crate. Cargo clones the whole
 repository once, then builds only the crates that you name and their

@@ -3,9 +3,9 @@
 //! the session's quiet period, to see whether auditions trigger a flash save.
 use std::time::{Duration, Instant};
 
+use oscyl_korg_minilogue_xd::library::Library;
+use oscyl_korg_minilogue_xd::msg::{Dump, Reply, Request, decode, encode_dump, encode_request};
 use oscyl_midi::Device;
-use oscyl_minilogue_xd::library::Library;
-use oscyl_minilogue_xd::msg::{Dump, Reply, Request, decode, encode_dump, encode_request};
 
 fn main() {
     let a: Vec<String> = std::env::args().collect();

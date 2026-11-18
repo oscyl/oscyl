@@ -2,8 +2,8 @@
 //! Usage: cargo run -p oscyl-midi --example read_slot -- <module 1-4> <slot> <out.bin>
 use std::time::{Duration, Instant};
 
+use oscyl_korg_minilogue_xd::msg::{Dump, Module, Reply, Request, decode, encode_request};
 use oscyl_midi::Device;
-use oscyl_minilogue_xd::msg::{Dump, Module, Reply, Request, decode, encode_request};
 
 fn main() {
     let a: Vec<String> = std::env::args().collect();

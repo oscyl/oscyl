@@ -6,8 +6,8 @@
 use std::path::PathBuf;
 
 use oscyl_driver::sysex::Framer;
-use oscyl_prophet_rev2::fields;
-use oscyl_prophet_rev2::msg::{Reply, decode, encode_program_dump};
+use oscyl_sequential_prophet_rev2::fields;
+use oscyl_sequential_prophet_rev2::msg::{Reply, decode, encode_program_dump};
 
 #[test]
 #[ignore = "needs the vendor's factory .syx file, local only"]

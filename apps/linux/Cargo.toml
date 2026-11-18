@@ -19,7 +19,7 @@ oscyl-app = { path = "../../crates/oscyl-app" }
 oscyl-core = { path = "../../crates/oscyl-core" }
 oscyl-driver = { path = "../../crates/oscyl-driver" }
 oscyl-logue = { path = "../../crates/drivers/logue" }
-oscyl-minilogue-xd = { path = "../../crates/drivers/korg-minilogue-xd" }
+oscyl-korg-minilogue-xd = { path = "../../crates/drivers/korg-minilogue-xd" }
 oscyl-midi = { path = "../../crates/oscyl-midi" }
 pango = { version = "0.22", features = ["v1_56"] }
 pangocairo = "0.22"

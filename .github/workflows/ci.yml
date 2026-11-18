@@ -73,7 +73,7 @@ jobs:
       fail-fast: false
       matrix:
         # One entry per driver package under crates/drivers/.
-        driver: [oscyl-minilogue-xd, oscyl-prophet-rev2, oscyl-korg-prologue, oscyl-tutorial-synth]
+        driver: [oscyl-korg-minilogue-xd, oscyl-sequential-prophet-rev2, oscyl-korg-prologue, oscyl-tutorial-synth]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

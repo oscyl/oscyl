@@ -22,4 +22,4 @@ midir = ["oscyl-midi/midir"]
 
 [dev-dependencies]
 zip = { version = "9.5.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }
-oscyl-minilogue-xd = { path = "../drivers/korg-minilogue-xd" }
+oscyl-korg-minilogue-xd = { path = "../drivers/korg-minilogue-xd" }

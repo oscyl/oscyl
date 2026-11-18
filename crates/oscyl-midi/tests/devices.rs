@@ -8,13 +8,13 @@ use std::time::{Duration, Instant};
 use oscyl_driver::engine::OpError;
 use oscyl_driver::sysex::{DEVICE_INQUIRY, Framer};
 use oscyl_driver::{Driver, SessionEvent, SessionOp, Simulator};
+use oscyl_korg_minilogue_xd::demo::demo_library;
+use oscyl_korg_minilogue_xd::msg::{Dump, PROGRAM_COUNT, Request, encode_dump, encode_request};
+use oscyl_korg_minilogue_xd::sim::SimDevice;
 use oscyl_midi::{Candidate, DRIVERS, Device, Error, Link, SimLink, candidates, run_all, wait};
-use oscyl_minilogue_xd::demo::demo_library;
-use oscyl_minilogue_xd::msg::{Dump, PROGRAM_COUNT, Request, encode_dump, encode_request};
-use oscyl_minilogue_xd::sim::SimDevice;
 
-const XD: &dyn Driver = &oscyl_minilogue_xd::DRIVER;
-const REV2: &dyn Driver = &oscyl_prophet_rev2::DRIVER;
+const XD: &dyn Driver = &oscyl_korg_minilogue_xd::DRIVER;
+const REV2: &dyn Driver = &oscyl_sequential_prophet_rev2::DRIVER;
 const PROLOGUE: &dyn Driver = &oscyl_korg_prologue::DRIVER;
 
 /// A synth on its own thread, as midir delivers a real one: replies arrive
@@ -508,7 +508,7 @@ fn send_goes_out_as_one_message() {
 
 #[test]
 fn run_xd_lists_48_slots_and_refuses_a_rev2() {
-    use oscyl_minilogue_xd::session::{Event, Op};
+    use oscyl_korg_minilogue_xd::session::{Event, Op};
     let mut d = Device::demo(XD).unwrap();
     let mut slots = 0;
     d.run_xd(Op::ReadSlots, |e| {
@@ -532,7 +532,7 @@ fn the_workers_bell_survives_a_blocking_run() {
     let (bell, rung) = channel();
     d.ring_on_input(bell.clone());
     d.run(SessionOp::ReadCurrent, |_| {}).unwrap();
-    d.run_xd(oscyl_minilogue_xd::session::Op::ReadSlots, |_| {})
+    d.run_xd(oscyl_korg_minilogue_xd::session::Op::ReadSlots, |_| {})
         .unwrap();
     let t0 = Instant::now();
     d.submit(SessionOp::ReadPrograms(vec![1])).unwrap();

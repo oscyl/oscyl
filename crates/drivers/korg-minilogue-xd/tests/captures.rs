@@ -4,8 +4,8 @@
 
 use std::path::{Path, PathBuf};
 
-use oscyl_minilogue_xd::msg::{Dump, Reply, decode};
-use oscyl_minilogue_xd::{Field, Program};
+use oscyl_korg_minilogue_xd::msg::{Dump, Reply, decode};
+use oscyl_korg_minilogue_xd::{Field, Program};
 
 fn captures() -> Vec<PathBuf> {
     let runs = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../private/research/probes/runs");

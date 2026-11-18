@@ -17,6 +17,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 - **The minilogue xd driver is Tier 1.** Its maintainer checks it on the
   synth for each release, and a failure of that check blocks the release.
+- **Two driver crates have new names.** `oscyl-minilogue-xd` is now
+  `oscyl-korg-minilogue-xd`, and `oscyl-prophet-rev2` is now
+  `oscyl-sequential-prophet-rev2`, so every driver package is
+  `oscyl-<vendor>-<model>`. A project that uses them from Git changes the
+  names in its `Cargo.toml` and its `use` lines.
 
 ## [0.5.0] - 2026-11-16
 
