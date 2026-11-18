@@ -329,8 +329,9 @@ impl MinilogueXd {
 
 impl Driver for MinilogueXd {
     fn tier(&self) -> u8 {
-        // GOVERNANCE.md, as the README's supported synths table says.
-        2
+        // GOVERNANCE.md: its maintainer, named in .github/CODEOWNERS, checks
+        // it on the synth for each release.
+        1
     }
     fn voices(&self) -> &'static [u8] {
         &[4]

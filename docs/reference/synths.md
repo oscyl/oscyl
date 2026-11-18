@@ -22,7 +22,7 @@ The synths that Oscyl has a driver for, and what Oscyl does with each one.
 |---|---|---|---|
 | Driver id | `korg-minilogue-xd` | `korg-prologue` | `sequential-prophet-rev2` |
 | Crate | `oscyl-minilogue-xd` | `oscyl-korg-prologue` | `oscyl-prophet-rev2` |
-| Tier | 2 | 2 | 2 |
+| Tier | 1 | 2 | 2 |
 | Program slots | 500, all writable | 500, all writable | U1 to U4 (512, writable); F1 to F4 (512, factory, never written) |
 | User unit slots | Oscillators 16, modulation effects 16, delays 8, reverbs 8 | Oscillators 16, modulation effects 16, delays 8, reverbs 8 | None |
 | File formats | `.mnlgxdlib`, `.mnlgxdpreset`, `.mnlgxdprog` | `.prlglib` | `.syx` |
@@ -49,10 +49,9 @@ synth yet.
 [GOVERNANCE](https://github.com/oscyl/oscyl/blob/main/GOVERNANCE.md#support-tiers)
 defines the tiers. A driver reports its tier with `Driver::tier`.
 
-No driver is Tier 1 today. The minilogue xd was checked on the synth, but
-Tier 1 also needs a named maintainer who checks the driver for each
-release. `.github/CODEOWNERS` names the maintainers' team for each driver,
-not one person, so every driver is Tier 2.
+The minilogue xd is Tier 1: its maintainer, named in `.github/CODEOWNERS`,
+checks it on the synth for each release. The prologue and the Prophet Rev2
+are Tier 2: no named maintainer checks them on hardware yet.
 
 | Tier | What it takes |
 |---|---|

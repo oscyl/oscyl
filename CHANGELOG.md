@@ -14,6 +14,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   step by step, and the API reference of the driver crates is on the same
   site.
 
+### Changed
+- **The minilogue xd driver is Tier 1.** Its maintainer checks it on the
+  synth for each release, and a failure of that check blocks the release.
+
 ## [0.5.0] - 2026-11-16
 
 Generate goes deeper, your units become part of it, Oscyl makes
