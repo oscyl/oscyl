@@ -1,4 +1,4 @@
-//! Wave makers: single-cycle tables for the engine's wavetable block, from
+//! Wave makers: single-cycle tables for the unit's wavetable block, from
 //! harmonics, drawn points, a single-cycle WAV file, or a seeded family of
 //! tables that morph into each other.
 

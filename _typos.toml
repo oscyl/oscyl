@@ -10,7 +10,7 @@ extend-exclude = [
     # Baseline Profiles: generated method signatures.
     "**/baselineProfiles/*.txt",
     # The logue SDK's files, vendored as Korg wrote them.
-    "units/oscyl-engine/sdk/",
+    "units/oscyl-osc/sdk/",
 ]
 
 [default.extend-words]
@@ -22,7 +22,7 @@ prelease = "prelease"
 writeable = "writeable"
 # "caf\u{e9}" in a test of non-ASCII names.
 caf = "caf"
-# "64ths": the oscillator engine's amounts.
+# "64ths": the oscillator unit's amounts.
 ths = "ths"
 # A syllable of generated oscillator names.
 nd = "nd"

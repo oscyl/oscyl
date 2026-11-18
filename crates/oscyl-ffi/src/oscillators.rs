@@ -1,11 +1,11 @@
 //! New oscillators for Generate on the mobile apps: hands of six made by
-//! Oscyl's oscillator engine (`oscyl_app::oscillators`). Dealing blocks for
+//! Oscyl's oscillator unit (`oscyl_app::oscillators`). Dealing blocks for
 //! a moment: call it off the main thread. Keep one with
 //! `Synth.keep_oscillator`.
 
 use std::sync::{Arc, Mutex};
 
-use oscyl_logue::engine::{Family, Patch, render::picture};
+use oscyl_logue::osc::{Family, Patch, render::picture};
 
 use crate::synth::FfiError;
 
@@ -58,7 +58,7 @@ pub fn oscillators_supported(driver_id: String) -> bool {
     crate::synth::driver(&driver_id)
         .ok()
         .and_then(oscyl_midi::logue::platform)
-        .is_some_and(|p| oscyl_logue::engine::supports(&p))
+        .is_some_and(|p| oscyl_logue::osc::supports(&p))
 }
 
 /// Keep oscillator `patch` on `driver_id`'s shelf without a synth to load

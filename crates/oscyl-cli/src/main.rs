@@ -14,7 +14,7 @@ use oscyl_midi::{DRIVERS, Device};
 // contract does not model; they run through `Device::run_units` on
 // every logue synth (minilogue xd, prologue).
 use oscyl_app::shelf::Shelf;
-use oscyl_logue::engine;
+use oscyl_logue::osc;
 use oscyl_logue::unit::{ParamKind, Unit, UnitInfo, palette_unit};
 use oscyl_midi::logue::{Module, UnitEvent as Event, UnitOp as Op, platform, unit_name};
 
@@ -154,7 +154,7 @@ enum UnitsCmd {
         #[command(subcommand)]
         cmd: ShelfCmd,
     },
-    /// Make a new oscillator with Oscyl's engine and show it. Needs no
+    /// Make a new oscillator with Oscyl's oscillator unit and show it. Needs no
     /// synth, except to --load it.
     Make {
         /// What it is built around [default: any, by the seed].
@@ -473,24 +473,24 @@ fn make(
     seed: Option<u64>,
     out: Option<&Path>,
     d: &'static dyn Driver,
-) -> Result<engine::Patch> {
+) -> Result<osc::Patch> {
     let p = platform(d)
-        .filter(engine::supports)
+        .filter(osc::supports)
         .with_context(|| format!("the {} cannot play Oscyl's oscillators", d.info().model))?;
     let seed = match seed {
         Some(s) => s,
         None => u64::from(SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()),
     };
     let family = match family {
-        Some(id) => engine::Family::from_id(id).context("no such family")?,
-        None => engine::Family::ALL[(seed % engine::Family::ALL.len() as u64) as usize],
+        Some(id) => osc::Family::from_id(id).context("no such family")?,
+        None => osc::Family::ALL[(seed % osc::Family::ALL.len() as u64) as usize],
     };
-    let patch = engine::generate(family, seed);
-    let unit = engine::build(&p, &patch)?;
+    let patch = osc::generate(family, seed);
+    let unit = osc::build(&p, &patch)?;
     print_unit(&unit.info());
     println!("  {} oscillator, seed {seed}", family.id());
     if let Some(out) = out {
-        std::fs::write(out, engine::file(&p, &patch)?)
+        std::fs::write(out, osc::file(&p, &patch)?)
             .with_context(|| format!("cannot write {}", out.display()))?;
         eprintln!("wrote {}", out.display());
     }

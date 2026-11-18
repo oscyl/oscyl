@@ -13,10 +13,10 @@ authors = ["Giuseppe Maggio <jertlok@proton.me>"]
 [workspace.dependencies]
 thiserror = "2"
 
-# The oscillator engine's render runs in tests thousands of times
-# (oscyl-engine-host): optimised, they take seconds, not minutes.
+# The oscillator unit's render runs in tests thousands of times
+# (oscyl-osc-host): optimised, they take seconds, not minutes.
 [profile.dev.package.oscyl-logue]
 opt-level = 3
 
-[profile.dev.package.oscyl-engine-host]
+[profile.dev.package.oscyl-osc-host]
 opt-level = 3

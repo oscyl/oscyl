@@ -1332,14 +1332,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oscyl-engine-host"
-version = "0.5.0"
-dependencies = [
- "cc",
- "oscyl-logue",
-]
-
-[[package]]
 name = "oscyl-ffi"
 version = "0.5.0"
 dependencies = [
@@ -1422,6 +1414,14 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.21",
  "zip",
+]
+
+[[package]]
+name = "oscyl-osc-host"
+version = "0.5.0"
+dependencies = [
+ "cc",
+ "oscyl-logue",
 ]
 
 [[package]]

@@ -174,13 +174,13 @@ pub fn about(win: &OscylWindow) {
         gtk::License::Custom,
         Some("SIL Open Font License 1.1"),
     );
-    // KORG's code in the oscillator engine unit Oscyl loads into synths.
+    // KORG's code in the oscillator unit Oscyl loads into synths.
     about.add_legal_section(
         "logue SDK",
         Some("Copyright (c) 2018, KORG INC."),
         gtk::License::Custom,
         Some(&glib::markup_escape_text(include_str!(
-            "../../../units/oscyl-engine/sdk/LICENSE"
+            "../../../units/oscyl-osc/sdk/LICENSE"
         ))),
     );
     // The Rust crates the app is built from, one section per licence text.

@@ -8,7 +8,7 @@
 //! sound's recipe code can be copied, and a code typed in deals its sound
 //! again.
 //!
-//! On a synth that runs Oscyl's oscillator engine (minilogue xd,
+//! On a synth that runs Oscyl's oscillator unit (minilogue xd,
 //! prologue), New Oscillators deals six oscillators of its own
 //! (`oscyl_app::oscillators`), varied and bred like sounds; Keep puts one
 //! on the shelf and loads it into the synth. Deal with a New Oscillator
@@ -26,7 +26,7 @@ use gtk::glib;
 use oscyl_app::generator::Hands;
 use oscyl_app::oscillators::{Oscillators, family_title};
 use oscyl_driver::{Driver, Family, Macros, Recipe};
-use oscyl_logue::engine::{self, Patch};
+use oscyl_logue::osc::{self, Patch};
 
 use crate::callback::Slot;
 use crate::editor::graph_of;
@@ -116,7 +116,7 @@ pub struct Generator {
     code_error: gtk::Label,
     lamps: RefCell<Vec<gtk::Widget>>,
     /// New oscillators: the section (shown when the synth runs Oscyl's
-    /// engine), its tiles, actions and the hands behind them.
+    /// oscillator unit), its tiles, actions and the hands behind them.
     osc_section: gtk::Widget,
     osc_tiles: gtk::FlowBox,
     osc_plate: Plated,
@@ -307,7 +307,7 @@ fn oscillator_tile(p: &Patch) -> gtk::FlowBoxChild {
     let wave = mini_graph();
     wave.set_min_width_em(12.0);
     wave.set_data(
-        crate::widgets::GraphData::Wave(engine::render::picture(p, 128)),
+        crate::widgets::GraphData::Wave(osc::render::picture(p, 128)),
         None,
     );
     wave.set_accessible_role(gtk::AccessibleRole::Presentation);
@@ -675,7 +675,7 @@ impl Generator {
         page.append(&actions);
         page.append(&code_row);
 
-        // New oscillators, for a synth that runs Oscyl's engine.
+        // New oscillators, for a synth that runs Oscyl's oscillator unit.
         let osc_section = gtk::Box::new(gtk::Orientation::Vertical, 0);
         osc_section.add_css_class("gen-osc");
         osc_section.append(&legend(&tr("New Oscillators")));
@@ -910,8 +910,8 @@ impl Generator {
             self.characters.append(&character_tile(d, i));
         }
         self.build_families(d);
-        let engine = oscyl_midi::logue::platform(d).is_some_and(|p| engine::supports(&p));
-        self.osc_section.set_visible(engine);
+        let runs = oscyl_midi::logue::platform(d).is_some_and(|p| osc::supports(&p));
+        self.osc_section.set_visible(runs);
         self.set_pending(None);
         self.refresh_units();
         self.generate.set_sensitive(!d.characters().is_empty());
@@ -1458,8 +1458,8 @@ impl Generator {
     /// use it once the synth lists it.
     fn deal_with_new_oscillator(&self) {
         let seed = u64::from(glib::random_int()) << 32 | u64::from(glib::random_int());
-        let family = engine::Family::ALL[(seed % engine::Family::ALL.len() as u64) as usize];
-        let p = engine::generate(family, seed);
+        let family = osc::Family::ALL[(seed % osc::Family::ALL.len() as u64) as usize];
+        let p = osc::generate(family, seed);
         self.set_pending(Some(p.name.clone()));
         self.on_ask.emit(Ask::KeepOscillator(self.driver.get(), p));
     }
@@ -1961,7 +1961,10 @@ mod tests {
             let a = asks.clone();
             g.connect_ask(move |ask| a.borrow_mut().push(ask));
             g.set_seed(7);
-            assert!(g.osc_section.is_visible(), "the xd runs the engine");
+            assert!(
+                g.osc_section.is_visible(),
+                "the xd runs the oscillator unit"
+            );
             assert!(g.osc_empty.is_visible() && !g.osc_actions.is_visible());
             g.deal_oscillators();
             assert_eq!(g.osc_tiles.observe_children().n_items() as usize, HAND);
@@ -2013,7 +2016,7 @@ mod tests {
             // Listed, its parameters known: six sounds that use it are
             // dealt, of a character that takes it when the chosen one does
             // not (the page moves to it).
-            let info = oscyl_logue::engine::build(&oscyl_midi::logue::platform(XD).unwrap(), &new)
+            let info = oscyl_logue::osc::build(&oscyl_midi::logue::platform(XD).unwrap(), &new)
                 .unwrap()
                 .info();
             let unit = oscyl_driver::PaletteUnit {

@@ -1,5 +1,5 @@
-//! Oscyl's oscillator engine, the patch maker: oscillators made of data for
-//! one prebuilt logue SDK unit (`units/oscyl-engine`, C), so every app can
+//! The patch maker for Oscyl's oscillator unit: oscillators made of data for
+//! one prebuilt logue SDK unit (`units/oscyl-osc`, C), so every app can
 //! make new ones without a compiler.
 //!
 //! The unit holds fixed DSP blocks and a marked *patch region*; a [`Patch`]
@@ -456,35 +456,33 @@ fn peak(s: &[f32]) -> f32 {
 fn payload(platform: &Platform) -> Option<&'static [u8]> {
     match platform.name {
         "minilogue-xd" => Some(include_bytes!(
-            "../../../../units/oscyl-engine/payload/minilogue-xd.bin"
+            "../../../../units/oscyl-osc/payload/minilogue-xd.bin"
         )),
         "prologue" => Some(include_bytes!(
-            "../../../../units/oscyl-engine/payload/prologue.bin"
+            "../../../../units/oscyl-osc/payload/prologue.bin"
         )),
         _ => None,
     }
 }
 
-/// Whether `platform` runs the engine.
+/// Whether `platform` runs the oscillator unit.
 pub fn supports(platform: &Platform) -> bool {
     payload(platform).is_some()
 }
 
 /// `patch` as a unit file for `platform` (`.mnlgxdunit`, `.prlgunit`): the
-/// engine's payload with the patch in its region, and a manifest naming
+/// unit's payload with the patch in its region, and a manifest naming
 /// it, its parameters (0 to 100 %) and an id of its own (its CRC), so a
 /// synth tells two oscillators apart.
 pub fn file(platform: &Platform, patch: &Patch) -> Result<Vec<u8>, Error> {
     patch.validate().map_err(Error::NotALibrary)?;
     let mut payload = payload(platform)
-        .ok_or_else(|| {
-            Error::NotALibrary(format!("no oscillator engine for the {}", platform.name))
-        })?
+        .ok_or_else(|| Error::NotALibrary(format!("no oscillator unit for the {}", platform.name)))?
         .to_vec();
     let at = payload
         .windows(MARK.len())
         .position(|w| w == MARK)
-        .expect("the engine's payload holds its region");
+        .expect("the unit's payload holds its region");
     let bytes = patch.to_bytes();
     payload[at..at + bytes.len()].copy_from_slice(&bytes);
     let params: Vec<_> = patch

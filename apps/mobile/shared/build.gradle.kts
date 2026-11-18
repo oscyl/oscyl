@@ -144,8 +144,8 @@ val assembleComposeResources = tasks.register<Sync>("assembleComposeResources") 
     from(files("../../linux/data/fonts/OFL-AlbertSans.txt", "../../../LICENSE-MIT", "../../../LICENSE-APACHE")) {
         into("files/licences")
     }
-    // KORG's logue SDK licence: the oscillator engine unit holds its code.
-    from("../../../units/oscyl-engine/sdk/LICENSE") {
+    // KORG's logue SDK licence: the oscillator unit holds its code.
+    from("../../../units/oscyl-osc/sdk/LICENSE") {
         into("files/licences")
         rename { "BSD-3-Clause-logue-sdk.txt" }
     }

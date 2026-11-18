@@ -1,6 +1,6 @@
-//! The unit's DSP (`units/oscyl-engine/engine.c`) in Rust, operation for
+//! The unit's DSP (`units/oscyl-osc/engine.c`) in Rust, operation for
 //! operation, for the apps' wave pictures and the patch maker's level
-//! checks. Keep the two in step: `oscyl-engine-host` renders both and
+//! checks. Keep the two in step: `oscyl-osc-host` renders both and
 //! fails when they part.
 
 use super::{Kind, Patch, TABLE_LEN};

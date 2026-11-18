@@ -1,9 +1,9 @@
-//! Oscyl's oscillator engine unit (`units/oscyl-engine`), its C compiled
+//! Oscyl's oscillator unit (`units/oscyl-osc`), its C compiled
 //! for the computer: what a patch sounds like on the synth, for tests.
 //! Nothing ships it.
 //!
-//! Its tests hold the engine to account: every family's oscillators sound
-//! right, the Rust port (`oscyl_logue::engine::render`) matches the C, a
+//! Its tests hold the unit to account: every family's oscillators sound
+//! right, the Rust port (`oscyl_logue::osc::render`) matches the C, a
 //! bad patch plays a saw, and the committed payloads are built from the
 //! sources as they are.
 
@@ -41,7 +41,7 @@ pub fn render(patch: &[u8], pitch: u16, knobs: [u16; 8], frames: usize) -> Vec<f
 #[cfg(test)]
 mod tests {
     use super::*;
-    use oscyl_logue::engine::{self, Family, Patch, Play, render::probes};
+    use oscyl_logue::osc::{self, Family, Patch, Play, render::probes};
 
     fn c(p: &Patch, play: &Play, frames: usize) -> Vec<f32> {
         let [a, b, c, d, e, f] = play.params;
@@ -66,7 +66,7 @@ mod tests {
         let probes = probes();
         for family in Family::ALL {
             for seed in 0..200 {
-                let p = engine::generate(family, seed);
+                let p = osc::generate(family, seed);
                 let what = format!("{family:?} {seed} {}", p.name);
                 for play in &probes {
                     let s = c(&p, play, 4096);
@@ -85,9 +85,9 @@ mod tests {
     fn the_rust_port_plays_what_the_unit_plays() {
         for family in Family::ALL {
             for seed in 0..6 {
-                let p = engine::generate(family, seed);
+                let p = osc::generate(family, seed);
                 for play in probes() {
-                    let (rust, c) = (engine::render(&p, &play, 2048), c(&p, &play, 2048));
+                    let (rust, c) = (osc::render(&p, &play, 2048), c(&p, &play, 2048));
                     let worst = rust
                         .iter()
                         .zip(&c)
@@ -113,16 +113,16 @@ mod tests {
         let plain = saw(&region);
         // Garbage, a broken check sum, a patch with nothing to sound.
         assert_eq!(saw(&[0x5A; 4608]), plain);
-        let mut p = engine::generate(Family::Fm, 1).to_bytes();
+        let mut p = osc::generate(Family::Fm, 1).to_bytes();
         p[40] ^= 0xFF;
         p.resize(4608, 0);
         assert_eq!(saw(&p), plain);
-        let mut quiet = engine::generate(Family::Fold, 1);
+        let mut quiet = osc::generate(Family::Fold, 1);
         quiet.blocks.retain(|b| !b.kind.is_source());
         quiet.mods.clear();
         assert_eq!(saw(&quiet.to_bytes()), plain);
         assert_eq!(
-            engine::render(&quiet, &Play::at(60, 50.0 / 100.0), 4096),
+            osc::render(&quiet, &Play::at(60, 50.0 / 100.0), 4096),
             plain,
             "the port too"
         );
@@ -165,7 +165,7 @@ mod tests {
             "sdk/minilogue-xd/userprg.h",
             "sdk/prologue/userprg.h",
         ]
-        .map(|f| format!("units/oscyl-engine/{f}"));
+        .map(|f| format!("units/oscyl-osc/{f}"));
         let mut all = vec![];
         for f in sources
             .iter()
@@ -175,7 +175,7 @@ mod tests {
             all.extend(std::fs::read(root.join(f)).unwrap());
         }
         let committed =
-            std::fs::read_to_string(root.join("units/oscyl-engine/payload/SOURCE")).unwrap();
+            std::fs::read_to_string(root.join("units/oscyl-osc/payload/SOURCE")).unwrap();
         assert_eq!(
             committed.trim(),
             cksum(&all),

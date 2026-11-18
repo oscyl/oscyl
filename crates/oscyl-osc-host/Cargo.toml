@@ -1,6 +1,6 @@
 [package]
-name = "oscyl-engine-host"
-description = "Oscyl's oscillator engine unit (units/oscyl-engine) compiled for the computer, so tests can hear what a patch does"
+name = "oscyl-osc-host"
+description = "Oscyl's oscillator unit (units/oscyl-osc) compiled for the computer, so tests can hear what a patch does"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

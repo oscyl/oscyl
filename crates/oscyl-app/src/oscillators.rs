@@ -1,12 +1,12 @@
 //! New oscillators for Generate, shared by every app: hands of six made by
-//! Oscyl's oscillator engine (`oscyl_logue::engine`), varied and bred like
+//! Oscyl's oscillator unit (`oscyl_logue::osc`), varied and bred like
 //! sounds. Keeping one puts it on the shelf ([`crate::shelf`]) and gives
 //! what to load into the synth's first free oscillator slot
 //! ([`crate::synth::Cmd::LoadUnit`]); once loaded, the synth lists it and
 //! it joins Generate's palette ([`crate::palette`]) with its parameters.
 
 use oscyl_driver::Driver;
-use oscyl_logue::engine::{self, Family, Patch};
+use oscyl_logue::osc::{self, Family, Patch};
 use oscyl_midi::logue::platform;
 
 use crate::generator::HAND;
@@ -91,7 +91,7 @@ impl Oscillators {
         self.fill(|seed| {
             let f = family.unwrap_or(Family::ALL[turn % Family::ALL.len()]);
             turn += 1;
-            engine::generate(f, seed)
+            osc::generate(f, seed)
         });
     }
 
@@ -101,7 +101,7 @@ impl Oscillators {
         let Some(p) = self.selected().cloned() else {
             return false;
         };
-        self.fill(|seed| engine::vary(&p, seed, amount));
+        self.fill(|seed| osc::vary(&p, seed, amount));
         true
     }
 
@@ -114,7 +114,7 @@ impl Oscillators {
         if other == self.selected {
             return false;
         }
-        self.fill(|seed| engine::breed(&a, &b, seed));
+        self.fill(|seed| osc::breed(&a, &b, seed));
         true
     }
 }
@@ -124,9 +124,9 @@ impl Oscillators {
 /// words, when the synth does not run Oscyl's oscillators.
 pub fn keep(shelf: &Shelf, d: &dyn Driver, patch: &Patch) -> Result<UnitFile, String> {
     let p = platform(d)
-        .filter(engine::supports)
+        .filter(osc::supports)
         .ok_or_else(|| tr("This synth cannot play Oscyl's oscillators."))?;
-    let bytes = engine::file(&p, patch).map_err(|e| e.to_string())?;
+    let bytes = osc::file(&p, patch).map_err(|e| e.to_string())?;
     let added = shelf.add(d, &bytes)?;
     shelf.unit(d, &added.file)
 }
