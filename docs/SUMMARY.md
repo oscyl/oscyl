@@ -9,6 +9,11 @@
 - [Glossary](start/glossary.md)
 - [A tour of the code](start/code-tour.md)
 
+# Tutorials
+
+- [Try Oscyl without a synth](tutorials/try-without-a-synth.md)
+- [Your first driver](tutorials/first-driver.md)
+
 # Guides
 
 - [Writing a synth driver](drivers.md)
