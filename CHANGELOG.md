@@ -6,6 +6,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **The documentation is a book**, online at
+  [oscyl.github.io/oscyl/docs](https://oscyl.github.io/oscyl/docs/). It
+  starts with four short pages for newcomers: what Oscyl is and is not, and
+  what it reads from and writes to a synth. A tutorial builds a first driver
+  step by step, and the API reference of the driver crates is on the same
+  site.
+
 ## [0.5.0] - 2026-11-16
 
 Generate goes deeper, your units become part of it, Oscyl makes

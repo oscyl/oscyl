@@ -5,8 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        See the driver acceptance rules in GOVERNANCE.md. Open the pull
-        request when you are ready and link it here.
+        See the driver acceptance rules in GOVERNANCE.md, and the guide
+        https://oscyl.github.io/oscyl/docs/how-to/add-a-synth.html. Open the
+        pull request when you are ready and link it here.
   - type: input
     id: synth
     attributes:

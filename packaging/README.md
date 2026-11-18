@@ -27,8 +27,8 @@ them before submission. Add a `<release>` entry for every version.
 ## Icons
 
 The app icon is a pen-stroke ring dial whose arc runs on into an oscillator
-wave, ending in an ink "pen" dot, on a chart-card ground (GNOME 128 px grid:
-96 px square with 8 px bottom depth). The symbolic icon is the same mark as
+wave, ending in an ink "pen" dot. It sits on a chart-card ground (GNOME 128 px
+grid: 96 px square with 8 px bottom depth). The symbolic icon is the same mark as
 filled paths in `#2e3436`. Neither uses KORG marks or panel artwork.
 
 Note that `apps/linux/build.rs` also bundles these SVGs into the GResource,
@@ -47,5 +47,5 @@ MSYS2 UCRT64 DLLs it loads, `share/`, `licences/`); `bundle-macos.sh` makes
 share `bundle-share.sh` (GTK's schemas, the Adwaita icons, the translations)
 and ship the licence texts and exact versions of the libraries they carry
 (`THIRD-PARTY.txt`, `PACKAGES.txt`). The release and `desktop-apps.yml`
-workflows run them; [docs/building.md](../docs/building.md) shows how by
-hand.
+workflows run them; [Build and run Oscyl](../docs/how-to/build.md) shows
+how by hand.

@@ -13,6 +13,7 @@ Windows, macOS, Android, iOS and the command line.
 [![Licence: MIT OR Apache-2.0](https://img.shields.io/badge/licence-MIT%20OR%20Apache--2.0-blue)](#licence)
 
 [Website](https://oscyl.github.io/oscyl/) ·
+[Documentation](https://oscyl.github.io/oscyl/docs/) ·
 [Download](#download) ·
 [Synths](#supported-synths) ·
 [Try it](#try-it-without-a-synth) ·
@@ -25,9 +26,12 @@ Windows, macOS, Android, iOS and the command line.
 
 </div>
 
-Oscyl reads every program on your synth, draws each stage of the sound, and
-writes back only the slots you changed, after backing them up. It works with
-the synth unplugged too: open a library, edit, sync later.
+Oscyl is a librarian and sound editor for hardware synths. It reads every
+program on your synth, draws each stage of the sound, and writes back only
+the slots you changed, after a backup. It is not a DAW, a sequencer or a
+preset converter: your synth plays, and Oscyl keeps and shapes its sounds.
+
+It works with the synth unplugged too: open a library, edit, sync later.
 
 **Status:** pre-alpha, validated on a KORG minilogue xd.
 
@@ -55,8 +59,9 @@ sounds. Vary, breed or morph them, share one as a recipe code, keep the best.
 </td>
 <td valign="top">
 <img src="docs/images/desktop-oscillators.png" alt="New Oscillators on Linux: six generated oscillators, each with its wave and its parameters">
-<b>New oscillators.</b> Oscyl makes user oscillators of its own for the
-minilogue xd and prologue, and loads the one you keep into a free slot.
+<b>New oscillators.</b> On a minilogue xd or prologue, Oscyl makes new
+oscillators with its own logue SDK unit. It loads the one you keep into a
+free user slot.
 </td>
 </tr>
 <tr>
@@ -101,7 +106,7 @@ and Italian, and an `oscyl` command line for backups, diffs and scripts.
 | Linux | [Flatpak](https://github.com/oscyl/oscyl/releases) (GNOME app) and the `oscyl` CLI |
 | Android | [APK](https://github.com/oscyl/oscyl/releases) for phones, foldables and tablets |
 | macOS, Windows | The desktop app (`Oscyl.app`, a zipped folder on Windows) and the `oscyl` CLI from [Releases](https://github.com/oscyl/oscyl/releases). The app is not yet tested with a synth there |
-| iOS | [Build from source](docs/building.md#ios) for now |
+| iOS | [Build from source](docs/how-to/mobile.md#run-the-ios-app) for now |
 
 Every release lists SHA-256 sums and carries signed build provenance.
 
@@ -114,7 +119,9 @@ Every release lists SHA-256 sums and carries signed build provenance.
 | Sequential Prophet Rev2 | Proven against its simulator; hardware testers wanted |
 
 Each synth has its own driver, tested against a simulator on every commit.
-To add yours, read the [driver guide](docs/drivers.md).
+[Supported synths](docs/reference/synths.md) says what works on each one. To
+add yours, start with the tutorial [Your first driver](docs/tutorials/first-driver.md),
+then [Add a driver for a new synth](docs/how-to/add-a-synth.md).
 
 ## Try it without a synth
 
@@ -126,7 +133,28 @@ cargo run -p oscyl-cli -- --simulator info    # any desktop
 cargo run -p oscyl-gtk -- --simulator         # the Linux app
 ```
 
-Android, iOS and Flatpak builds: [docs/building.md](docs/building.md).
+The tutorial [Try Oscyl without a synth](docs/tutorials/try-without-a-synth.md)
+goes further. Other builds: [the desktop and the command line](docs/how-to/build.md),
+[Android and iOS](docs/how-to/mobile.md).
+
+## Documentation
+
+The documentation is a book, online at
+[oscyl.github.io/oscyl/docs](https://oscyl.github.io/oscyl/docs/):
+
+- **Start here:** four short pages, from
+  [what Oscyl is, and what it is not](docs/start/what-is-oscyl.md) to
+  [a tour of the code](docs/start/code-tour.md).
+- **Tutorials:** [try Oscyl without a synth](docs/tutorials/try-without-a-synth.md)
+  and [your first driver](docs/tutorials/first-driver.md).
+- **How-to guides:** [add a synth](docs/how-to/add-a-synth.md),
+  [build](docs/how-to/build.md), [run the checks](docs/how-to/run-the-checks.md),
+  [translate](docs/how-to/translate.md) and more.
+- **Reference:** [the driver contract](docs/reference/driver-contract.md),
+  [the command line](docs/reference/cli.md), the
+  [library format](docs/reference/oscyllib-format.md) and more.
+- **Explanation:** [the architecture](docs/explanation/architecture.md) and
+  [the oscillator unit](docs/explanation/oscillator-unit.md).
 
 ## Contributing
 

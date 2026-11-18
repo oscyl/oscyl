@@ -4,4 +4,4 @@ message: "Do not use an em-dash. Use a colon, a comma, brackets or a new sentenc
 level: error
 nonword: true
 tokens:
-  - "—"
+  - "\u2014"
