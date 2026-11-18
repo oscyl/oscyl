@@ -85,11 +85,13 @@ pub fn scan() -> Result<Vec<Candidate>, Error> {
         .ports()
         .iter()
         .filter_map(|p| input.port_name(p).ok())
+        .map(|n| crate::port_label(&n))
         .collect();
     let duplex: Vec<String> = output
         .ports()
         .iter()
         .filter_map(|p| output.port_name(p).ok())
+        .map(|n| crate::port_label(&n))
         .filter(|n| ins.contains(n))
         .collect();
     Ok(candidates(&duplex))

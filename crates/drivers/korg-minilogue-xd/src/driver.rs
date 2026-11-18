@@ -706,6 +706,8 @@ impl Driver for MinilogueXd {
     /// The synth engine's USB port; "MIDI OUT"/"MIDI IN" are the DIN jacks.
     /// Android names neither, so there it is the second port, "MIDI 2"
     /// (see the mobile app's `midiPortName`); checked on a Pixel 7 Pro.
+    /// Windows names it "MIDIIN2 (minilogue xd)", read as "MIDI 2" too
+    /// (`oscyl_midi::port_label`).
     fn port_hint(&self) -> &'static [&'static str] {
         &["minilogue xd _ SOUND", "minilogue xd _ MIDI 2"]
     }

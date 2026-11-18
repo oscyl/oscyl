@@ -65,6 +65,25 @@ fn midi_err(e: impl std::fmt::Display) -> Error {
     Error::Midi(e.to_string())
 }
 
+/// A port's name as Oscyl spells it on every platform. Windows' class
+/// driver names a device's later ports "MIDIIN2 (minilogue xd)" and
+/// "MIDIOUT2 (minilogue xd)"; both become "minilogue xd _ MIDI 2", the
+/// name such a port gets on Android (the mobile app's `midiPortName`), so
+/// the input and output pair up and the drivers' hints match.
+pub fn port_label(name: &str) -> String {
+    let numbered = name
+        .strip_prefix("MIDIIN")
+        .or_else(|| name.strip_prefix("MIDIOUT"))
+        .and_then(|rest| rest.split_once(" ("))
+        .and_then(|(n, rest)| Some((n, rest.strip_suffix(')')?)));
+    match numbered {
+        Some((n, product)) if !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()) => {
+            format!("{product} _ MIDI {n}")
+        }
+        _ => name.to_string(),
+    }
+}
+
 #[cfg(feature = "midir")]
 /// Names of all MIDI input and output ports, for diagnostics.
 pub fn list_ports() -> Result<Vec<String>, Error> {
@@ -72,10 +91,16 @@ pub fn list_ports() -> Result<Vec<String>, Error> {
     let output = MidiOutput::new(CLIENT).map_err(midi_err)?;
     let mut names = Vec::new();
     for p in input.ports() {
-        names.push(format!("in:  {}", input.port_name(&p).map_err(midi_err)?));
+        names.push(format!(
+            "in:  {}",
+            port_label(&input.port_name(&p).map_err(midi_err)?)
+        ));
     }
     for p in output.ports() {
-        names.push(format!("out: {}", output.port_name(&p).map_err(midi_err)?));
+        names.push(format!(
+            "out: {}",
+            port_label(&output.port_name(&p).map_err(midi_err)?)
+        ));
     }
     Ok(names)
 }
@@ -139,11 +164,11 @@ impl MidirLink {
         let (in_ports, out_ports) = (input.ports(), output.ports());
         let names = |f: &dyn Fn(usize) -> String, n: usize| (0..n).map(f).collect::<Vec<_>>();
         let in_names = names(
-            &|i| input.port_name(&in_ports[i]).unwrap_or_default(),
+            &|i| port_label(&input.port_name(&in_ports[i]).unwrap_or_default()),
             in_ports.len(),
         );
         let out_names = names(
-            &|i| output.port_name(&out_ports[i]).unwrap_or_default(),
+            &|i| port_label(&output.port_name(&out_ports[i]).unwrap_or_default()),
             out_ports.len(),
         );
         let (i, o) = (
@@ -436,6 +461,27 @@ impl Link for SimLink {
 
 #[cfg(all(test, feature = "midir"))]
 mod tests {
+    #[test]
+    fn windows_numbered_ports_pair_up_under_the_android_name() {
+        use super::port_label;
+        assert_eq!(
+            port_label("MIDIIN2 (minilogue xd)"),
+            "minilogue xd _ MIDI 2"
+        );
+        assert_eq!(
+            port_label("MIDIOUT2 (minilogue xd)"),
+            "minilogue xd _ MIDI 2"
+        );
+        for kept in [
+            "minilogue xd",
+            "minilogue xd:minilogue xd _ SOUND 24:1",
+            "MIDIIN (x)",
+            "MIDIINx (y)",
+        ] {
+            assert_eq!(port_label(kept), kept);
+        }
+    }
+
     use super::*;
 
     fn names(v: &[&str]) -> Vec<String> {
