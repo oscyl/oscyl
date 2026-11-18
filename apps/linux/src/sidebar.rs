@@ -249,14 +249,18 @@ impl Sidebar {
 
         // Synth status: a flat row (dot, name, state) with its one action
         // at the end, and a progress bar under it while transferring.
-        let status = gtk::Box::new(gtk::Orientation::Vertical, 8);
+        let status = gtk::Box::new(gtk::Orientation::Vertical, 0);
         status.add_css_class("synth-status");
         let top = gtk::Box::new(gtk::Orientation::Horizontal, 8);
         let status_dot = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         status_dot.add_css_class("status-dot");
         status_dot.set_valign(gtk::Align::Center);
-        let texts = gtk::Box::new(gtk::Orientation::Vertical, 0);
-        texts.set_hexpand(true);
+        // The name (or, with several synths, the picker) shares one row with
+        // the dot and the action, so all three line up whichever shows; the
+        // state reads under the name.
+        let head = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        head.set_hexpand(true);
+        head.set_valign(gtk::Align::Center);
         let status_title = gtk::Label::builder()
             .label(tr("Synth"))
             .xalign(0.0)
@@ -278,9 +282,10 @@ impl Sidebar {
         picker.set_visible(false);
         picker.set_tooltip_text(Some(&tr("Which synth to show and sync with")));
         picker.update_property(&[gtk::accessible::Property::Label(&tr("Synth"))]);
-        texts.append(&status_title);
-        texts.append(&picker);
-        texts.append(&status_detail);
+        head.append(&status_title);
+        head.append(&picker);
+        // Indented by the dot (6px) and the row's spacing (8px).
+        status_detail.set_margin_start(14);
         let connect = gtk::Button::builder()
             .label(tr("Connect"))
             .action_name("win.connect")
@@ -297,11 +302,13 @@ impl Sidebar {
         cancel.add_css_class("flat");
         cancel.add_css_class("circular");
         top.append(&status_dot);
-        top.append(&texts);
+        top.append(&head);
         top.append(&connect);
         top.append(&cancel);
         status.append(&top);
+        status.append(&status_detail);
         let progress = gtk::ProgressBar::new();
+        progress.set_margin_top(8);
         progress.set_visible(false);
         progress.update_property(&[gtk::accessible::Property::Label(&tr(
             "Synth transfer progress",
