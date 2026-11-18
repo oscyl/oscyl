@@ -29,7 +29,14 @@
 
 # Reference
 
-- [Native library format](protocol/native-library-format.md)
+- [The driver contract](reference/driver-contract.md)
+- [Supported synths](reference/synths.md)
+- [The command line](reference/cli.md)
+- [The .oscyllib library format](reference/oscyllib-format.md)
+- [The mobile bindings](reference/mobile-bindings.md)
+- [Checks and workflows](reference/ci.md)
+- [Release artifacts](reference/release-artifacts.md)
+- [Repository layout](reference/layout.md)
 
 # Explanation
 

@@ -32,7 +32,7 @@ one vendor's format.
    library belongs to and stores programs as the driver's own bytes. Vendor
    library and program files are import and export formats handled
    losslessly by each driver. The format is described in
-   [native-library-format.md](../protocol/native-library-format.md).
+   [oscyllib-format.md](../reference/oscyllib-format.md).
 
 ## Consequences
 

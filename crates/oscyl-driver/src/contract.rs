@@ -20,15 +20,20 @@ pub struct DriverError(pub String);
 pub struct Info {
     /// Stable id: `<vendor>-<model>`, lowercase, dash-separated.
     pub id: &'static str,
+    /// The maker, as people write it ("KORG").
     pub vendor: &'static str,
+    /// The model, as the maker writes it ("minilogue xd").
     pub model: &'static str,
 }
 
 /// A run of program slots, numbered from `first`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Bank {
+    /// The bank's name, as the synth shows it ("U1").
     pub name: &'static str,
+    /// The number of the bank's first slot.
     pub first: u16,
+    /// How many slots the bank has.
     pub len: u16,
     /// False for factory/ROM banks Oscyl must never write.
     pub writable: bool,
@@ -37,34 +42,45 @@ pub struct Bank {
 /// One kind of user unit (custom oscillator, effect, …) and its slot count.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UnitKind {
+    /// The kind's short name ("osc", "modfx").
     pub name: &'static str,
+    /// How many slots of this kind the synth has.
     pub slots: u8,
 }
 
 /// What the synth can do. Apps show only what is listed here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Capabilities {
+    /// The program banks, in slot order.
     pub banks: &'static [Bank],
     /// Programs can be loaded into an edit buffer without storing them.
     pub edit_buffer: bool,
     /// Parameters can change while notes sound (CC/NRPN).
     pub live_changes: bool,
+    /// The kinds of user unit the synth holds; empty when it holds none.
     pub units: &'static [UnitKind],
 }
 
 /// One program parameter: raw stored values `min..=max`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FieldInfo {
+    /// The parameter's name ("Cutoff").
     pub name: &'static str,
+    /// The group it belongs to ("Filter"). [`curation_by_group`] makes one
+    /// page for each group.
     pub group: &'static str,
+    /// The smallest raw value.
     pub min: u16,
+    /// The largest raw value.
     pub max: u16,
 }
 
 /// Program-name limits.
 #[derive(Debug, Clone, Copy)]
 pub struct NameRules {
+    /// The longest name, in characters.
     pub max_len: usize,
+    /// Whether a character can be part of a name.
     pub allowed: fn(char) -> bool,
 }
 
@@ -73,13 +89,16 @@ pub struct NameRules {
 pub struct LibProgram {
     /// The driver's native program bytes.
     pub data: Vec<u8>,
+    /// Who made the program; empty when nobody says.
     pub author: String,
+    /// A note on the program; empty when there is none.
     pub comment: String,
 }
 
 /// A library's contents, independent of any file format.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LibraryData {
+    /// The programs, in library order.
     pub programs: Vec<LibProgram>,
     /// Driver-owned members (vendor entries Oscyl does not edit), kept
     /// verbatim so an export loses nothing. Names are the driver's.
@@ -91,13 +110,13 @@ pub struct LibraryData {
 pub struct FileFormat {
     /// File extension, without the dot.
     pub ext: &'static str,
+    /// The format's name, for file pickers ("minilogue xd library").
     pub name: &'static str,
     /// Whether the format stores each program's author and comment. When
     /// false, import gives them empty.
     pub keeps_metadata: bool,
 }
 
-/// One synth model. Object-safe, so apps can hold several at once.
 /// Decodes the Control Changes a synth's panel sends: one per synth, as it
 /// keeps state between messages (a 10-bit value's lower bits, an NRPN
 /// selection).
@@ -107,17 +126,40 @@ pub trait PanelListener: Send {
     fn control(&mut self, cc: u8, value: u8, program: &[u8]) -> Option<(usize, u16)>;
 }
 
+/// One synth model: everything the apps know about it. Object-safe, so
+/// apps can hold several at once, as `&dyn Driver`. A driver crate exposes
+/// one as `pub static DRIVER`.
+///
+/// Methods without a default are required. The others have a default that
+/// suits a driver which does not use them.
 pub trait Driver: Send + Sync {
+    /// Which synth this driver serves.
     fn info(&self) -> &'static Info;
+    /// What the synth can do. Apps show only what this lists.
     fn capabilities(&self) -> &'static Capabilities;
+    /// The program's parameters. A field's index in this slice is the
+    /// `field` argument of the other methods.
     fn fields(&self) -> &'static [FieldInfo];
+    /// The limits of a program's name.
     fn name_rules(&self) -> NameRules;
+    /// A new program, valid, with a name that [`Driver::name_rules`] allow.
     fn init_program(&self) -> Vec<u8>;
+    /// Refuses bytes that are not a whole, valid program.
     fn check_program(&self, program: &[u8]) -> Result<(), DriverError>;
+    /// The raw value of `field` in `program`. An error for a bad program
+    /// or field index.
     fn get(&self, program: &[u8], field: usize) -> Result<u16, DriverError>;
+    /// Sets `field` in `program` to `value`, and changes no other field. An
+    /// error for a bad program, a bad field index, or a value outside
+    /// `min..=max`.
     fn set(&self, program: &mut [u8], field: usize, value: u16) -> Result<(), DriverError>;
+    /// The program's name, without padding.
     fn name(&self, program: &[u8]) -> Result<String, DriverError>;
+    /// Sets the program's name. An error for a name that
+    /// [`Driver::name_rules`] refuse.
     fn set_name(&self, program: &mut [u8], name: &str) -> Result<(), DriverError>;
+    /// The synth's own file formats that the driver reads and writes,
+    /// the usual one first. Can be empty.
     fn file_formats(&self) -> &'static [FileFormat];
     /// Read a vendor file of format `ext`.
     fn import(&self, ext: &str, bytes: &[u8]) -> Result<LibraryData, DriverError>;
@@ -200,6 +242,8 @@ pub trait Driver: Send + Sync {
     fn relevant(&self, _program: &[u8], _field: usize) -> bool {
         true
     }
+    /// What `field` does to the sound, for the editor's help. Empty by
+    /// default.
     fn help(&self, _field: usize) -> Help {
         Help::default()
     }
@@ -216,9 +260,13 @@ pub trait Driver: Send + Sync {
 
     // Generation. A driver with no characters does not generate.
 
+    /// What generation may do to `field`. By default
+    /// [`Mutability::Restricted`]: generation keeps it.
     fn mutability(&self, _field: usize) -> Mutability {
         Mutability::Restricted
     }
+    /// The kinds of sound that Generate makes for this synth. Empty by
+    /// default: the driver does not generate.
     fn characters(&self) -> &'static [Character] {
         &[]
     }
@@ -294,7 +342,10 @@ pub trait Driver: Send + Sync {
 
     // Sessions.
 
+    /// A new session with one synth that listens on MIDI channel
+    /// `channel` (0-15). A driver whose SysEx has no channel ignores it.
     fn session(&self, channel: u8) -> Box<dyn DriverSession>;
+    /// A new simulated synth, for the conformance suite and the tests.
     fn simulator(&self) -> Box<dyn Simulator>;
     /// Substrings of the MIDI port names this synth shows up as.
     fn port_hint(&self) -> &'static [&'static str];
@@ -385,7 +436,9 @@ pub trait Driver: Send + Sync {
 /// A generic operation on a connected synth.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SessionOp {
+    /// Read the edit buffer: the program the synth plays now.
     ReadCurrent,
+    /// Read these slots, in this order.
     ReadPrograms(Vec<u16>),
     /// Store programs; the driver plans the exact sequence that leaves the
     /// synth committed and safe to read.
@@ -397,22 +450,40 @@ pub enum SessionOp {
 /// Results of [`SessionOp`]s, in order.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SessionEvent {
+    /// The edit buffer's program, for [`SessionOp::ReadCurrent`].
     Current(Vec<u8>),
+    /// A slot's program, for [`SessionOp::ReadPrograms`].
     Program(u16, Vec<u8>),
-    Progress { done: usize, total: usize },
+    /// Steps of the op that are done, out of all its steps.
+    Progress {
+        /// Steps done.
+        done: usize,
+        /// All the op's steps.
+        total: usize,
+    },
+    /// The op ended, and every step succeeded.
     Done,
+    /// The op ended at a failed step; the steps after it did not run.
     Failed(crate::engine::OpError),
 }
 
 /// A sans-IO session with one connected synth.
 pub trait DriverSession: Send {
-    /// Plans the op. Errors before anything is queued.
+    /// Plans the op. Errors before anything is queued: a bad slot, a
+    /// write to a factory slot, or a bad program sends nothing.
     fn submit(&mut self, op: SessionOp) -> Result<(), DriverError>;
+    /// True when nothing is queued or in flight.
     fn is_idle(&self) -> bool;
+    /// The next bytes to send to the synth, if the session sends now.
     fn poll_transmit(&mut self, now: Instant) -> Option<Vec<u8>>;
+    /// When the caller must call [`DriverSession::handle_timeout`], if a
+    /// request waits for its reply.
     fn next_deadline(&self) -> Option<Instant>;
+    /// Time passed: a request whose reply did not come by now fails.
     fn handle_timeout(&mut self, now: Instant);
+    /// Bytes that the synth sent, in fragments of any size.
     fn handle_input(&mut self, bytes: &[u8]);
+    /// The next result of the submitted ops, in order.
     fn poll_event(&mut self) -> Option<SessionEvent>;
 }
 
@@ -422,12 +493,16 @@ pub trait Simulator: Send {
     fn handle(&mut self, msg: &[u8]) -> Vec<Vec<u8>>;
     /// One firmware main-loop pass with no MIDI traffic.
     fn idle_tick(&mut self);
+    /// The program in `slot`, or `None` for a slot the synth does not have.
     fn program(&self, slot: u16) -> Option<Vec<u8>>;
+    /// The edit buffer's program.
     fn edit_buffer(&self) -> Vec<u8>;
     /// No pending save and no corrupted reply state.
     fn is_settled(&self) -> bool;
     /// Failures seen on hardware that [`Simulator::inject`] can switch on.
     fn faults(&self) -> &'static [&'static str];
+    /// Switches on `fault`, one of [`Simulator::faults`], until the
+    /// simulator is dropped.
     fn inject(&mut self, fault: &str);
 }
 

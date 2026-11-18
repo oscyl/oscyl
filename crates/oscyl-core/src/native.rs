@@ -1,7 +1,7 @@
 //! Oscyl's own library file, `.oscyllib`: a ZIP holding `oscyl.json`
 //! (format version, driver id, per-program metadata), the program bytes in
 //! the driver's native layout, and the driver's extras verbatim. See
-//! `docs/protocol/native-library-format.md`.
+//! `docs/reference/oscyllib-format.md`.
 
 use std::collections::BTreeMap;
 use std::io::{Read, Seek, Write};

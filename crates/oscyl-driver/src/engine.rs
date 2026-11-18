@@ -12,26 +12,44 @@ use std::time::{Duration, Instant};
 
 use crate::sysex::Framer;
 
+/// Why an op failed. `what` names the step ("program write") and `index`
+/// its slot, when it has one.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum OpError {
+    /// The synth refused the step.
     #[error("synth rejected {what}{}", at(*index))]
     Nak {
+        /// The step.
         what: &'static str,
+        /// The step's slot, if any.
         index: Option<u16>,
     },
+    /// The synth answered with an error code.
     #[error("synth reported error {code:#04x} for {what}{}", at(*index))]
     Device {
+        /// The synth's error code.
         code: u8,
+        /// The step.
         what: &'static str,
+        /// The step's slot, if any.
         index: Option<u16>,
     },
+    /// The step's reply did not come before its timeout.
     #[error("no reply to {what}{}", at(*index))]
     Timeout {
+        /// The step.
         what: &'static str,
+        /// The step's slot, if any.
         index: Option<u16>,
     },
+    /// The reply came, but its data is wrong.
     #[error("malformed data in reply to {what}: {error}")]
-    BadData { what: &'static str, error: String },
+    BadData {
+        /// The step.
+        what: &'static str,
+        /// What is wrong with the data.
+        error: String,
+    },
     /// The op was dropped before it ended (e.g. its synth was unplugged).
     #[error("cancelled")]
     Cancelled,
@@ -44,11 +62,16 @@ fn at(index: Option<u16>) -> String {
 /// One message to send and the reply that completes it.
 #[derive(Debug, Clone)]
 pub struct Step<X> {
+    /// The bytes to send.
     pub msg: Vec<u8>,
+    /// What [`Protocol::on_message`] needs to know which reply completes
+    /// the step.
     pub expect: X,
     /// Bounds a dead link; never paces traffic.
     pub timeout: Duration,
+    /// The step, for people ("program write"). Errors name it.
     pub what: &'static str,
+    /// The step's slot, if any. Errors name it.
     pub index: Option<u16>,
 }
 
@@ -65,9 +88,13 @@ pub enum Outcome<E> {
 
 /// A synth's request/reply rules.
 pub trait Protocol {
+    /// An operation that a caller submits.
     type Op;
+    /// A result that the engine reports.
     type Event;
+    /// What a step waits for; see [`Step::expect`].
     type Expect: Copy;
+    /// The steps that make up `op`, in the order the engine sends them.
     fn expand(&self, op: Self::Op) -> Vec<Step<Self::Expect>>;
     /// Classify one complete SysEx message against the step in flight.
     fn on_message(
@@ -77,11 +104,16 @@ pub trait Protocol {
         what: &'static str,
         index: Option<u16>,
     ) -> Outcome<Self::Event>;
+    /// The event for `done` steps of `total` done.
     fn progress(done: usize, total: usize) -> Self::Event;
+    /// The event for an op whose every step succeeded.
     fn done() -> Self::Event;
+    /// The event for an op that failed with `e`.
     fn failed(e: OpError) -> Self::Event;
 }
 
+/// The engine: it runs a [`Protocol`]'s ops one step at a time, sans IO.
+/// See the module's documentation.
 pub struct Engine<P: Protocol> {
     protocol: P,
     queue: VecDeque<P::Op>,
@@ -93,6 +125,7 @@ pub struct Engine<P: Protocol> {
 }
 
 impl<P: Protocol> Engine<P> {
+    /// An engine that runs `protocol`, with nothing queued.
     pub fn new(protocol: P) -> Engine<P> {
         Engine {
             protocol,
@@ -105,10 +138,12 @@ impl<P: Protocol> Engine<P> {
         }
     }
 
+    /// The protocol that the engine runs.
     pub fn protocol(&self) -> &P {
         &self.protocol
     }
 
+    /// Queues `op` after the ops already queued.
     pub fn submit(&mut self, op: P::Op) {
         self.queue.push_back(op);
     }
@@ -142,6 +177,8 @@ impl<P: Protocol> Engine<P> {
         self.in_flight.as_ref().map(|(s, t)| *t + s.timeout)
     }
 
+    /// Fails the step in flight, and the rest of its op, if its timeout
+    /// passed by `now`.
     pub fn handle_timeout(&mut self, now: Instant) {
         let expired = self
             .in_flight
@@ -156,12 +193,15 @@ impl<P: Protocol> Engine<P> {
         }
     }
 
+    /// Bytes from the synth, in fragments of any size. Each complete SysEx
+    /// message goes to [`Protocol::on_message`].
     pub fn handle_input(&mut self, bytes: &[u8]) {
         for msg in self.framer.push(bytes) {
             self.on_message(&msg);
         }
     }
 
+    /// The next event, in order.
     pub fn poll_event(&mut self) -> Option<P::Event> {
         self.events.pop_front()
     }

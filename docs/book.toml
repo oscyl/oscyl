@@ -32,3 +32,4 @@ runnable = false
 "/building.html" = "how-to/build.html"
 "/releasing.html" = "how-to/release.html"
 "/mobile/index.html" = "../how-to/mobile.html"
+"/protocol/native-library-format.html" = "../reference/oscyllib-format.html"
