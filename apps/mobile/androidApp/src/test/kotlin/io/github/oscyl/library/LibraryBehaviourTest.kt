@@ -73,7 +73,15 @@ class LibraryBehaviourTest {
         return model
     }
 
-    private fun await(condition: () -> Boolean) = compose.waitUntil(TIMEOUT_MS, condition)
+    /**
+     * Waits for [condition], the app's main thread idled before each look. A bare
+     * `waitUntil` never runs the main looper (Robolectric's is paused): what a synth
+     * sends after the last idle would never be handled, and the wait would run out.
+     */
+    private fun await(condition: () -> Boolean) = compose.waitUntil(TIMEOUT_MS) {
+        compose.waitForIdle()
+        condition()
+    }
 
     private fun awaitText(text: String) = await { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
@@ -325,15 +333,14 @@ class LibraryBehaviourTest {
         val synth = ViewModelProvider.create(store, viewModelFactory { initializer { SynthModel(NoMidi) } })[SynthModel::class]
         val model = show(synth)
         synth.openDemo("sequential-prophet-rev2")
+        await { synth.cards.value.isNotEmpty() }
         awaitText("Prophet Rev2")
         compose.onNodeWithText("Prophet Rev2").performClick()
         await { model.ui.value.programs?.source == synthSource(model.ui.value.synths.single().id) }
         val factory = model.ui.value.programs!!.rows.indexOfFirst { it.readOnly }
         assertTrue(factory > 0)
         // Read first: a name that arrives later is not an edit.
-        // The factory banks come after the user banks: on a slow CI runner that read
-        // outlasts the usual bound.
-        compose.waitUntil(READ_MS) { model.ui.value.programs!!.rows[factory].loaded }
+        await { model.ui.value.programs!!.rows[factory].loaded }
         val before = model.ui.value.programs!!.rows[factory].name
         model.renameProgram(factory, "Mine")
         compose.waitForIdle()
@@ -348,6 +355,5 @@ class LibraryBehaviourTest {
     private companion object {
         const val MENU = "More options"
         const val TIMEOUT_MS = 10_000L
-        const val READ_MS = 60_000L
     }
 }
