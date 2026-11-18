@@ -154,8 +154,8 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         // As scripts/build-units.sh lists them.
         let sources = [
-            "engine.h",
-            "engine.c",
+            "dsp.h",
+            "dsp.c",
             "unit.c",
             "osc_api.h",
             "sdk/userosc.h",

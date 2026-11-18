@@ -18,7 +18,7 @@ bin=${GCC_BIN_PATH:-/usr/bin}
 # The files a payload is made from, in the order SOURCE hashes them; the
 # test (crates/oscyl-osc-host) reads the same list.
 sources=(
-    "$unit/engine.h" "$unit/engine.c" "$unit/unit.c" "$unit/osc_api.h"
+    "$unit/dsp.h" "$unit/dsp.c" "$unit/unit.c" "$unit/osc_api.h"
     "$unit/sdk/userosc.h" "$unit/sdk/_unit.c" "$unit/sdk/ld/userosc.ld" "$unit/sdk/ld/rules.ld"
     "$unit/sdk/minilogue-xd/userprg.h" "$unit/sdk/prologue/userprg.h"
     scripts/build-units.sh
@@ -36,7 +36,7 @@ cflags=(
 
 for platform in minilogue-xd prologue; do
     objs=()
-    for c in "$unit/sdk/_unit.c" "$unit/engine.c" "$unit/unit.c"; do
+    for c in "$unit/sdk/_unit.c" "$unit/dsp.c" "$unit/unit.c"; do
         o="$out/$platform-$(basename "$c" .c).o"
         "$bin/arm-none-eabi-gcc" "${cflags[@]}" -I"$unit" -I"$unit/sdk" -I"$unit/sdk/$platform" -c "$c" -o "$o"
         objs+=("$o")

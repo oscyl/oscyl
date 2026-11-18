@@ -2,14 +2,14 @@
 
 fn main() {
     let unit = "../../units/oscyl-osc";
-    for f in ["engine.c", "engine.h"] {
+    for f in ["dsp.c", "dsp.h"] {
         println!("cargo:rerun-if-changed={unit}/{f}");
     }
     println!("cargo:rerun-if-changed=src/host.c");
     cc::Build::new()
         .std("c11")
         .include(unit)
-        .file(format!("{unit}/engine.c"))
+        .file(format!("{unit}/dsp.c"))
         .file("src/host.c")
         // Plain multiply then add, as the Rust port does: Apple's clang
         // fuses them by default, which drifts FM and feedback apart.

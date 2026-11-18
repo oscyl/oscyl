@@ -1,12 +1,12 @@
 /*
- * Oscyl's oscillator engine. See engine.h for the patch format.
+ * The oscillator unit's DSP. See dsp.h for the patch format.
  * Copyright (c) 2026 the Oscyl contributors. MIT OR Apache-2.0.
  *
  * Kept free of libc and libm, so the unit and the host build compute the
  * same thing; crates/drivers/logue/src/osc/render.rs ports it to Rust
  * operation for operation (a test holds the two together).
  */
-#include "engine.h"
+#include "dsp.h"
 
 static const float ONE_255 = 1.0f / 255.0f;
 
@@ -94,7 +94,7 @@ static const float VOWELS[5][2] = {
 
 static const float SPREAD[5] = {-1.0f, -0.42f, 0.0f, 0.42f, 1.0f};
 
-static void reset(oscyl_engine_t *e) {
+static void reset(oscyl_dsp_t *e) {
   e->phase = 0.0f;
   e->sub_phase = 0.0f;
   e->env = 0.0f;
@@ -108,7 +108,7 @@ static void reset(oscyl_engine_t *e) {
   }
 }
 
-void oscyl_engine_load(oscyl_engine_t *e, const uint8_t *p, uint32_t size) {
+void oscyl_dsp_load(oscyl_dsp_t *e, const uint8_t *p, uint32_t size) {
   uint8_t *z = (uint8_t *)e;
   for (uint32_t i = 0; i < sizeof *e; i++) z[i] = 0;
   e->noise = 0x12345678u;
@@ -175,9 +175,9 @@ void oscyl_engine_load(oscyl_engine_t *e, const uint8_t *p, uint32_t size) {
   reset(e);
 }
 
-void oscyl_engine_note_on(oscyl_engine_t *e) { reset(e); }
+void oscyl_dsp_note_on(oscyl_dsp_t *e) { reset(e); }
 
-void oscyl_engine_param(oscyl_engine_t *e, uint16_t index, uint16_t value) {
+void oscyl_dsp_param(oscyl_dsp_t *e, uint16_t index, uint16_t value) {
   if (index < 6)
     e->params[index] = clamp01((float)value * 0.01f);
   else if (index == 6)
@@ -196,7 +196,7 @@ static float table_at(const uint8_t *t, float phase) {
 }
 
 /* Everything that holds for one render call: modulation and coefficients. */
-static void resolve(oscyl_engine_t *e, float note, float w0, float shape_lfo, uint32_t frames) {
+static void resolve(oscyl_dsp_t *e, float note, float w0, float shape_lfo, uint32_t frames) {
   float dt = (float)frames * (1.0f / OSCYL_RATE);
   e->lfo_phase += e->lfo_rate * dt;
   if (e->lfo_phase >= 1.0f) {
@@ -303,7 +303,7 @@ static void resolve(oscyl_engine_t *e, float note, float w0, float shape_lfo, ui
   }
 }
 
-void oscyl_engine_render(oscyl_engine_t *e, uint16_t pitch, int32_t shape_lfo, float *out,
+void oscyl_dsp_render(oscyl_dsp_t *e, uint16_t pitch, int32_t shape_lfo, float *out,
                          uint32_t frames) {
   float note = (float)(pitch >> 8) + (float)(pitch & 0xFF) * (1.0f / 256.0f);
   float w0 = 440.0f * exp2_((note - 69.0f) * (1.0f / 12.0f)) * (1.0f / OSCYL_RATE);

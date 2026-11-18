@@ -1,5 +1,5 @@
 /*
- * Oscyl's oscillator engine: fixed DSP blocks that a patch wires up.
+ * The oscillator unit's DSP: fixed blocks that a patch wires up.
  * Copyright (c) 2026 the Oscyl contributors. MIT OR Apache-2.0.
  *
  * The same code runs in the logue SDK unit (unit.c) and, compiled for the
@@ -14,8 +14,8 @@
  * signed amount) and tables (256 int16 each). A patch that does not check
  * out, or wires no sound source, plays a plain saw.
  */
-#ifndef OSCYL_ENGINE_H
-#define OSCYL_ENGINE_H
+#ifndef OSCYL_DSP_H
+#define OSCYL_DSP_H
 
 #include <stdint.h>
 
@@ -85,17 +85,17 @@ typedef struct {
   float phase, sub_phase, lfo_phase, lfo_value, env, dc_x, dc_y;
   uint8_t env_stage;
   uint32_t noise;
-} oscyl_engine_t;
+} oscyl_dsp_t;
 
 /* Wire `e` from `patch` (`size` bytes); a bad patch wires a saw. */
-void oscyl_engine_load(oscyl_engine_t *e, const uint8_t *patch, uint32_t size);
-void oscyl_engine_note_on(oscyl_engine_t *e);
+void oscyl_dsp_load(oscyl_dsp_t *e, const uint8_t *patch, uint32_t size);
+void oscyl_dsp_note_on(oscyl_dsp_t *e);
 /* A logue SDK parameter: 0-5 the unit's six (0-100), 6 Shape, 7 Shift-Shape
  * (both 0-1023). */
-void oscyl_engine_param(oscyl_engine_t *e, uint16_t index, uint16_t value);
+void oscyl_dsp_param(oscyl_dsp_t *e, uint16_t index, uint16_t value);
 /* `frames` (at most OSCYL_CHUNK) samples at `pitch` (note << 8 | fine),
  * with the synth's LFO on Shape (`shape_lfo`, Q31), each within -1..1. */
-void oscyl_engine_render(oscyl_engine_t *e, uint16_t pitch, int32_t shape_lfo,
+void oscyl_dsp_render(oscyl_dsp_t *e, uint16_t pitch, int32_t shape_lfo,
                          float *out, uint32_t frames);
 
 #endif

@@ -59,7 +59,7 @@ pub const DEV_ID: u32 = 0x4F53_4359;
 /// A single-cycle table.
 pub type Table = [i16; TABLE_LEN];
 
-/// A DSP block of the unit (`engine.h`); its constants are 0-255 and mean,
+/// A DSP block of the unit (`dsp.h`); its constants are 0-255 and mean,
 /// in order:
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]

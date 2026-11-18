@@ -1,16 +1,16 @@
 /*
- * The logue SDK oscillator around Oscyl's engine (engine.c). Oscyl writes
+ * The logue SDK oscillator around the unit's DSP (dsp.c). Oscyl writes
  * a patch into `oscyl_patch` in the payload, found by its marker; as built,
  * the region holds only the marker and so plays a plain saw.
  * Copyright (c) 2026 the Oscyl contributors. MIT OR Apache-2.0.
  */
 #include "userosc.h"
-#include "engine.h"
+#include "dsp.h"
 
 __attribute__((used, aligned(4))) const uint8_t oscyl_patch[OSCYL_PATCH_SIZE] = {
     'O', 'S', 'C', 'Y', 'L', 'P', 'A', 'T'};
 
-static oscyl_engine_t s_engine;
+static oscyl_dsp_t s_dsp;
 
 void OSC_INIT(uint32_t platform, uint32_t api) {
   (void)platform;
@@ -19,7 +19,7 @@ void OSC_INIT(uint32_t platform, uint32_t api) {
    * Oscyl wrote it, not as it was compiled. */
   const uint8_t *p = oscyl_patch;
   __asm__("" : "+r"(p));
-  oscyl_engine_load(&s_engine, p, OSCYL_PATCH_SIZE);
+  oscyl_dsp_load(&s_dsp, p, OSCYL_PATCH_SIZE);
 }
 
 void OSC_CYCLE(const user_osc_param_t *const params, int32_t *yn, const uint32_t frames) {
@@ -27,7 +27,7 @@ void OSC_CYCLE(const user_osc_param_t *const params, int32_t *yn, const uint32_t
   for (uint32_t done = 0; done < frames;) {
     uint32_t n = frames - done;
     if (n > OSCYL_CHUNK) n = OSCYL_CHUNK;
-    oscyl_engine_render(&s_engine, params->pitch, params->shape_lfo, buf, n);
+    oscyl_dsp_render(&s_dsp, params->pitch, params->shape_lfo, buf, n);
     for (uint32_t i = 0; i < n; i++) {
       float y = buf[i];
       if (y > 0.999999f) y = 0.999999f;
@@ -40,9 +40,9 @@ void OSC_CYCLE(const user_osc_param_t *const params, int32_t *yn, const uint32_t
 
 void OSC_NOTEON(const user_osc_param_t *const params) {
   (void)params;
-  oscyl_engine_note_on(&s_engine);
+  oscyl_dsp_note_on(&s_dsp);
 }
 
 void OSC_NOTEOFF(const user_osc_param_t *const params) { (void)params; }
 
-void OSC_PARAM(uint16_t index, uint16_t value) { oscyl_engine_param(&s_engine, index, value); }
+void OSC_PARAM(uint16_t index, uint16_t value) { oscyl_dsp_param(&s_dsp, index, value); }

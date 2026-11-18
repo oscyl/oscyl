@@ -1,4 +1,4 @@
-//! The unit's DSP (`units/oscyl-osc/engine.c`) in Rust, operation for
+//! The unit's DSP (`units/oscyl-osc/dsp.c`) in Rust, operation for
 //! operation, for the apps' wave pictures and the patch maker's level
 //! checks. Keep the two in step: `oscyl-osc-host` renders both and
 //! fails when they part.
@@ -134,7 +134,7 @@ struct Block {
     n: u32,
 }
 
-struct Engine<'a> {
+struct Dsp<'a> {
     blocks: Vec<Block>,
     mods: Vec<(u8, u8, u8, f32)>,
     tables: &'a [[i16; TABLE_LEN]],
@@ -167,10 +167,10 @@ fn table_at(t: &[i16; TABLE_LEN], phase: f32) -> f32 {
     (s0 + (s1 - s0) * f) * (1.0 / 32768.0)
 }
 
-impl<'a> Engine<'a> {
-    /// As `oscyl_engine_load`; a patch with no source plays a saw.
-    fn load(p: &'a Patch) -> Engine<'a> {
-        let mut e = Engine {
+impl<'a> Dsp<'a> {
+    /// As `oscyl_dsp_load`; a patch with no source plays a saw.
+    fn load(p: &'a Patch) -> Dsp<'a> {
+        let mut e = Dsp {
             blocks: p
                 .blocks
                 .iter()
@@ -495,7 +495,7 @@ impl<'a> Engine<'a> {
 /// `frames` samples of `patch` played as `play` from a note's start,
 /// rendered as the unit does (64 at a time), each within -1 to 1.
 pub fn render(patch: &Patch, play: &Play, frames: usize) -> Vec<f32> {
-    let mut e = Engine::load(patch);
+    let mut e = Dsp::load(patch);
     for (i, v) in play.params.iter().enumerate() {
         e.param(i as u16, *v);
     }
