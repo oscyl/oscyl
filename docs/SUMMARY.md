@@ -40,7 +40,11 @@
 
 # Explanation
 
-- [Architecture decision records](adr/README.md)
+- [Architecture](explanation/architecture.md)
+- [The oscillator unit](explanation/oscillator-unit.md)
+- [Mobile smoothness](explanation/mobile-smoothness.md)
+- [The design system](explanation/design-system.md)
+- [Decision records](adr/README.md)
   - [ADR 0001: Monorepo](adr/0001-monorepo.md)
   - [ADR 0002: Driver contract, conformance and native library format](adr/0002-driver-contract.md)
 - [RFCs](rfcs/README.md)
