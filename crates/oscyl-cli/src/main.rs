@@ -1204,12 +1204,17 @@ fn write_library(d: &dyn Driver, lib: &LibraryData, path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// GLib's user data directory, so the CLI and the desktop app share their
+/// shelf and backups: `%LOCALAPPDATA%` on Windows (where `HOME` is usually
+/// unset), `~/.local/share` elsewhere, `XDG_DATA_HOME` when set.
 fn data_dir() -> Result<PathBuf> {
-    let base = match std::env::var_os("XDG_DATA_HOME").filter(|v| !v.is_empty()) {
+    let var = |name: &str| std::env::var_os(name).filter(|v| !v.is_empty());
+    let base = match var("XDG_DATA_HOME") {
         Some(d) => PathBuf::from(d),
-        None => {
-            PathBuf::from(std::env::var_os("HOME").context("HOME is not set")?).join(".local/share")
+        None if cfg!(windows) => {
+            PathBuf::from(var("LOCALAPPDATA").context("LOCALAPPDATA is not set")?)
         }
+        None => PathBuf::from(var("HOME").context("HOME is not set")?).join(".local/share"),
     };
     Ok(base.join("oscyl"))
 }
