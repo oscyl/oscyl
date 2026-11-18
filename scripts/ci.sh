@@ -260,7 +260,7 @@ stage "mobile app"
 if ! mobile_changed; then
     skip
 elif [ -z "${ANDROID_HOME:-}" ]; then
-    echo "ANDROID_HOME not set, skipping the mobile app (see docs/mobile/README.md)"
+    echo "ANDROID_HOME not set, skipping the mobile app (see docs/how-to/mobile.md)"
 else
     # The preview screenshots (nine tenths of the suite's time) only when something that
     # draws changed; a change to the Rust core alone runs the behaviour tests.

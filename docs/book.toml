@@ -28,3 +28,7 @@ runnable = false
 
 # Pages that moved: their old addresses open the new page.
 [output.html.redirect]
+"/drivers.html" = "how-to/add-a-synth.html"
+"/building.html" = "how-to/build.html"
+"/releasing.html" = "how-to/release.html"
+"/mobile/index.html" = "../how-to/mobile.html"

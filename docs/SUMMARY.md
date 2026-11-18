@@ -14,12 +14,18 @@
 - [Try Oscyl without a synth](tutorials/try-without-a-synth.md)
 - [Your first driver](tutorials/first-driver.md)
 
-# Guides
+# How-to guides
 
-- [Writing a synth driver](drivers.md)
-- [Build and run](building.md)
-- [Oscyl on mobile](mobile/README.md)
-- [Releasing](releasing.md)
+- [Add a driver for a new synth](how-to/add-a-synth.md)
+- [Check a driver on hardware](how-to/hardware-check.md)
+- [Use Oscyl's crates in your own project](how-to/use-the-crates.md)
+- [Build and run Oscyl](how-to/build.md)
+- [Build, run and test the mobile apps](how-to/mobile.md)
+- [Run the checks](how-to/run-the-checks.md)
+- [Test on Windows hardware from Linux](how-to/windows-hardware.md)
+- [Translate Oscyl](how-to/translate.md)
+- [Update screenshots and goldens](how-to/screenshots.md)
+- [Cut a release](how-to/release.md)
 
 # Reference
 
