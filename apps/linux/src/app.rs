@@ -1139,6 +1139,9 @@ impl App {
         if !self.is_loaded(i) {
             return;
         }
+        let d = self.doc_driver();
+        // What the synth plays now: the blend this compare stands at.
+        let was = oscyl_app::editor::blend(d, &base, &p, self.editor.blend());
         self.editor.set_blend(t, glide);
         if let Some(pr) = self.primary.borrow().as_ref() {
             if t < 1.0 {
@@ -1149,12 +1152,28 @@ impl App {
             pr.blend.set_fraction(f64::from(t));
             pr.blend.set_visible(t > 0.0 && t < 1.0);
         }
-        let d = self.doc_driver();
-        self.audition(if t >= 1.0 {
+        let now = if t >= 1.0 {
             p
         } else {
             oscyl_app::editor::blend(d, &base, &p, t)
-        });
+        };
+        // Only what differs, as live messages where the synth takes them, so
+        // notes keep sounding through a compare (a whole program would mute
+        // a minilogue xd for seconds).
+        match (
+            self.audition_target(),
+            oscyl_app::editor::audition_change(d, &was, &now),
+        ) {
+            (Some(id), oscyl_app::editor::Audition::Live(msgs)) if self.audition.get() => {
+                if !msgs.is_empty() {
+                    #[cfg(test)]
+                    self.auditions_sent.set(self.auditions_sent.get() + 1);
+                    self.synth.send(Cmd::Live(id, msgs));
+                    self.blink();
+                }
+            }
+            _ => self.audition(now),
+        }
     }
 
     /// Show on the audition lamp that a change went to the synth.

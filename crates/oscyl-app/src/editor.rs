@@ -414,6 +414,29 @@ pub fn audition_of(d: &dyn Driver, p: &[u8], field: usize) -> Audition {
     }
 }
 
+/// What to send to move the synth's edit buffer from program `from` to `to`
+/// (Hold to compare, a blend): the live messages of every field that
+/// differs when each has some, so held notes keep sounding; else the
+/// whole of `to`. A whole program reloads the edit buffer, and a
+/// minilogue xd then stays silent for about 2.6 s, so a compare pressed
+/// while playing would go quiet instead of A/B-ing.
+pub fn audition_change(d: &dyn Driver, from: &[u8], to: &[u8]) -> Audition {
+    let mut out = Vec::new();
+    for f in 0..d.fields().len() {
+        let (Ok(a), Ok(b)) = (d.get(from, f), d.get(to, f)) else {
+            return Audition::Program(to.to_vec());
+        };
+        if a == b {
+            continue;
+        }
+        match d.live_messages(to, f, 0) {
+            Some(m) => out.extend(m),
+            None => return Audition::Program(to.to_vec()),
+        }
+    }
+    Audition::Live(out)
+}
+
 /// How a mark of a [`Picture`] is drawn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MarkKind {
@@ -674,6 +697,39 @@ mod tests {
 
     fn field(d: &dyn Driver, name: &str) -> usize {
         d.fields().iter().position(|f| f.name == name).unwrap()
+    }
+
+    #[test]
+    fn a_change_of_live_fields_goes_out_as_their_messages() {
+        let d = xd();
+        let from = d.init_program();
+        let mut to = from.clone();
+        d.set(&mut to, field(d, "Cutoff"), 640).unwrap();
+        d.set(&mut to, field(d, "Resonance"), 300).unwrap();
+        let Audition::Live(msgs) = audition_change(d, &from, &to) else {
+            panic!("cutoff and resonance are live on the xd");
+        };
+        let cutoff = d.live_messages(&to, field(d, "Cutoff"), 0).unwrap();
+        let reso = d.live_messages(&to, field(d, "Resonance"), 0).unwrap();
+        assert_eq!(msgs, [cutoff, reso].concat());
+        // Nothing differs: nothing to send.
+        assert_eq!(audition_change(d, &to, &to), Audition::Live(vec![]));
+    }
+
+    #[test]
+    fn a_change_without_live_messages_sends_the_program() {
+        let d = xd();
+        let from = d.init_program();
+        let mut to = from.clone();
+        d.set(&mut to, field(d, "Cutoff"), 640).unwrap();
+        let oct = field(d, "Octave");
+        assert!(d.live_messages(&to, oct, 0).is_none());
+        let v = d.get(&from, oct).unwrap();
+        d.set(&mut to, oct, if v == 0 { 1 } else { 0 }).unwrap();
+        assert_eq!(
+            audition_change(d, &from, &to),
+            Audition::Program(to.clone())
+        );
     }
 
     /// The spike for typed values: a value's written form typed back lands
