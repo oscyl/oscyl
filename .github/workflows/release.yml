@@ -117,7 +117,8 @@ jobs:
           path: dist/
 
   # The GTK app for Windows: a folder with the DLLs and data it needs
-  # (packaging/desktop/bundle-windows.sh), zipped. Not signed.
+  # (packaging/desktop/bundle-windows.sh), zipped, and the same folder as a
+  # per-user installer (packaging/desktop/oscyl.nsi). Not signed.
   desktop-windows:
     name: desktop-windows
     needs: guard
@@ -139,7 +140,7 @@ jobs:
           cache: false
           install: zip
           pacboy: >-
-            toolchain:p rust:p pkgconf:p gtk4:p libadwaita:p gettext-tools:p
+            toolchain:p rust:p pkgconf:p gtk4:p libadwaita:p gettext-tools:p nsis:p
       - name: Build and package
         env:
           VERSION: ${{ needs.guard.outputs.version }}
@@ -149,6 +150,10 @@ jobs:
           packaging/desktop/bundle-windows.sh target/release/oscyl-gtk.exe "$MSYSTEM_PREFIX" "$name"
           mkdir dist
           zip -qr "dist/$name.zip" "$name"
+          eval "$(scripts/version.sh "$VERSION")"
+          makensis -V2 -DVERSION="$VERSION" -DNUMERIC="$marketing" -DSRC="$(cygpath -w "$PWD/$name")" \
+              -DOUT="$(cygpath -w "$PWD/dist/oscyl-$VERSION-windows-x86_64-setup.exe")" \
+              packaging/desktop/oscyl.nsi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-desktop-windows

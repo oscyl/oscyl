@@ -40,10 +40,15 @@ jobs:
           update: true
           install: zip
           pacboy: >-
-            toolchain:p rust:p pkgconf:p gtk4:p libadwaita:p gettext-tools:p
+            toolchain:p rust:p pkgconf:p gtk4:p libadwaita:p gettext-tools:p nsis:p
       - run: cargo build --release --locked -p oscyl-gtk
       - name: Bundle
         run: packaging/desktop/bundle-windows.sh target/release/oscyl-gtk.exe "$MSYSTEM_PREFIX" dist/Oscyl
+      - name: Installer
+        run: |
+          eval "$(scripts/version.sh)"
+          makensis -V2 -DVERSION="$version" -DNUMERIC="$marketing" -DSRC="$(cygpath -w "$PWD/dist/Oscyl")" \
+              -DOUT="$(cygpath -w "$PWD/dist/oscyl-windows-x86_64-setup.exe")" packaging/desktop/oscyl.nsi
       # From PowerShell, whose PATH has no MSYS2: only the bundle's DLLs load.
       - name: Open once
         timeout-minutes: 5
@@ -52,6 +57,25 @@ jobs:
           $app = Start-Process dist\Oscyl\bin\Oscyl.exe -Wait -PassThru `
               -ArgumentList '--simulator', '--screenshot', 'screenshot-windows.png'
           if ($app.ExitCode -ne 0 -or -not (Test-Path screenshot-windows.png)) { exit 1 }
+      # Install for this user, open the installed app once, uninstall, and
+      # check that nothing of it is left.
+      - name: Install, open, uninstall
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          Start-Process dist\oscyl-windows-x86_64-setup.exe -ArgumentList '/S' -Wait
+          $dir = "$env:LOCALAPPDATA\Programs\Oscyl"
+          $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Oscyl'
+          $link = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Oscyl.lnk"
+          if (-not ((Test-Path $key) -and (Test-Path $link))) { exit 1 }
+          $app = Start-Process "$dir\bin\Oscyl.exe" -Wait -PassThru `
+              -ArgumentList '--simulator', '--screenshot', 'screenshot-installed.png'
+          if ($app.ExitCode -ne 0 -or -not (Test-Path screenshot-installed.png)) { exit 1 }
+          # Waits for the real uninstaller (_?= keeps it in place), then
+          # removes the copy it leaves.
+          Start-Process "$dir\uninstall.exe" -ArgumentList '/S', "_?=$dir" -Wait
+          Remove-Item "$dir\uninstall.exe"; Remove-Item $dir
+          if ((Test-Path $key) -or (Test-Path $link)) { exit 1 }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: oscyl-windows

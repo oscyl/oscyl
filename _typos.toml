@@ -18,6 +18,8 @@ extend-exclude = [
 formant = "formant"
 # Gradle's -P prefix: -PreleaseBuild.
 prelease = "prelease"
+# makensis's -D prefix: -DOUT=setup.exe.
+dout = "dout"
 # Quoted from Edisyn's UI.
 writeable = "writeable"
 # "caf\u{e9}" in a test of non-ASCII names.

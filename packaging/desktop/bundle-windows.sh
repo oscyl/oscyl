@@ -38,7 +38,7 @@ done
 
 # The licence texts of the packages the DLLs came from, and their exact
 # versions (the sources are on packages.msys2.org).
-cp "$root/LICENSE-MIT" "$root/LICENSE-APACHE" "$out/"
+cp "$root/LICENSE-MIT" "$root/LICENSE-APACHE" "$here/oscyl.ico" "$out/"
 cp "$here/THIRD-PARTY.txt" "$out/licences/"
 for dll in "$out"/bin/*.dll; do
     pacman -Qqo "$prefix/bin/${dll##*/}"
