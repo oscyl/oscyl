@@ -3,7 +3,7 @@
 ; %LOCALAPPDATA%\Programs\Oscyl, adds Oscyl to the Start menu and to
 ; Settings > Apps, where it is uninstalled. Settings and libraries stay.
 ;
-;   makensis /DVERSION=0.5.0 /DSRC=dist\Oscyl /DOUT=dist\oscyl-setup.exe oscyl.nsi
+;   makensis /DVERSION=X.Y.Z /DSRC=dist\Oscyl /DOUT=dist\oscyl-setup.exe oscyl.nsi
 ;
 ; For a release candidate, also pass /DNUMERIC=X.Y.Z (the file version
 ; Windows shows must be numbers only).

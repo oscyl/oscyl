@@ -24,6 +24,8 @@ workflow builds and what it refuses.
      and `CURRENT_PROJECT_VERSION` to its `code` line.
    - In `apps/linux/data/io.github.oscyl.Oscyl.metainfo.xml`, add a new
      `<release>` as the first one in `<releases>`.
+   - For a final release, in `docs/how-to/use-the-crates.md`, set the
+     dependencies' `tag` to `vX.Y.Z`. That guide names the newest release.
 3. **Edit the changelog.**
    - Rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`.
    - Add a new, empty `## [Unreleased]` above it.

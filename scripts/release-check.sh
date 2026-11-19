@@ -29,6 +29,13 @@ expect "apps/mobile/iosApp CURRENT_PROJECT_VERSION" \
     "$(sed -n 's/^CURRENT_PROJECT_VERSION *= *\(.*\)/\1/p' apps/mobile/iosApp/Configuration/Config.xcconfig)" "$code"
 check "the metainfo's newest release" \
     "$(sed -n 's/^ *<release version="\([^"]*\)".*/\1/p' apps/linux/data/io.github.oscyl.Oscyl.metainfo.xml | head -n 1)"
+# The guide to the crates names the newest final release (a release
+# candidate leaves it on the last final).
+if [[ $version != *-rc.* ]]; then
+    for tag in $(grep -o 'tag = "[^"]*"' docs/how-to/use-the-crates.md | sed 's/tag = "\(.*\)"/\1/' | sort -u); do
+        check "docs/how-to/use-the-crates.md's tag" "${tag#v}"
+    done
+fi
 scripts/release-notes.sh "$version" >/dev/null || fail=1
 
 [ "$fail" = 0 ] && echo "release $version: versions and changelog agree"

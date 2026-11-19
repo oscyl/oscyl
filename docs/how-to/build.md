@@ -91,7 +91,8 @@ To make the installer from that folder, install
 `mingw-w64-ucrt-x86_64-nsis`, then run:
 
 ```sh
-makensis -DVERSION=0.5.0 -DSRC="$(cygpath -w "$PWD/dist/Oscyl")" \
+eval "$(scripts/version.sh)"
+makensis -DVERSION="$version" -DNUMERIC="$marketing" -DSRC="$(cygpath -w "$PWD/dist/Oscyl")" \
     -DOUT="$(cygpath -w "$PWD/dist/oscyl-setup.exe")" packaging/desktop/oscyl.nsi
 ```
 

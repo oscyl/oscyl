@@ -16,9 +16,9 @@ this repository: see [Add a driver for a new synth](add-a-synth.md).
 | `oscyl-conformance` | Test a driver against its simulator |
 | A driver crate, such as `oscyl-korg-minilogue-xd` | Use one synth's own types directly |
 
-The driver packages are named `oscyl-<vendor>-<model>` after Oscyl 0.5.0.
-At the tag v0.5.0, two of them have older names: `oscyl-minilogue-xd` and
-`oscyl-prophet-rev2`.
+The driver packages are named `oscyl-<vendor>-<model>` from Oscyl 0.6.0.
+Up to the tag v0.5.0, two of them have older names: `oscyl-minilogue-xd`
+and `oscyl-prophet-rev2`.
 
 `oscyl-midi` depends on every driver crate. Cargo clones the whole
 repository once, then builds only the crates that you name and their
@@ -28,12 +28,12 @@ the ALSA development package (`alsa-lib`).
 ## Add the dependencies
 
 Name the same tag for every Oscyl crate. A tag is a release, and its
-crates are tested together:
+crates are tested together. This guide uses the newest release:
 
 ```toml
 [dependencies]
-oscyl-driver = { git = "https://github.com/oscyl/oscyl", tag = "v0.5.0" }
-oscyl-midi = { git = "https://github.com/oscyl/oscyl", tag = "v0.5.0" }
+oscyl-driver = { git = "https://github.com/oscyl/oscyl", tag = "v0.6.0" }
+oscyl-midi = { git = "https://github.com/oscyl/oscyl", tag = "v0.6.0" }
 ```
 
 ## Read a program
@@ -68,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 `cargo run` prints the program's name, then one line for each field. This
-is the output with Oscyl 0.5.0:
+is the output with that tag:
 
 ```text
 Glass Choir
