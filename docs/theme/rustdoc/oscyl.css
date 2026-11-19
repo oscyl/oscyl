@@ -1,32 +1,55 @@
 /* The API reference (rustdoc) in the website's world, like the book
-   (docs/theme/oscyl.css). One theme that follows the system's light or dark
-   setting; .github/workflows/pages.yml makes it the default. Rustdoc's other
-   themes stay in its settings. */
+   (docs/theme/oscyl.css). This one file is both of Oscyl's rustdoc themes:
+   oscyl-light.css and oscyl-dark.css link to it, and rustdoc names a theme
+   after its file. .github/workflows/pages.yml makes them the defaults: the
+   system's light or dark choice picks one. Rustdoc's own themes stay in its
+   settings, and rustdoc loads this file only while an Oscyl theme is on.
 
-:root[data-theme="oscyl"] {
+   Colour keeps rustdoc's meanings: each kind of item (type, trait, function,
+   macro, module) has its hue, in links, item lists, search results and code,
+   as in rustdoc's own themes, so a reader used to them reads these. Every hue
+   is at least 4.5:1 on the ground and the sidebar. Prose links are also
+   underlined, so they never rely on colour alone. */
+
+@font-face {
+    font-family: "Albert Sans";
+    font-weight: 700;
+    font-display: swap;
+    /* The website's copy: /oscyl/AlbertSans-Bold.ttf, next to /oscyl/api/. */
+    src: url("../AlbertSans-Bold.ttf") format("truetype");
+}
+
+:root[data-theme="oscyl-light"] {
     --ground: #e7e6e2; --sidebar: #dedcd7; --raised: #f6f5f2; --plate: #2a2b2c; --on-plate: #ecebe7;
     --rule: #cbc9c3; --rule-strong: #8a8882; --ink: #1d1e1f; --legend: #62615c; --act: #a54c08;
-    --hover: rgb(29 30 31 / 6%); --mark: rgb(29 30 31 / 10%);
+    --shadow: rgb(29 30 31 / 14%); --hover: rgb(29 30 31 / 6%); --mark: rgb(165 76 8 / 12%);
     --icon-filter: none;
+    /* Item kinds and code. */
+    --kind-type: #93306c; --kind-trait: #5a42a6; --kind-fn: #7e5410; --kind-macro: #1d6762;
+    --kind-mod: #265d8e; --code-string: #3d6b1f; --code-lifetime: #8a4a10;
     color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-    :root[data-theme="oscyl"] {
-        --ground: #202122; --sidebar: #1a1b1c; --raised: #2b2c2d; --plate: #d9d8d3; --on-plate: #202122;
-        --rule: #353637; --rule-strong: #6b6c6d; --ink: #ecebe7; --legend: #9d9c97; --act: #f08a24;
-        --hover: rgb(236 235 231 / 6%); --mark: rgb(236 235 231 / 12%);
-        --icon-filter: invert(100%);
-        color-scheme: dark;
-    }
+:root[data-theme="oscyl-dark"] {
+    --ground: #202122; --sidebar: #1a1b1c; --raised: #2b2c2d; --plate: #d9d8d3; --on-plate: #202122;
+    --rule: #353637; --rule-strong: #6b6c6d; --ink: #ecebe7; --legend: #9d9c97; --act: #f08a24;
+    --shadow: rgb(0 0 0 / 40%); --hover: rgb(236 235 231 / 6%); --mark: rgb(240 138 36 / 14%);
+    --icon-filter: invert(100%);
+    --kind-type: #e48fc4; --kind-trait: #b4a3f2; --kind-fn: #deae66; --kind-macro: #7fcfc6;
+    --kind-mod: #86b6e6; --code-string: #a9cf86; --code-lifetime: #e6a46a;
+    color-scheme: dark;
 }
 @media (prefers-contrast: more) {
-    :root[data-theme="oscyl"] { --rule: var(--rule-strong); --legend: var(--ink); }
+    :root[data-theme="oscyl-light"], :root[data-theme="oscyl-dark"] { --rule: var(--rule-strong); --legend: var(--ink); }
 }
 
-:root[data-theme="oscyl"] {
+:root[data-theme="oscyl-light"], :root[data-theme="oscyl-dark"] {
     --font-family: system-ui, sans-serif;
     --font-family-code: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    --display-font: "Albert Sans", system-ui, sans-serif;
+    --plate-fill: linear-gradient(to bottom, color-mix(in srgb, var(--plate) 94%, white), color-mix(in srgb, var(--plate) 95%, black));
+    --ease: cubic-bezier(.2, .8, .2, 1);
     --button-border-radius: 6px;
+    --toolbar-button-border-radius: 6px;
     --code-block-border-radius: 10px;
 
     --main-background-color: var(--ground);
@@ -34,7 +57,7 @@
     --settings-input-color: var(--plate);
     --settings-input-border-color: var(--rule-strong);
     --settings-button-color: var(--ink);
-    --settings-button-border-focus: var(--ink);
+    --settings-button-border-focus: var(--rule-strong);
     --sidebar-background-color: var(--sidebar);
     --sidebar-background-color-hover: var(--hover);
     --sidebar-border-color: var(--rule);
@@ -59,20 +82,19 @@
     --settings-menu-filter: var(--icon-filter);
     --settings-menu-hover-filter: var(--icon-filter);
     --codeblock-error-hover-color: var(--act);
-    --codeblock-error-color: var(--act);
+    --codeblock-error-color: color-mix(in srgb, var(--act) 60%, transparent);
     --codeblock-ignore-hover-color: var(--legend);
-    --codeblock-ignore-color: var(--legend);
+    --codeblock-ignore-color: color-mix(in srgb, var(--legend) 60%, transparent);
     --warning-border-color: var(--act);
-    /* Item kinds are named by their section and their keyword: no hues. */
-    --type-link-color: var(--ink);
-    --trait-link-color: var(--ink);
-    --assoc-item-link-color: var(--ink);
-    --function-link-color: var(--ink);
-    --macro-link-color: var(--ink);
-    --keyword-link-color: var(--ink);
-    --attribute-link-color: var(--ink);
-    --mod-link-color: var(--ink);
-    --link-color: var(--ink);
+    --type-link-color: var(--kind-type);
+    --trait-link-color: var(--kind-trait);
+    --assoc-item-link-color: var(--kind-mod);
+    --function-link-color: var(--kind-fn);
+    --macro-link-color: var(--kind-macro);
+    --keyword-link-color: var(--kind-mod);
+    --attribute-link-color: var(--kind-mod);
+    --mod-link-color: var(--kind-mod);
+    --link-color: var(--kind-mod);
     --sidebar-link-color: var(--ink);
     --sidebar-current-link-background-color: var(--plate);
     --search-result-link-focus-background-color: var(--hover);
@@ -82,31 +104,30 @@
     --search-results-alias-color: var(--ink);
     --search-results-grey-color: var(--legend);
     --search-tab-title-count-color: var(--legend);
-    --search-tab-button-not-selected-border-top-color: var(--rule);
-    --search-tab-button-not-selected-background: var(--sidebar);
-    --search-tab-button-selected-border-top-color: var(--ink);
-    --search-tab-button-selected-background: var(--ground);
+    --search-tab-button-not-selected-border-top-color: transparent;
+    --search-tab-button-not-selected-background: transparent;
+    --search-tab-button-selected-border-top-color: transparent;
+    --search-tab-button-selected-background: var(--plate);
     --stab-background-color: var(--sidebar);
     --stab-code-color: var(--ink);
-    /* Syntax: weight and tone, as in the book. */
-    --code-highlight-kw-color: var(--ink);
-    --code-highlight-kw-2-color: var(--ink);
-    --code-highlight-lifetime-color: var(--legend);
-    --code-highlight-prelude-color: var(--ink);
-    --code-highlight-prelude-val-color: var(--ink);
-    --code-highlight-number-color: var(--ink);
-    --code-highlight-string-color: var(--ink);
-    --code-highlight-literal-color: var(--ink);
+    --code-highlight-kw-color: var(--kind-trait);
+    --code-highlight-kw-2-color: var(--kind-mod);
+    --code-highlight-lifetime-color: var(--code-lifetime);
+    --code-highlight-prelude-color: var(--kind-mod);
+    --code-highlight-prelude-val-color: var(--kind-type);
+    --code-highlight-number-color: var(--code-string);
+    --code-highlight-string-color: var(--code-string);
+    --code-highlight-literal-color: var(--kind-type);
     --code-highlight-attribute-color: var(--legend);
-    --code-highlight-self-color: var(--ink);
-    --code-highlight-macro-color: var(--ink);
-    --code-highlight-question-mark-color: var(--act);
+    --code-highlight-self-color: var(--kind-type);
+    --code-highlight-macro-color: var(--kind-macro);
+    --code-highlight-question-mark-color: var(--code-lifetime);
     --code-highlight-comment-color: var(--legend);
     --code-highlight-doc-comment-color: var(--legend);
     --src-line-numbers-span-color: var(--legend);
     --src-line-number-highlighted-background-color: var(--mark);
     --target-background-color: var(--mark);
-    --target-border-color: var(--rule-strong);
+    --target-border-color: var(--act);
     --kbd-color: var(--ink);
     --kbd-background: var(--raised);
     --kbd-box-shadow-color: var(--rule-strong);
@@ -114,7 +135,7 @@
     --crate-search-div-filter: var(--icon-filter);
     --crate-search-div-hover-filter: var(--icon-filter);
     --crate-search-hover-border: var(--rule-strong);
-    --src-sidebar-background-selected: var(--raised);
+    --src-sidebar-background-selected: var(--plate);
     --src-sidebar-background-hover: var(--hover);
     --table-alt-row-background-color: transparent;
     --codeblock-link-background: var(--hover);
@@ -132,40 +153,96 @@
     --sidebar-resizer-active: var(--ink);
 }
 
-/* Type: the platform font, as on the website; monospace for code only. */
-:root[data-theme="oscyl"] :is(#crate-search, h1, h2, h3, h4, h5, h6, .sidebar, rustdoc-topbar, .search-input,
-    .search-results .result-name, .item-table dt > a, .out-of-band, .sub-heading, span.since, a.src,
-    rustdoc-toolbar, summary.hideme, .scraped-example-list, .rustdoc-breadcrumbs, .search-switcher,
-    ul.all-items, .deprecated-count) {
+/* Everything below applies only while this file is loaded, that is under an
+   Oscyl theme. */
+
+/* Type: the platform font, as on the website; Albert Sans for the page's
+   title and its sections; monospace for code only. */
+#crate-search, h1, h2, h3, h4, h5, h6, .sidebar, rustdoc-topbar, .search-input,
+.search-results .result-name, .item-table dt > a, .out-of-band, .sub-heading, span.since, a.src,
+rustdoc-toolbar, summary.hideme, .scraped-example-list, .rustdoc-breadcrumbs, .search-switcher,
+ul.all-items, .deprecated-count {
     font-family: var(--font-family);
 }
-:root[data-theme="oscyl"] body { -webkit-font-smoothing: antialiased; }
-:root[data-theme="oscyl"] ::selection { background: var(--plate); color: var(--on-plate); }
-:root[data-theme="oscyl"] :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+body { -webkit-font-smoothing: antialiased; }
+.main-heading h1, #main-content > h2.section-header, .sidebar-crate h2 a {
+    font-family: var(--display-font); font-weight: 700; letter-spacing: -.01em;
+}
+.main-heading h1 { font-size: 1.9rem; line-height: 1.15; }
+#main-content > h2.section-header { font-size: 1.45rem; margin-top: 2em; }
+.docblock { line-height: 1.6; }
+::selection { background: var(--plate); color: var(--on-plate); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.rustdoc-breadcrumbs, .rustdoc-breadcrumbs a { color: var(--legend); }
 
-/* Links: every link in the page is underlined, in prose, code, signatures and
-   tables, because the item kinds' hues are gone and colour never marks a link.
-   Not underlined: section anchors, and an item's name in its own header,
-   which only links to itself. The sidebar and the toolbar are all links and
-   stay plain, as in the book. */
-:root[data-theme="oscyl"] :is(#main-content, .main-heading) a:not(.anchor, .doc-anchor, .tooltip, rustdoc-toolbar a, .code-header a[href^="#"]) {
+/* Prose links: their hue and an underline. Links in code and lists keep
+   their item kind's hue, and underline on hover. */
+.docblock a:not(.doc-anchor, .tooltip, .scrape-help), .item-table dd a:not(.tooltip), .item-info a {
     text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px;
-    text-decoration-color: var(--rule-strong);
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
 }
-:root[data-theme="oscyl"] :is(#main-content, .main-heading) a:not(.anchor, .doc-anchor, .tooltip, rustdoc-toolbar a, .code-header a[href^="#"]):hover {
-    text-decoration-color: var(--ink); text-decoration-thickness: 2px;
+.docblock a:not(.doc-anchor, .tooltip, .scrape-help):hover, .item-table dd a:not(.tooltip):hover, .item-info a:hover {
+    text-decoration-color: currentColor;
 }
-:root[data-theme="oscyl"] .code-header a[href^="#"]:hover { text-decoration: underline; text-underline-offset: 3px; }
-:root[data-theme="oscyl"] .docblock code, :root[data-theme="oscyl"] .item-decl code { color: var(--ink); }
-:root[data-theme="oscyl"] .docblock :not(pre) > code {
-    background: var(--sidebar); box-shadow: inset 0 0 0 1px var(--rule); border-radius: 4px;
+.rust a:hover, .code-header a:hover, .item-table dt a:hover, .rustdoc-breadcrumbs a:hover, a.src:hover {
+    text-decoration: underline; text-underline-offset: 3px;
 }
-:root[data-theme="oscyl"] pre.rust, :root[data-theme="oscyl"] .item-decl pre {
-    box-shadow: inset 0 0 0 1px var(--rule);
-}
-:root[data-theme="oscyl"] .kw { font-weight: 600; }
 
-/* The page you are on is the plate. */
-:root[data-theme="oscyl"] .sidebar .current > a, :root[data-theme="oscyl"] .sidebar a.current {
-    color: var(--on-plate); border-radius: 6px;
+/* Code: framed panels, as in the book. */
+.docblock :not(pre) > code, .item-table dd code, .item-info code {
+    background: var(--sidebar); box-shadow: inset 0 0 0 1px var(--rule); border-radius: 4px; padding: 0 .3em;
+}
+.docblock a > code { background: none; box-shadow: none; padding: 0; }
+.example-wrap > pre.rust, .example-wrap > pre.language-text, .item-decl pre, pre.rust {
+    box-shadow: inset 0 0 0 1px var(--rule); border-radius: 10px;
+}
+.rust .kw, .rust .kw-2 { font-weight: 600; }
+.rust .comment, .rust .doccomment { font-style: italic; }
+
+/* Lists of items: ruled rows, as the website's tables. */
+dl.item-table > dt, dl.item-table > dd { padding-block: 7px; border-bottom: 1px solid var(--rule); margin: 0; }
+dl.item-table > dt { padding-inline-end: 16px; }
+dl.item-table > dt:last-of-type, dl.item-table > dd:last-of-type { border-bottom: 0; }
+
+/* The sidebar: section names as small legends, the page you are on as the
+   plate, hover as a tone. */
+.sidebar h3 { font-size: .8rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--legend); margin: 1.2em 0 .3em; }
+.sidebar h3 a { color: inherit; }
+.sidebar a { border-radius: 6px; }
+.sidebar a:hover:not(.logo-container) { background-color: var(--hover); }
+.sidebar .current, .sidebar .current a, .sidebar .current a:hover {
+    background: var(--plate-fill); color: var(--on-plate); border-radius: 6px;
+}
+.sidebar-crate h2 .version { color: var(--legend); font-family: var(--font-family); font-weight: 400; letter-spacing: 0; }
+#src-sidebar div.files > a.selected { background: var(--plate-fill); color: var(--on-plate); }
+
+/* The toolbar: outlined buttons that show their outline on hover. */
+#search-button > a, .settings-menu > a, .help-menu > a, button#toggle-all-docs {
+    color: var(--legend); transition: background .16s var(--ease), color .16s var(--ease);
+}
+#search-button > a:hover, .settings-menu > a:hover, .help-menu > a:hover, button#toggle-all-docs:hover {
+    background: var(--hover); color: var(--ink);
+}
+
+/* Search: an outlined field; the result tabs a segment group whose chosen
+   tab is the plate. */
+.search-input { border: 0; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--rule-strong); padding: 9px 12px; }
+.search-input:focus { box-shadow: inset 0 0 0 1px var(--rule-strong); outline: 2px solid var(--ink); outline-offset: 2px; }
+#search-tabs { gap: 2px; padding: 4px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--rule-strong); }
+#search-tabs button { border: 0; border-radius: 6px; font-size: 1rem; color: var(--legend); padding: 6px 4px; }
+#search-tabs button:hover:not(.selected) { background: var(--hover); color: var(--ink); }
+#search-tabs button.selected { background: var(--plate-fill); color: var(--on-plate); box-shadow: 0 1px 3px var(--shadow); }
+#search-tabs button.selected .count { color: inherit; opacity: .75; }
+.search-results > a { border-radius: 6px; border-bottom: 1px solid var(--rule); padding-block: 5px; }
+.search-results > a:hover, .search-results > a:focus { background-color: var(--hover); }
+
+/* Popovers (settings, help) and badges. */
+.popover { border-radius: 10px; border: 0; background: var(--raised); box-shadow: 0 0 0 1px var(--rule), 0 4px 12px var(--shadow); }
+.popover::before { background: var(--raised); border-color: var(--rule); }
+.setting-check input, .setting-radio input { accent-color: var(--plate); }
+.stab { border-radius: 4px; box-shadow: inset 0 0 0 1px var(--rule); }
+kbd { border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+    #search-button > a, .settings-menu > a, .help-menu > a, button#toggle-all-docs { transition: none; }
 }

@@ -58,9 +58,15 @@ jobs:
           cp apps/linux/data/icons/hicolor/scalable/apps/io.github.oscyl.Oscyl.svg _site/icon.svg
           mdbook build docs --dest-dir _site/docs
           rm _site/docs/book.toml # mdBook copies its own config: docs/ is its source
-          # The API pages wear the website's look by default (docs/theme/rustdoc/oscyl.css);
+          # The API pages take Oscyl's light and dark themes (docs/theme/rustdoc/) as their
+          # defaults, chosen by the system's setting, and share the theme choice with the
+          # website and the book (header.html). --default-setting is unstable, so
+          # RUSTC_BOOTSTRAP lets the stable rustdoc take it, for this build only.
           # site/api/index.html is their front page.
-          RUSTDOCFLAGS="--theme $PWD/docs/theme/rustdoc/oscyl.css --default-theme oscyl" \
+          t=$PWD/docs/theme/rustdoc
+          RUSTC_BOOTSTRAP=1 RUSTDOCFLAGS="-Z unstable-options --theme $t/oscyl-light.css --theme $t/oscyl-dark.css --html-in-header $t/header.html \
+            --default-setting use-system-theme=true --default-setting theme=oscyl-light \
+            --default-setting preferred-light-theme=oscyl-light --default-setting preferred-dark-theme=oscyl-dark" \
             cargo doc --no-deps --locked -p oscyl-driver -p oscyl-conformance -p oscyl-core -p oscyl-midi
           cp -r target/doc/. _site/api/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

@@ -8,6 +8,7 @@
 <link rel="canonical" href="https://oscyl.github.io/oscyl/">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="color-scheme" content="light dark">
+<script src="theme.js"></script>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Oscyl: librarian and sound editor for hardware synths">
 <meta property="og:description" content="Read, edit, back up and sync your synth's programs. Open source, one Rust core, on Linux, Windows, macOS, Android, iOS and the command line.">
@@ -25,12 +26,21 @@
   --shadow: rgb(29 30 31 / 14%); --hover: rgb(29 30 31 / 6%);
   --ease: cubic-bezier(.2, .8, .2, 1);
 }
+/* Dark follows the system, unless theme.js set a choice (data-theme). */
+:root { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #202122; --sidebar: #1a1b1c; --raised: #2b2c2d; --plate: #d9d8d3; --on-plate: #202122;
     --rule: #353637; --rule-strong: #6b6c6d; --ink: #ecebe7; --legend: #9d9c97; --on: #3fae5a; --act: #f08a24;
     --shadow: rgb(0 0 0 / 40%); --hover: rgb(236 235 231 / 6%);
   }
+}
+:root[data-theme="dark"] {
+  --ground: #202122; --sidebar: #1a1b1c; --raised: #2b2c2d; --plate: #d9d8d3; --on-plate: #202122;
+  --rule: #353637; --rule-strong: #6b6c6d; --ink: #ecebe7; --legend: #9d9c97; --on: #3fae5a; --act: #f08a24;
+  --shadow: rgb(0 0 0 / 40%); --hover: rgb(236 235 231 / 6%);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 108px; scrollbar-color: var(--rule-strong) var(--ground); }
@@ -56,6 +66,14 @@ h1, h2 { font-family: "Albert Sans", system-ui, sans-serif; font-weight: 700; le
 .button.plate { background: linear-gradient(to bottom, color-mix(in srgb, var(--plate) 94%, white), color-mix(in srgb, var(--plate) 95%, black)); color: var(--on-plate); box-shadow: 0 1px 3px var(--shadow); }
 .button.plate:hover { filter: brightness(1.08); }
 .bar .button { height: 36px; padding: 0 14px; font-size: 14px; color: var(--ink); }
+
+/* Theme: System, Light, Dark (theme.js), a segment group whose choice is the plate. */
+.theme { display: inline-flex; gap: 2px; padding: 3px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.theme[hidden] { display: none; }
+.theme button { display: grid; place-items: center; width: 34px; height: 30px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--legend); cursor: pointer; transition: background .16s var(--ease), color .16s var(--ease); }
+.theme button:hover { background: var(--hover); color: var(--ink); }
+.theme button[aria-pressed="true"] { background: linear-gradient(to bottom, color-mix(in srgb, var(--plate) 94%, white), color-mix(in srgb, var(--plate) 95%, black)); color: var(--on-plate); box-shadow: 0 1px 3px var(--shadow); }
+.theme svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Nameplate */
 .nameplate { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 7fr); gap: 48px; align-items: center; padding: 72px 0 64px; }
@@ -135,7 +153,7 @@ footer nav { display: flex; gap: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .slide, .tabs a, .button { transition: none; }
+  .slide, .tabs a, .button, .theme button { transition: none; }
 }
 @media (prefers-contrast: more) { :root { --rule: var(--rule-strong); --legend: var(--ink); } }
 </style>
@@ -150,6 +168,11 @@ footer nav { display: flex; gap: 18px; }
       <a href="#try">Try it</a>
       <a href="docs/">Docs</a>
       <a href="docs/how-to/add-a-synth.html">Add a synth</a>
+      <div class="theme" role="group" aria-label="Theme" hidden>
+        <button type="button" value="" aria-label="System theme" title="System theme"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg></button>
+        <button type="button" value="light" aria-label="Light theme" title="Light theme"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.06 1.06M11.54 11.54l1.06 1.06M3.4 12.6l1.06-1.06M11.54 4.46l1.06-1.06"/></svg></button>
+        <button type="button" value="dark" aria-label="Dark theme" title="Dark theme"><svg viewBox="0 0 16 16"><path d="M13 9.6A5.5 5.5 0 1 1 6.4 3a4.5 4.5 0 0 0 6.6 6.6z"/></svg></button>
+      </div>
       <a class="button" href="https://github.com/oscyl/oscyl">GitHub</a>
     </nav>
   </header>
@@ -166,7 +189,7 @@ footer nav { display: flex; gap: 18px; }
       <p class="state"><span class="lamp"></span><b>Pre-alpha.</b> Checked with a real minilogue xd: the desktop app and the command line on Linux, the Android app, and <code>oscyl info</code> on Windows. The prologue and the Prophet Rev2 are tested against simulators only. Builds are on the <a href="https://github.com/oscyl/oscyl/releases">Releases</a> page.</p>
     </div>
     <picture>
-      <source srcset="images/desktop-editor.png" media="(prefers-color-scheme: dark)">
+      <source srcset="images/desktop-editor.png" media="(prefers-color-scheme: dark)" data-dark>
       <img class="window" src="images/desktop-editor-light.png" width="1200" height="750" alt="The Oscyl editor on Linux: the program list, the six stage tabs, the filter graph and its dials">
     </picture>
   </section>

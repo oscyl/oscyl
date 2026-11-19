@@ -1,0 +1,31 @@
+<script>
+// One theme choice for every Oscyl page (site/theme.js): localStorage
+// "oscyl-theme" is "light" or "dark", or absent to follow the system. Rustdoc
+// keeps its own settings; when they disagree with the shared choice, this
+// brings them in line before the page draws (rustdoc's storage.js has run,
+// and its updateTheme() applies the change). A change in rustdoc's settings
+// writes the shared choice back.
+(function () {
+    function get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function put(key, value) {
+        try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch (e) { /* storage off */ }
+    }
+    function mode() {
+        if (getSettingValue("use-system-theme") !== "false") return null;
+        return ["dark", "ayu", "oscyl-dark"].includes(getSettingValue("theme")) ? "dark" : "light";
+    }
+    let shared = get("oscyl-theme");
+    if (shared !== "light" && shared !== "dark") shared = null;
+    if (shared !== mode()) {
+        if (shared === null) {
+            put("rustdoc-use-system-theme", "true");
+        } else {
+            put("rustdoc-use-system-theme", "false");
+            put("rustdoc-theme", "oscyl-" + shared);
+        }
+        updateTheme();
+    }
+    // Rustdoc's own handlers on the settings' inputs run first.
+    document.addEventListener("change", function () { put("oscyl-theme", mode()); });
+})();
+</script>

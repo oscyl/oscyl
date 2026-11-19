@@ -15,12 +15,12 @@ create-missing = false
 site-url = "/oscyl/docs/"
 git-repository-url = "https://github.com/oscyl/oscyl"
 edit-url-template = "https://github.com/oscyl/oscyl/edit/main/docs/{path}"
-default-theme = "light"
-preferred-dark-theme = "coal"
+# Oscyl's light and dark themes, the website's look (theme/oscyl.css and
+# theme/index.hbs). mdBook's own themes stay in the theme menu.
+default-theme = "oscyl-light"
+preferred-dark-theme = "oscyl-dark"
 no-section-label = true
-# The website's look (theme/oscyl.css, see DESIGN.md).
 additional-css = ["theme/oscyl.css"]
-additional-js = ["theme/oscyl.js"]
 smart-punctuation = true
 
 [output.html.search]

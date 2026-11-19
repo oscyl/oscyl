@@ -8,18 +8,28 @@
 <link rel="canonical" href="https://oscyl.github.io/oscyl/api/">
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <meta name="color-scheme" content="light dark">
+<script src="../theme.js"></script>
 <style>
 /* The website's tokens and parts (../index.html), for the API's front page. */
 @font-face { font-family: "Albert Sans"; font-weight: 700; font-display: swap; src: url("../AlbertSans-Bold.ttf") format("truetype"); }
 :root {
   --ground: #e7e6e2; --sidebar: #dedcd7; --rule: #cbc9c3; --rule-strong: #8a8882; --ink: #1d1e1f; --legend: #62615c;
-  --plate: #2a2b2c; --on-plate: #ecebe7; --hover: rgb(29 30 31 / 6%);
+  --plate: #2a2b2c; --on-plate: #ecebe7; --hover: rgb(29 30 31 / 6%); --shadow: rgb(29 30 31 / 14%);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: light dark;
 }
+/* Dark follows the system, unless ../theme.js set a choice (data-theme). */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #202122; --sidebar: #1a1b1c; --rule: #353637; --rule-strong: #6b6c6d; --ink: #ecebe7; --legend: #9d9c97;
-    --plate: #d9d8d3; --on-plate: #202122; --hover: rgb(236 235 231 / 6%);
+    --plate: #d9d8d3; --on-plate: #202122; --hover: rgb(236 235 231 / 6%); --shadow: rgb(0 0 0 / 40%);
   }
+}
+:root[data-theme="dark"] {
+  --ground: #202122; --sidebar: #1a1b1c; --rule: #353637; --rule-strong: #6b6c6d; --ink: #ecebe7; --legend: #9d9c97;
+  --plate: #d9d8d3; --on-plate: #202122; --hover: rgb(236 235 231 / 6%); --shadow: rgb(0 0 0 / 40%);
 }
 @media (prefers-contrast: more) { :root { --rule: var(--rule-strong); --legend: var(--ink); } }
 * { box-sizing: border-box; }
@@ -31,9 +41,17 @@ code { font: .9em ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
 .bar { display: flex; align-items: center; justify-content: space-between; height: 64px; border-bottom: 1px solid var(--rule); }
 .brand { display: flex; align-items: center; gap: 10px; font: 700 20px "Albert Sans", system-ui, sans-serif; text-decoration: none; }
-.bar nav { display: flex; gap: 22px; font-size: 15px; }
+.bar nav { display: flex; align-items: center; gap: 22px; font-size: 15px; }
 .bar nav a { text-decoration: none; color: var(--legend); }
 .bar nav a:hover { color: var(--ink); }
+
+/* Theme: System, Light, Dark (theme.js), a segment group whose choice is the plate. */
+.theme { display: inline-flex; gap: 2px; padding: 3px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.theme[hidden] { display: none; }
+.theme button { display: grid; place-items: center; width: 34px; height: 30px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--legend); cursor: pointer; transition: background .16s var(--ease), color .16s var(--ease); }
+.theme button:hover { background: var(--hover); color: var(--ink); }
+.theme button[aria-pressed="true"] { background: linear-gradient(to bottom, color-mix(in srgb, var(--plate) 94%, white), color-mix(in srgb, var(--plate) 95%, black)); color: var(--on-plate); box-shadow: 0 1px 3px var(--shadow); }
+.theme svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 h1 { font: 700 clamp(36px, 5vw, 52px)/1.04 "Albert Sans", system-ui, sans-serif; letter-spacing: -.02em; margin: 56px 0 0; }
 .lede { color: var(--legend); font-size: 19px; max-width: 46ch; margin: 18px 0 0; }
 fieldset { margin: 40px 0 0; padding: 18px 28px 22px; border: 1px solid var(--rule); border-radius: 10px; background: linear-gradient(to bottom, color-mix(in srgb, var(--ink) 3%, transparent), transparent 45%); min-width: 0; }
@@ -48,9 +66,14 @@ li span { color: var(--legend); }
 footer { margin-top: 64px; padding: 28px 0 56px; border-top: 1px solid var(--rule); color: var(--legend); font-size: 13.5px; }
 @media (max-width: 620px) {
   .wrap { padding: 0 16px; }
+  .bar nav { gap: 16px; }
   .bar nav a.wide { display: none; }
   fieldset { padding: 12px 18px 16px; }
   li a { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  /* The page's own text links to the same guides. */
+  .bar nav a { display: none; }
 }
 </style>
 </head>
@@ -62,6 +85,11 @@ footer { margin-top: 64px; padding: 28px 0 56px; border-top: 1px solid var(--rul
       <a href="../docs/">Docs</a>
       <a class="wide" href="../docs/how-to/use-the-crates.html">Use the crates</a>
       <a href="https://github.com/oscyl/oscyl">GitHub</a>
+      <div class="theme" role="group" aria-label="Theme" hidden>
+        <button type="button" value="" aria-label="System theme" title="System theme"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg></button>
+        <button type="button" value="light" aria-label="Light theme" title="Light theme"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.06 1.06M11.54 11.54l1.06 1.06M3.4 12.6l1.06-1.06M11.54 4.46l1.06-1.06"/></svg></button>
+        <button type="button" value="dark" aria-label="Dark theme" title="Dark theme"><svg viewBox="0 0 16 16"><path d="M13 9.6A5.5 5.5 0 1 1 6.4 3a4.5 4.5 0 0 0 6.6 6.6z"/></svg></button>
+      </div>
     </nav>
   </header>
 

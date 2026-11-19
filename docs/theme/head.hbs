@@ -1,0 +1,27 @@
+<script>
+// One theme choice for every Oscyl page (site/theme.js): localStorage
+// "oscyl-theme" is "light" or "dark", or absent to follow the system. mdBook
+// keeps its own choice ("mdbook-theme"); when its light or dark disagrees with
+// the shared one, this sets the matching Oscyl theme before mdBook reads it
+// (index.hbs runs this partial first). Picking in the theme menu writes the
+// shared choice back; mdBook's themes count as their light or dark.
+(function () {
+    function get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function put(key, value) {
+        try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch (e) { /* storage off */ }
+    }
+    function mode(theme) {
+        if (theme === null) return null;
+        return ["coal", "navy", "ayu", "oscyl-dark"].includes(theme.replace(/"/g, "")) ? "dark" : "light";
+    }
+    let shared = get("oscyl-theme");
+    if (shared !== "light" && shared !== "dark") shared = null;
+    if (shared !== mode(get("mdbook-theme"))) put("mdbook-theme", shared && "oscyl-" + shared);
+    // mdBook's own handler on the menu runs first, then this one.
+    document.addEventListener("click", function (event) {
+        if (event.target.closest && event.target.closest("#mdbook-theme-list button")) {
+            put("oscyl-theme", mode(get("mdbook-theme")));
+        }
+    });
+})();
+</script>
