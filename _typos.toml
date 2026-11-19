@@ -35,3 +35,5 @@ udid = "udid"
 UDID = "UDID"
 # Dial geometry (x and y of the indicator).
 iy = "iy"
+# mdBook's own variable name: --sidebar-non-existant.
+existant = "existant"

@@ -7,6 +7,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'Cargo.toml' # the workspace version the API pages show
       - 'site/**'
       - 'docs/**'
       - 'crates/oscyl-driver/**'
@@ -51,15 +52,17 @@ jobs:
       - name: Assemble
         run: |
           mkdir -p _site/images
-          cp site/* _site/
+          cp -r site/. _site/
           cp docs/images/*.png _site/images/
           cp apps/linux/data/fonts/AlbertSans-Bold.ttf _site/
           cp apps/linux/data/icons/hicolor/scalable/apps/io.github.oscyl.Oscyl.svg _site/icon.svg
           mdbook build docs --dest-dir _site/docs
           rm _site/docs/book.toml # mdBook copies its own config: docs/ is its source
-          cargo doc --no-deps --locked -p oscyl-driver -p oscyl-conformance -p oscyl-core -p oscyl-midi
-          cp -r target/doc _site/api
-          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=oscyl_driver/index.html"><title>Oscyl API</title><a href="oscyl_driver/index.html">oscyl_driver</a>\n' > _site/api/index.html
+          # The API pages wear the website's look by default (docs/theme/rustdoc/oscyl.css);
+          # site/api/index.html is their front page.
+          RUSTDOCFLAGS="--theme $PWD/docs/theme/rustdoc/oscyl.css --default-theme oscyl" \
+            cargo doc --no-deps --locked -p oscyl-driver -p oscyl-conformance -p oscyl-core -p oscyl-midi
+          cp -r target/doc/. _site/api/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
       - id: deploy
